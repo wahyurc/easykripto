@@ -1,0 +1,13 @@
+{
+ "name": "easykripto-frontend",
+ "version": "0.1.0",
+ "private": true,
+ "type": "module",
+ "scripts": {
+  "dev": "node preview.mjs",
+  "start": "node preview.mjs"
+ },
+ "dependencies": {
+  "google-auth-library": "^11.2.0"
+ }
+}

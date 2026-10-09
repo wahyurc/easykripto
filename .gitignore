@@ -1,0 +1,6 @@
+node_modules/
+.gmgn/
+client_secret_*.json
+.env
+.env.*
+!.env.example
