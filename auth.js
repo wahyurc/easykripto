@@ -17,6 +17,10 @@
   let authSdk = null;
   let loginBusy = false;
   let authRevision = 0;
+  window.easykriptoIdToken = async () => {
+    if(!auth?.currentUser)throw new Error('Masuk dengan Google untuk melanjutkan.');
+    return auth.currentUser.getIdToken();
+  };
   function loginError(error) {
     const messages = {
       'auth/popup-blocked': 'Popup Google diblokir. Izinkan popup untuk situs ini, lalu ketuk tombol Google lagi.',

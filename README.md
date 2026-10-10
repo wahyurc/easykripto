@@ -83,9 +83,42 @@ Referensi: [login Google Firebase](https://firebase.google.com/docs/auth/web/goo
 
 ## Batas prototipe
 
+## Integrasi API gratis
+
+Pencarian CA memakai DEX Screener untuk harga/volume/likuiditas. Detail token sekarang menambahkan:
+
+- **GeckoTerminal**: maksimal 48 candle per jam, dipilih dari pool token dengan likuiditas terbesar yang tersedia. Pool grafik bisa berbeda dari pool DEX Screener; sumbernya disebutkan pada antarmuka. Tabel OHLCV menjadi alternatif grafik.
+- **GoPlus**: informasi risiko untuk Solana (Beta), Ethereum, Base, dan BNB. Tidak ada skor keamanan buatan; field yang tidak tersedia ditampilkan sebagai tidak tersedia. Hasil deteksi tidak menjamin keamanan token.
+- **Peta holder Solana**: pemilik dari maksimal 20 akun token terbesar; saldo dijumlahkan ketika pemilik sama. Persentase terhadap supply saat ini, bukan persentase seluruh sampel. Tidak ada hubungan transfer yang dibuat dari kepemilikan saja.
+
+Menu **Peta → Transfer wallet** menerima alamat publik Solana, Ethereum, atau Base. Wallet tersimpan memiliki tombol **Analisis wallet** pada detailnya. Hasil berisi saldo native, peta transfer langsung, daftar transaksi, dan tautan explorer. BNB/Robinhood belum didukung analisis wallet.
+
+### Data Solana dan batas cakupan
+
+Jika layanan API belum dipasang di GitHub Pages, Solana menggunakan RPC publik `api.mainnet-beta.solana.com` dari browser. RPC ini dapat membatasi akses/rate; kegagalan ditampilkan tanpa mengganti hasil dengan simulasi. Setelah Helius diaktifkan pada layanan API, data Solana melewati Helius.
+
+Transfer wallet Solana diambil dari maksimal 8 transaksi terbaru yang menyebut alamat wallet, memeriksa instruksi utama dan internal. Transfer SPL yang hanya menyebut akun token dapat tidak terjangkau oleh pencarian alamat wallet. Titik yang pemiliknya belum diketahui tetap merupakan akun token dan diberi keterangan. Metode ini belum membentuk riwayat lengkap atau klasifikasi beli/jual.
+
+Transfer Ethereum/Base melalui Alchemy mencakup maksimal 25 masuk dan 25 keluar, kategori native/ERC-20, dengan deduplikasi. Tidak mencakup seluruh internal transfer/NFT atau keseluruhan riwayat. Ukuran lingkaran transfer mengikuti jumlah kemunculan dalam sampel, bukan nilai USD. Maksimal 12 alamat lawan ditampilkan pada peta; daftar memuat seluruh hasil.
+
+### Mengaktifkan API dengan key
+
+1. Buat key **Free** pada Helius dan Alchemy. Simpan `HELIUS_API_KEY` dan `ALCHEMY_API_KEY` dalam `.env` untuk server lokal, atau gunakan Workers secrets untuk Cloudflare. Jangan memasukkannya ke `data-config.js`, GitHub, atau frontend.
+2. Server lokal `npm run dev` menyediakan `/api/analysis/wallet` dan `/api/analysis/holders`. Setelah perubahan environment, restart server lokal. Endpoint menerima Firebase ID token pengguna melalui header Bearer dan memverifikasi signature RSA, issuer, audience, expiry, auth_time, dan email terverifikasi. Pemeriksaan pencabutan sesi belum diterapkan.
+3. Untuk GitHub Pages, deploy `api-worker.mjs` melalui Cloudflare Workers Free dengan konfigurasi `wrangler.toml`. Setelah akses Cloudflare tersedia, gunakan Wrangler untuk deploy, lalu pasang secret dengan `wrangler secret put HELIUS_API_KEY` dan `wrangler secret put ALCHEMY_API_KEY`. Tidak ada service account Firebase yang diperlukan oleh Worker ini.
+4. Isi `window.EASYKRIPTO_API_ORIGIN` pada `data-config.js` dengan origin HTTPS Worker yang benar-benar sudah diterbitkan, lalu push perubahan frontend. Nilai awal kosong; belum ada Worker yang diterbitkan oleh konfigurasi ini.
+
+Pembatasan layanan: cache hasil 120 detik, maksimal 4 analisis per UID/menit dan 2 pekerjaan aktif pada satu instance. Pada Cloudflare batas/cache bersifat per isolate, bukan global lintas pusat data. Endpoint tidak mengizinkan URL RPC arbitrer atau metode penandatanganan/transaksi. Hasil dan pesan error tidak menyertakan API key. Gunakan paket Free provider agar penggunaan tidak beralih menjadi overage berbayar.
+
+API publik di browser memanfaatkan cache 120 detik dan jeda permintaan; pembatasan ini per tab, bukan global untuk semua pengunjung. Tidak ada polling otomatis atau pemantauan latar belakang. Grafik serta risiko dapat gagal secara independen tanpa menghilangkan informasi pasar yang sudah dimuat.
+
+Referensi: [DEX Screener](https://docs.dexscreener.com/api/reference), [GeckoTerminal](https://api.geckoterminal.com/docs/index.html), [GoPlus](https://docs.gopluslabs.io/reference/support), [Solana RPC](https://solana.com/docs/rpc/http), [Alchemy Transfers](https://www.alchemy.com/docs/reference/transfers-api-quickstart), [Firebase token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens), [Workers secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+### Bagian contoh
+
 Semua token, wallet bawaan, nilai, serta waktu merupakan simulasi. Ukuran lingkaran ditentukan untuk tata letak.
 Wallet tambahan tidak masuk ke peta karena belum memiliki data transaksi. Validasi alamat memeriksa format sesuai jaringan, bukan keberadaan akun atau kontrak di blockchain.
-Pencarian CA mengambil data pasar DEX Screener. Peta, kartu ringkasan, dan aktivitas bawaan tetap simulasi. Belum ada notifikasi push, sinkronisasi saldo, atau pemantauan transaksi blockchain.
+Peta contoh, kartu ringkasan, dan aktivitas bawaan tetap simulasi. Analisis alamat pada menu Peta mengambil data terpisah sesuai sumber dan batas cakupan di atas. Belum ada notifikasi push atau pemantauan transaksi latar belakang.
 Alamat wallet disimpan pada perangkat ini. Private key dan seed phrase tidak diperlukan.
 
 Font Google Fonts bersifat opsional dan memiliki fallback font sistem. Ikon dan graf tersedia lokal.

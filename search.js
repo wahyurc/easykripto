@@ -8,6 +8,17 @@
   const submit=document.getElementById('submit-token-search');
   const message=()=>selectedBlockchain==='solana'?'Cari CA Solana atau token contoh: ARKA, NOMI, KORA.':`Cari CA ${currentNetwork().name}. Alamat 0x bisa ada pada beberapa jaringan; pilih jaringan yang tepat.`;
   let reading=false,request=null;
+  function enrichToken(chain,ca){
+    const content=document.getElementById('dialog-content');
+    const chart=document.createElement('section');chart.className='token-data-block';chart.innerHTML='<h3>Grafik harga · per jam</h3><div id="token-live-chart" role="status">Memuat grafik GeckoTerminal…</div>';
+    const risk=document.createElement('section');risk.className='token-data-block';risk.innerHTML='<h3>Pemeriksaan risiko</h3><div id="token-live-risk" role="status">Memuat hasil GoPlus…</div>';
+    content.append(chart,risk);
+    if(chain==='solana'){
+      const holders=document.createElement('button');holders.type='button';holders.className='secondary-button full-width live-holder-actions';holders.textContent='Lihat peta pemegang token';
+      holders.addEventListener('click',()=>window.EasyWallet.open({address:ca,chain,kind:'holders'}));content.append(holders);
+    }
+    window.loadTokenAnalysis({chain,ca});
+  }
   function extractCA(text){
     if(typeof text!=='string'||text.length>4096)return null;
     const trimmed=text.trim();
@@ -72,11 +83,15 @@
       pairs.sort((a,b)=>Number(b.liquidity?.usd||0)-Number(a.liquidity?.usd||0));
       if(request!==current||chain!==selectedBlockchain||document.body.classList.contains('signed-out'))return;
       const pair=pairs[0];
-      if(!pair){status.textContent='Belum ada pasangan perdagangan untuk CA ini di DEX Screener. Periksa jaringan, alamat kontrak, atau ketersediaan pasarnya.';return;}
+      if(!pair){
+        dialog('Telusuri token',`<div class="address-block">${escapeHTML(ca)}</div><div class="detail-note">DEX Screener belum memiliki pasangan untuk alamat ini pada ${escapeHTML(networkName)}. Grafik dan risiko diperiksa melalui sumber lain; format alamat saja belum membuktikan keberadaan token.</div>`,'DATA TOKEN');
+        enrichToken(chain,ca);status.textContent='Pasangan DEX Screener belum ditemukan. Memeriksa sumber data lainnya.';return;
+      }
       const number=(n,money=true)=>n==null||n===''||!Number.isFinite(Number(n))?'Belum tersedia':money?new Intl.NumberFormat('id-ID',{style:'currency',currency:'USD',maximumSignificantDigits:6}).format(Number(n)):new Intl.NumberFormat('id-ID').format(Number(n));
       const label=pair.baseToken.symbol||'Token';
-      dialog(label,`<p class="dialog-body-copy" style="margin:12px 0">${escapeHTML(pair.baseToken.name||label)} · ${escapeHTML(networkName)}</p><div class="address-block">${escapeHTML(ca)}</div><div class="detail-metrics" style="margin-top:18px"><div class="detail-metric"><small>Harga USD</small><strong>${number(pair.priceUsd)}</strong></div><div class="detail-metric"><small>Likuiditas pasangan</small><strong>${number(pair.liquidity?.usd)}</strong></div><div class="detail-metric"><small>Volume pasangan · 24 jam</small><strong>${number(pair.volume?.h24)}</strong></div><div class="detail-metric"><small>Market cap</small><strong>${number(pair.marketCap)}</strong></div></div><div class="detail-note">Sumber: DEX Screener, diambil ${new Date().toLocaleTimeString('id-ID')}. Menampilkan pasangan dengan likuiditas terbesar yang tersedia. Data holder dan pergerakan wallet belum dihubungkan.</div><a class="secondary-button full-width" href="https://dexscreener.com/${chain}/${encodeURIComponent(pair.pairAddress)}" target="_blank" rel="noopener noreferrer">Buka pasangan perdagangan ${icon('arrow')}</a>`,'HASIL PENCARIAN · DATA PASAR');
-      status.textContent=`${label} ditemukan. Data pasar bersumber dari DEX Screener.`;
+      dialog(label,`<p class="dialog-body-copy" style="margin:12px 0">${escapeHTML(pair.baseToken.name||label)} · ${escapeHTML(networkName)}</p><div class="address-block">${escapeHTML(ca)}</div><div class="detail-metrics" style="margin-top:18px"><div class="detail-metric"><small>Harga USD</small><strong>${number(pair.priceUsd)}</strong></div><div class="detail-metric"><small>Likuiditas pasangan</small><strong>${number(pair.liquidity?.usd)}</strong></div><div class="detail-metric"><small>Volume pasangan · 24 jam</small><strong>${number(pair.volume?.h24)}</strong></div><div class="detail-metric"><small>Market cap</small><strong>${number(pair.marketCap)}</strong></div></div><div class="detail-note">Sumber: DEX Screener, diambil ${new Date().toLocaleTimeString('id-ID')}. Menampilkan pasangan dengan likuiditas terbesar yang tersedia. Grafik dan hasil risiko ditampilkan dari penyedia terpisah. Peta holder tersedia untuk Solana.</div><a class="secondary-button full-width" href="https://dexscreener.com/${chain}/${encodeURIComponent(pair.pairAddress)}" target="_blank" rel="noopener noreferrer">Buka pasangan perdagangan ${icon('arrow')}</a>`,'HASIL PENCARIAN · DATA PASAR');
+      enrichToken(chain,ca);
+      status.textContent=`${label} ditemukan. Data pasar bersumber dari DEX Screener; grafik dan risiko diperiksa terpisah.`;
     }catch(error){if(request!==current)return;status.textContent=error.name==='AbortError'?'Pencarian terlalu lama. Periksa koneksi dan coba lagi.':error.message==='Failed to fetch'?'Tidak dapat terhubung ke sumber data. Periksa koneksi dan coba lagi.':error.message;}
     finally{clearTimeout(timeout);if(request===current){request=null;submit.disabled=false;}}
   });

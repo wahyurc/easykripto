@@ -1,0 +1,9 @@
+name = "easykripto-data"
+main = "api-worker.mjs"
+compatibility_date = "2026-10-10"
+workers_dev = true
+
+[vars]
+API_ALLOWED_ORIGINS = "https://wahyurc.github.io,http://localhost:4173"
+
+# Set HELIUS_API_KEY and ALCHEMY_API_KEY using Workers secrets, never vars.

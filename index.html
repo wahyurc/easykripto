@@ -8,11 +8,15 @@
   <title>Easykripto — Pahami setiap pergerakan</title>
   <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
   <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
+  <link rel="stylesheet" href="live-data.css?v=20261010-free-api">
+  <script src="data-config.js?v=20261010-free-api" defer></script>
   <script src="networks.js" defer></script>
-  <script src="app.js?v=20261010-superadmin" defer></script>
-  <script src="search.js" defer></script>
+  <script src="app.js?v=20261010-free-api" defer></script>
+  <script src="search.js?v=20261010-free-api" defer></script>
+  <script src="market-data.js?v=20261010-free-api" defer></script>
+  <script src="wallet-data.js?v=20261010-free-api" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
-  <script src="auth.js?v=20261010-superadmin" defer></script>
+  <script src="auth.js?v=20261010-free-api" defer></script>
 </head>
 <body class="signed-out">
   <section class="login-screen" aria-label="Masuk ke Easykripto">
@@ -44,7 +48,7 @@
     <header class="topbar">
       <a class="mobile-brand" href="#ringkasan"><span class="brand-mark">e<span></span></span>easykripto</a>
       <div class="breadcrumb">Ruang analisis <span>/</span> <strong id="breadcrumb">Ringkasan</strong></div>
-      <div class="topbar-actions"><span class="demo-pill"><span></span> Data simulasi</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
+      <div class="topbar-actions"><span class="demo-pill"><span></span> Mode eksplorasi</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
     </header>
 
     <main id="main" tabindex="-1">
@@ -59,7 +63,7 @@
         <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Cari berdasarkan CA Solana atau nama token contoh: ARKA, NOMI, KORA.</p>
       </section>
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
-      <div class="demo-notice"><span data-icon="flask"></span><span><strong>Mode eksplorasi.</strong> Token, wallet, dan transaksi di bawah adalah contoh, belum terhubung ke blockchain.</span><button data-action="about-data" aria-label="Informasi data simulasi"><span data-icon="arrow"></span></button></div>
+      <div class="demo-notice"><span data-icon="flask"></span><span><strong>Mode eksplorasi.</strong> Kartu ringkasan dan peta contoh memakai simulasi. Cari CA atau buka menu Peta untuk mengambil data dari sumber publik.</span><button data-action="about-data" aria-label="Informasi data simulasi"><span data-icon="arrow"></span></button></div>
 
       <section id="view-ringkasan" class="view" aria-label="Ringkasan">
         <div class="stats-grid" id="stats"></div>
@@ -76,8 +80,11 @@
         </div>
       </section>
 
-      <section id="view-peta" class="view" hidden><div id="full-map-slot"></div><div class="map-explainer"><span data-icon="info"></span><p>Garis menunjukkan transaksi yang teramati. Hubungan antarwallet tidak membuktikan pemilik yang sama.</p></div></section>
-      <section id="view-pantauan" class="view" hidden><div class="section-toolbar"><div class="search-field"><span data-icon="search"></span><input id="wallet-search" type="search" placeholder="Cari nama atau alamat wallet" aria-label="Cari wallet"></div><button class="primary-button" data-action="add-wallet"><span data-icon="plus"></span><span>Tambah</span></button></div><div class="wallet-grid" id="wallet-list"></div><p class="panel-footnote">Wallet baru disimpan di perangkat ini. Pemantauan blockchain akan tersedia setelah API dihubungkan.</p></section>
+      <section id="view-peta" class="view" hidden>
+        <section class="panel live-panel" aria-label="Analisis wallet blockchain"><div class="live-header"><div><h2>Telusuri wallet</h2><small>Peta transfer dari catatan blockchain yang tersedia.</small></div><span class="subtle-tag">Data blockchain</span></div><div class="segmented" aria-label="Jenis analisis"><button type="button" data-live-mode="wallet" class="active" aria-pressed="true">Transfer wallet</button><button type="button" data-live-mode="holders" aria-pressed="false">Holder Solana</button></div><p class="live-mode-description">Pilih transfer untuk menelusuri alamat wallet, atau holder untuk memeriksa CA token Solana.</p><form id="live-wallet-form"><label id="live-wallet-label" for="live-wallet-address">Alamat wallet</label><div class="live-form"><input id="live-wallet-address" placeholder="Tempel alamat publik" required autocomplete="off" autocapitalize="off" spellcheck="false"><button id="live-wallet-submit" class="primary-button" type="submit">Analisis alamat</button></div></form><p id="live-wallet-status" class="live-status" role="status" aria-live="polite"></p><div id="live-wallet-result"></div></section>
+        <button id="live-demo-toggle" class="secondary-button live-demo-toggle" type="button" aria-controls="full-map-slot" aria-expanded="false">Lihat peta simulasi</button><div id="full-map-slot" hidden></div><div class="map-explainer"><span data-icon="info"></span><p>Garis menunjukkan transaksi yang teramati. Hubungan antarwallet tidak membuktikan pemilik yang sama.</p></div>
+      </section>
+      <section id="view-pantauan" class="view" hidden><div class="section-toolbar"><div class="search-field"><span data-icon="search"></span><input id="wallet-search" type="search" placeholder="Cari nama atau alamat wallet" aria-label="Cari wallet"></div><button class="primary-button" data-action="add-wallet"><span data-icon="plus"></span><span>Tambah</span></button></div><div class="wallet-grid" id="wallet-list"></div><p class="panel-footnote">Wallet disimpan di perangkat ini. Buka detail untuk analisis transaksi; belum ada pemantauan latar belakang.</p></section>
       <section id="view-aktivitas" class="view" hidden><div class="section-toolbar"><div class="segmented activity-filters" aria-label="Filter jenis transaksi"><button class="active" data-type="all" aria-pressed="true">Semua</button><button data-type="buy" aria-pressed="false">Beli</button><button data-type="sell" aria-pressed="false">Jual</button><button data-type="transfer" aria-pressed="false">Transfer</button></div><span class="subtle-tag">Data simulasi</span></div><div class="panel activity-full" id="all-activity"></div></section>
       <section id="view-superadmin" class="view admin-view" hidden aria-label="Dashboard superadmin">
         <div class="admin-overview"><div><span class="admin-label">RUANG SUPERADMIN</span><p>Aktivitas aplikasi, dalam angka.</p></div><button id="admin-refresh" class="secondary-button" type="button">Perbarui data</button></div>

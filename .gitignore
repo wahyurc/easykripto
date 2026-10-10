@@ -1,6 +1,9 @@
 node_modules/
 .gmgn/
 .secrets/
+.wrangler/
+.dev.vars
+.dev.vars.*
 *-firebase-adminsdk-*.json
 service-account*.json
 client_secret_*.json
