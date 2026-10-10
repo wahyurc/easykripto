@@ -11,6 +11,10 @@
   let reading=false,request=null,automaticNetworkChange=false,chosenChain=null,chosenPairs=null;
   function enrichToken(chain,ca,pair){
     const content=document.getElementById('dialog-content');
+    window.EasyTokenUI.setDialogIcon({imageUrl:pair?.info?.imageUrl,label:pair?.baseToken?.symbol||'Token'});
+    const holdersBlock=document.createElement('section');holdersBlock.className='token-data-block token-holders-block';
+    const holdersTitle=document.createElement('h3');holdersTitle.textContent='Wallet pemegang token';
+    const holdersRoot=document.createElement('div');holdersRoot.id='token-live-holders';holdersRoot.dataset.symbol=String(pair?.baseToken?.symbol||'token').slice(0,32);holdersRoot.setAttribute('aria-live','polite');holdersRoot.textContent='Memuat pemegang token…';holdersBlock.append(holdersTitle,holdersRoot);content.append(holdersBlock);
     const chart=document.createElement('section');chart.className='token-data-block';chart.innerHTML='<h3>Grafik harga · per jam</h3><div id="token-live-chart" role="status">Memuat grafik GeckoTerminal…</div>';
     const risk=document.createElement('section');risk.className='token-data-block';risk.innerHTML='<h3>Pemeriksaan risiko</h3><div id="token-live-risk" role="status">Memuat hasil GoPlus…</div>';
     content.append(chart,risk);
@@ -102,11 +106,11 @@
         data=await response.json();
       }
       const raw=Array.isArray(data)?data:Array.isArray(data.pairs)?data.pairs:[];
-      let pairs=raw.filter(p=>blockchainNetworks.some(network=>network.id===p.chainId)&&validChainAddress(ca,p.chainId)&&typeof p.baseToken?.address==='string'&&equalChainAddress(p.baseToken.address,ca,p.chainId)&&(!chain||p.chainId===chain));
+      let pairs=raw.filter(p=>supportedNetworks().some(network=>network.id===p.chainId)&&validChainAddress(ca,p.chainId)&&typeof p.baseToken?.address==='string'&&equalChainAddress(p.baseToken.address,ca,p.chainId)&&(!chain||p.chainId===chain));
       if(request!==current||document.body.classList.contains('signed-out'))return;
       if(!chain){
-        const found=blockchainNetworks.filter(network=>pairs.some(pair=>pair.chainId===network.id));
-        if(found.length!==1){chooseNetwork(ca,found.length?found:blockchainNetworks.filter(network=>network.kind==='evm'),pairs,found.length>0);return;}
+        const found=supportedNetworks().filter(network=>pairs.some(pair=>pair.chainId===network.id));
+        if(found.length!==1){chooseNetwork(ca,found.length?found:supportedNetworks().filter(network=>network.kind==='evm'),pairs,found.length>0);return;}
         chain=found[0].id;
       }
       if(chain!==selectedBlockchain){

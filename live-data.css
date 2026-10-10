@@ -12,3 +12,16 @@
 .live-graph-controls button{min-width:44px;min-height:44px}
 .activity-main,.token-name{min-width:0}.activity-main strong,.token-name strong{overflow-wrap:anywhere}
 @media(max-width:760px){.dashboard-toolbar>span,.watch-sync p{font-size:10px}.watch-sync button{min-height:44px}.wallet-card-footer{flex-wrap:wrap}.token-cards>.empty-state{min-width:100%}.activity-number{max-width:38%;overflow-wrap:anywhere}.dashboard-toolbar .secondary-button{min-height:44px}}
+.token-picture{position:relative;overflow:hidden;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center}
+.token-picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.token-picture-fallback{display:inline-block}.token-picture-fallback[hidden]{display:none}
+.token-result-title{display:flex;align-items:center;gap:12px}.token-result-title .token-picture{width:48px;height:48px;border-radius:14px;font-size:17px}
+.holder-summary{font-size:12px;color:#a9becb}.holder-list{display:grid;gap:10px;margin-top:12px;max-height:460px;overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
+.holder-card{border:1px solid #2d414d;border-radius:14px;padding:14px;background:#13212c}.holder-card-main strong{font-size:13px}.holder-address{font-family:monospace;font-size:11px;overflow-wrap:anywhere;color:#9cb5c5;margin:8px 0}
+.holder-balance{font-size:12px;margin:8px 0;color:#c2e9d1}.holder-label{font-size:10px;color:#b4a3e5}.holder-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}.holder-card-actions button{font-size:11px;min-height:44px}.holder-explorer{font-size:11px;color:#b4d9bc;padding:12px 4px}
+@media(max-width:760px){.token-result-title .token-picture{width:40px;height:40px;border-radius:12px}.holder-list{max-height:48dvh}.holder-card{padding:12px}.holder-card-actions .primary-button{flex:1 1 170px}.holder-address{font-size:10px}}
+.network-options{min-width:270px;max-width:calc(100vw - 30px)}
+.network-options-title{padding:10px 12px;color:#b7d4bf;font-size:10px;letter-spacing:1.2px;font-weight:700}
+.network-options .network-option-copy{display:flex;flex-direction:column;gap:3px;padding:10px 0}
+.network-option-copy strong{font-size:12px;font-weight:600}.network-option-copy small{font-size:10px;color:#a3b9c6}.network-option-copy .network-option-provider{font-size:9px;color:#789a86}
+.network-support-note{padding:10px 12px;border-top:1px solid #30473a;font-size:10px;line-height:1.6;color:#9eb1bd}

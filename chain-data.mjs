@@ -64,21 +64,31 @@ export async function solanaWallet(url,address,signal) {
 }
 
 export async function solanaHolders(url,mint,signal) {
-  const largest=await rpc(url,'getTokenLargestAccounts',[mint,{commitment:'confirmed'}],signal);
-  const accounts=largest?.value||[];
+  let accounts=[],fallback=false;
+  try{
+    const largest=await rpc(url,'getTokenLargestAccounts',[mint,{commitment:'confirmed'}],signal);accounts=largest?.value||[];
+  }catch(error){
+    if(!(error instanceof DataError)||signal?.aborted)throw error;
+    // Very large mints can exceed the RPC provider's largest-account scan limit.
+    const response=await fetch(`https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=${encodeURIComponent(mint)}`,{signal,headers:{Accept:'application/json'}});
+    const data=response.ok?await response.json():null,token=data?.code===1?data.result?.[mint]:null;
+    accounts=[...new Set((Array.isArray(token?.holders)?token.holders:[]).map(holder=>holder.token_account).filter(address=>validAddress(address,'solana')))].slice(0,10).map(address=>({address}));
+    if(!accounts.length)throw error;fallback=true;
+  }
   if(!accounts.length)return {chain:'solana',mint,holders:[],partial:true};
   const details=await rpc(url,'getMultipleAccounts',[accounts.map(account=>account.address),{encoding:'jsonParsed',commitment:'confirmed'}],signal);
   const supply=await rpc(url,'getTokenSupply',[mint,{commitment:'confirmed'}],signal);
   const owners=new Map();
   accounts.forEach((token,index)=>{
-    const owner=details.value[index]?.data?.parsed?.info?.owner;
-    if(!owner)return;
+    const info=details.value[index]?.data?.parsed?.info,owner=info?.owner;
+    const raw=info?.tokenAmount?.amount;
+    if(!owner||info.mint!==mint||typeof raw!=='string'||!/^\d+$/.test(raw)||BigInt(raw)===0n)return;
     const item=owners.get(owner)||{address:owner,raw:0n,accounts:0};
-    item.raw+=BigInt(token.amount);item.accounts++;owners.set(owner,item);
+    item.raw+=BigInt(raw);item.accounts++;owners.set(owner,item);
   });
   const total=BigInt(supply.value.amount);
   const holders=[...owners.values()].sort((a,b)=>a.raw>b.raw?-1:a.raw<b.raw?1:0).map(item=>({address:item.address,amount:decimalUnits(item.raw,supply.value.decimals),share:total?Number(item.raw*1000000n/total)/10000:0,accounts:item.accounts}));
-  return {chain:'solana',mint,holders,sampledTokenAccounts:accounts.length,partial:true,note:'Pemilik dari maksimal 20 akun token terbesar, bukan seluruh holder. Persentase terhadap supply saat ini. Wallet pool/exchange belum diberi label; kepemilikan bukan bukti hubungan antarwallet.'};
+  return {chain:'solana',mint,holders,sampledTokenAccounts:accounts.length,holderDiscovery:fallback?'GoPlus':'RPC',partial:true,note:`${fallback?'RPC daftar terbesar dibatasi penyedia. Memakai maksimal 10 akun token yang dilaporkan GoPlus; pemilik dan saldo positif diperiksa kembali melalui RPC.':'Pemilik dari maksimal 20 akun token terbesar.'} Bukan seluruh holder. Persentase terhadap supply saat ini. Wallet pool/exchange belum diberi label; kepemilikan bukan bukti hubungan antarwallet.`};
 }
 
 export async function evmWallet(url,chain,address,signal) {

@@ -32,7 +32,7 @@
     const [app,sdk]=await Promise.all([import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js')]);
     cloud={sdk,db:sdk.getFirestore(app.getApp())};return cloud;
   }
-  function renderAll(){rebuildEvents();renderSummary();renderWallets();renderActivities();renderMap();const label=$('#watch-sync-status');if(label)label.textContent=syncMessage;}
+  function renderAll(){rebuildEvents();renderSummary();renderWallets();renderActivities();renderMap();const label=$('#watch-sync-status');if(label)label.textContent=syncMessage;window.dispatchEvent(new Event('easykripto-watch-change'));}
   function persist(){
     if(!user)return;
     const value=watch(),uid=user.id,version=epoch;save(localKey(),{...value,pending:true,baseline:syncedWatch});
@@ -84,8 +84,9 @@
     $('#recent-activity').innerHTML=list.slice(0,4).map(row).join('')||empty('Belum ada aktivitas 24 jam pada sampel yang dimuat.');
     $('#token-cards').innerHTML=currentTokens.map(t=>{
       const market=markets.get(key(t.chain,t.address));
-      return `<button class="token-card" data-token="${escapeHTML(t.id)}"><div class="token-card-head"><span class="token-logo">${escapeHTML(t.symbol.slice(0,2))}</span><span class="token-name"><strong>${escapeHTML(t.symbol)}</strong><small>${escapeHTML(short(t.address))}</small></span></div><div class="token-card-value">${market?.error?'—':money(market?.pair?.priceUsd)}</div><div class="token-card-caption">${market?.error?escapeHTML(market.error):market?.at?`Harga · ${new Date(market.at).toLocaleTimeString('id-ID')}`:'Harga belum dimuat'}</div><div class="token-card-bottom"><span>Buka grafik & risiko</span>${icon('arrow')}</div></button>`;
+      return `<button class="token-card" data-token="${escapeHTML(t.id)}"><div class="token-card-head"><span class="token-logo token-picture" data-token-picture data-image="${escapeHTML(window.EasyTokenUI.imageURL(market?.pair?.info?.imageUrl)||'')}" data-label="${escapeHTML(t.symbol)}"></span><span class="token-name"><strong>${escapeHTML(t.symbol)}</strong><small>${escapeHTML(short(t.address))}</small></span></div><div class="token-card-value">${market?.error?'—':money(market?.pair?.priceUsd)}</div><div class="token-card-caption">${market?.error?escapeHTML(market.error):market?.at?`Harga · ${new Date(market.at).toLocaleTimeString('id-ID')}`:'Harga belum dimuat'}</div><div class="token-card-bottom"><span>Buka grafik & risiko</span>${icon('arrow')}</div></button>`;
     }).join('')||empty('Cari CA lalu ketuk Pantau token untuk menambahkan token.');
+    window.EasyTokenUI.updateCardIcons();
     const counterparties=new Map();list.forEach(e=>{const addr=e.type==='incoming'?e.from:e.to;if(addr)counterparties.set(addr,(counterparties.get(addr)||0)+1);});
     const top=[...counterparties].sort((a,b)=>b[1]-a[1])[0];
     $('.insight-card').innerHTML=`<div class="insight-label">${icon('spark')} CATATAN SAMPEL</div><h2>${top?'Alamat paling sering muncul.':'Mulai dari satu wallet.'}</h2><p>${top?`${escapeHTML(walletLabel(top[0],selectedBlockchain))} muncul pada ${top[1]} dari ${list.length} catatan transfer 24 jam yang dimuat. Frekuensi bukan bukti pemilik yang sama.`:'Tambahkan wallet, lalu analisis untuk melihat hubungan dan aktivitas dari catatan blockchain.'}</p><button class="text-button" data-route="peta">Telusuri peta ${icon('arrow')}</button>`;
@@ -223,7 +224,7 @@
     void refreshTokens();const first=availableWallets()[0];if(first)void refreshWallet(first.id,true);
   }
   window.EasyDashboard={row,summary,activities,wallets,map:mapView,showEvents,showNode,receive,persist,allowed,
-    addWallet(wallet){if(!allowed())return false;if(state.wallets.length>=20){toast('Maksimal 20 wallet per akun untuk menjaga kuota gratis.');return false;}state.wallets.push(wallet);persist();void refreshWallet(wallet.id);return true;},
+    addWallet(wallet){if(!allowed())return false;if(!blockchainNetworks.some(n=>n.id===wallet.chain)||!validChainAddress(wallet.address,wallet.chain)){toast('Alamat holder tidak sesuai jaringan.');return false;}if(state.wallets.some(w=>w.chain===wallet.chain&&equalChainAddress(w.address,wallet.address,wallet.chain))){toast('Alamat sudah berada di pantauan.');return false;}if(state.wallets.length>=20){toast('Maksimal 20 wallet per akun untuk menjaga kuota gratis.');return false;}state.wallets.push(wallet);persist();void refreshWallet(wallet.id);return true;},
     removeWallet(id){state.wallets=state.wallets.filter(w=>{if(w.id!==id)return true;snapshots.delete(key(w.chain,w.address));return false;});delete state.alerts[id];errors.delete(id);persist();},
     toggleAlert(id){if(!allowed())return;state.alerts[id]=!state.alerts[id];persist();if(state.alerts[id])void refreshWallet(id,true);toast(state.alerts[id]?'Pantauan aktif selama aplikasi terbuka.':'Pantauan otomatis dimatikan.');schedule();},
     trackToken({chain,address,name,symbol,pair}){if(!allowed())return;if(tokens.some(t=>key(t.chain,t.address)===key(chain,address))){toast('Token sudah ada dalam pantauan.');return;}if(tokens.length>=20){toast('Maksimal 20 token per akun.');return;}tokens.push({id:crypto.randomUUID(),chain,address,name:String(name||'Token').slice(0,80),symbol:String(symbol||'Token').slice(0,32)});if(pair)markets.set(key(chain,address),{pair,at:Date.now()});persist();toast('Token ditambahkan ke pantauan akun.');},

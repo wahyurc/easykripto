@@ -40,8 +40,10 @@
   async function chart(chain,ca,signal,root){
     const network=networks[chain];if(!network){root.textContent='Grafik belum tersedia pada jaringan ini.';return;}
     try{
-      const pools=await json(`https://api.geckoterminal.com/api/v2/networks/${network}/tokens/${encodeURIComponent(ca)}/pools?page=1`,signal,'gecko');
+      const pools=await json(`https://api.geckoterminal.com/api/v2/networks/${network}/tokens/${encodeURIComponent(ca)}/pools?page=1&include=base_token,quote_token`,signal,'gecko');
       const match=id=>chain==='solana'?id===`${network}_${ca}`:id?.toLowerCase()===`${network}_${ca}`.toLowerCase();
+      const metadata=(pools.included||[]).find(item=>match(item.id))?.attributes;
+      if(root.isConnected&&!signal.aborted&&metadata?.image_url&&!document.querySelector('#dialog-title .token-picture img'))window.EasyTokenUI.setDialogIcon({imageUrl:metadata.image_url,label:metadata.symbol||'Token'});
       const pool=(pools.data||[]).filter(p=>match(p.relationships?.base_token?.data?.id)||match(p.relationships?.quote_token?.data?.id)).sort((a,b)=>Number(b.attributes?.reserve_in_usd||0)-Number(a.attributes?.reserve_in_usd||0))[0];
       const address=pool?.attributes?.address;if(!address||!(validChainAddress(address,chain)||(chain!=='solana'&&/^0x[0-9a-fA-F]{64}$/.test(address))))throw new Error('Pool grafik belum tersedia untuk token ini.');
       const side=match(pool.relationships.base_token.data.id)?'base':'quote';
@@ -60,7 +62,7 @@
     if(raw==='0'||raw===0||raw===false)return 'Tidak terdeteksi';
     return 'Tidak tersedia';
   }
-  async function risk(chain,ca,signal,root){
+  async function risk(chain,ca,signal,root,holdersRoot){
     const path=chain==='solana'?'solana/token_security':chainIds[chain]?`token_security/${chainIds[chain]}`:null;
     if(!path){root.textContent='Pemeriksaan risiko belum tersedia pada jaringan ini.';return;}
     try{
@@ -69,17 +71,30 @@
       const key=Object.keys(response.result||{}).find(key=>equalChainAddress(key,ca,chain)),data=response.result?.[key];
       if(!data||!Object.keys(data).length)throw new Error('Belum ada hasil pemeriksaan untuk token ini.');
       if(!root.isConnected)return;root.replaceChildren();
+      if(chain!=='solana'&&holdersRoot?.isConnected)window.EasyTokenUI.renderHolders(holdersRoot,window.EasyTokenUI.fromGoPlus(data,chain),{chain,symbol:holdersRoot.dataset.symbol==='token'?data.token_symbol||'token':holdersRoot.dataset.symbol});
       const fields=chain==='solana'?[['mintable','Mint tambahan'],['freezable','Pembekuan token'],['closable','Penutupan akun'],['transfer_fee','Biaya transfer']]:[['is_honeypot','Indikasi honeypot'],['cannot_sell_all','Pembatasan menjual'],['is_blacklisted','Blacklist'],['is_proxy','Kontrak proxy']];
       const dl=document.createElement('dl');dl.className='risk-grid';for(const [field,label]of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=riskValue(data[field]);dl.append(dt,dd);}root.append(dl);
       const p=document.createElement('p');p.className='panel-footnote';p.textContent=`GoPlus${chain==='solana'?' Solana Beta':''} · hasil deteksi bukan jaminan keamanan. Field yang tidak dilaporkan ditandai tidak tersedia.`;root.append(p);
-    }catch(error){if(root.isConnected&&!signal.aborted)root.textContent=error.message==='Failed to fetch'?'Pemeriksaan risiko belum dapat dihubungi.':error.message;}
+    }catch(error){if(root.isConnected&&!signal.aborted){root.textContent=error.message==='Failed to fetch'?'Pemeriksaan risiko belum dapat dihubungi.':error.message;if(chain!=='solana'&&holdersRoot?.isConnected)holdersRoot.textContent='Daftar holder belum dapat dimuat dari GoPlus. Cari ulang token untuk mencoba lagi.';}}
+  }
+  async function solanaHolderList(ca,signal,root){
+    if(!root?.isConnected||signal.aborted)return;
+    root.textContent='Memuat pemilik akun token dari blockchain…';
+    try{
+      const data=await window.EasyData.analyze({chain:'solana',address:ca,kind:'holders',signal,onWait:message=>{if(root.isConnected&&!signal.aborted)root.textContent=message;}});
+      if(!signal.aborted)window.EasyTokenUI.renderHolders(root,data,{chain:'solana',symbol:root.dataset.symbol});
+    }catch(error){
+      if(!root.isConnected||signal.aborted)return;root.replaceChildren();const message=document.createElement('p');message.textContent=error.message||'Daftar holder belum tersedia.';root.append(message);
+      const retry=document.createElement('button');retry.type='button';retry.className='secondary-button';retry.textContent='Coba muat holder lagi';retry.addEventListener('click',()=>void solanaHolderList(ca,signal,root));root.append(retry);
+    }
   }
   let analysis;
   window.loadTokenAnalysis=({chain,ca})=>{
     analysis?.abort();analysis=new AbortController();const signal=analysis.signal;
-    const chartRoot=target('token-live-chart'),riskRoot=target('token-live-risk');
+    const chartRoot=target('token-live-chart'),riskRoot=target('token-live-risk'),holdersRoot=target('token-live-holders');
     if(chartRoot)void chart(chain,ca,signal,chartRoot);
-    if(riskRoot)void risk(chain,ca,signal,riskRoot);
+    if(riskRoot)void risk(chain,ca,signal,riskRoot,holdersRoot);
+    if(chain==='solana'&&holdersRoot)void solanaHolderList(ca,signal,holdersRoot);
   };
   document.getElementById('detail-dialog').addEventListener('close',()=>{if(!document.getElementById('detail-dialog').open)analysis?.abort();});
   window.addEventListener('easykripto-network',()=>analysis?.abort());

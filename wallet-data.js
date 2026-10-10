@@ -62,8 +62,8 @@
     result.append(text('p',data.note||'Sampel data blockchain.','live-mode-description'));graph(data);
     const list=document.createElement('div');list.className='live-result-list';
     if(data.holders){
-      for(const [index,holder]of data.holders.entries()){const row=document.createElement('article');row.className='live-transfer';row.append(text('strong',`${index+1}. ${holder.address}`),text('p',`${fmt(holder.amount)} token · ${fmt(holder.share)}% supply · ${holder.accounts} akun token dalam sampel`));list.append(row);}
-      if(!data.holders.length)list.append(text('p','Belum ditemukan pemilik pada sampel akun token.'));
+      result.append(list);
+      window.EasyTokenUI.renderHolders(list,data,{chain:data.chain,symbol:'token'});
     }else{
       for(const transfer of data.transfers){const row=document.createElement('article');row.className='live-transfer';const from=transfer.from||'Tidak diketahui',to=transfer.to||'Tidak diketahui';row.append(text('strong',`${short(from)} → ${short(to)}`),text('p',`${fmt(transfer.amount)} ${transfer.asset}`));
         if(transfer.timestamp){const date=new Date(transfer.timestamp);if(Number.isFinite(date.getTime()))row.append(text('small',`${date.toLocaleString('id-ID',{timeZone:'Asia/Makassar'})} WITA · `));}

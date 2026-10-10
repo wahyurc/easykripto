@@ -1,12 +1,14 @@
 'use strict';
 
 const blockchainNetworks=[
- {id:'solana',name:'Solana',kind:'solana'},
- {id:'ethereum',name:'Ethereum',kind:'evm'},
- {id:'base',name:'Base',kind:'evm'},
- {id:'bsc',name:'BNB Chain',kind:'evm'},
- {id:'robinhood',name:'Robinhood',kind:'evm'}
+ {id:'solana',name:'Solana',kind:'solana',walletProvider:'Helius',holderProvider:'RPC',holderLimit:20},
+ {id:'ethereum',name:'Ethereum',kind:'evm',walletProvider:'Alchemy',holderProvider:'GoPlus',holderLimit:10},
+ {id:'base',name:'Base',kind:'evm',walletProvider:'Alchemy',holderProvider:'GoPlus',holderLimit:10},
+ {id:'bsc',name:'BNB Chain',kind:'evm',walletProvider:'Alchemy',holderProvider:'GoPlus',holderLimit:10},
+ {id:'robinhood',name:'Robinhood',kind:'evm',walletProvider:'Alchemy',holderProvider:'GoPlus',holderLimit:10}
 ];
+let supportedNetworkIds=new Set(blockchainNetworks.map(network=>network.id));
+function supportedNetworks(){return blockchainNetworks.filter(network=>supportedNetworkIds.has(network.id));}
 const networkLogos={
  solana:'<path fill="#82e3bb" d="m5 5 2-2h14l-2 2H5Zm0 14 2-2h14l-2 2H5Z"/><path fill="#ad83ef" d="m5 10 2 2h14l-2-2H5Z"/>',
  ethereum:'<path fill="#c0c8ec" d="m12 2-6 10 6 3 6-3-6-10Z"/><path fill="#8395d3" d="M12 2v13l6-3-6-10Z"/><path fill="#c0c8ec" d="m6 13 6 9 6-9-6 3-6-3Z"/><path fill="#8395d3" d="M12 16v6l6-9-6 3Z"/>',
@@ -29,8 +31,25 @@ const networkTrigger=document.getElementById('network-trigger');
 const networkOptions=document.getElementById('network-options');
 function updateNetworkPicker(){
  const network=currentNetwork();networkTrigger.innerHTML=`${networkLogo(network.id)}<span>${network.name}</span><svg class="network-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
- networkTrigger.setAttribute('aria-label',`Jaringan ${network.name}. Pilih jaringan blockchain`);
+ networkTrigger.setAttribute('aria-label',`Jaringan ${network.name}. Pilih jaringan yang didukung Easykripto`);
  networkOptions.querySelectorAll('[data-network]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.network===network.id)));
+}
+function renderSupportedOptions(note='Wallet, token, dan holder sesuai cakupan penyedia.'){
+ networkOptions.setAttribute('aria-label','Jaringan yang didukung Easykripto');
+ networkOptions.innerHTML='<div class="network-options-title" role="presentation">JARINGAN EASYKRIPTO</div>'+supportedNetworks().map(n=>`<button type="button" role="option" tabindex="-1" data-network="${n.id}" aria-selected="${n.id===selectedBlockchain}">${networkLogo(n.id)}<span class="network-option-copy"><strong>${n.name}</strong><small>Wallet · token · holder maks. ${n.holderLimit}</small><small class="network-option-provider">${n.walletProvider} · ${n.holderProvider}</small></span><span class="network-check" aria-hidden="true">✓</span></button>`).join('')+`<div class="network-support-note" role="presentation">${note}</div>`;
+}
+async function loadSupportedNetworks(){
+ try{
+  const origin=window.EASYKRIPTO_API_ORIGIN?new URL(window.EASYKRIPTO_API_ORIGIN).origin:location.origin;
+  const response=await fetch(`${origin}/api/analysis/capabilities`,{credentials:'omit',signal:AbortSignal.timeout(12000)});
+  if(!response.ok)throw new Error('Dukungan belum dimuat');const data=await response.json();
+  const supported=blockchainNetworks.filter(network=>data.networks?.some(item=>item.id===network.id));if(!supported.length)throw new Error('Dukungan belum dimuat');
+  for(const network of supported){const item=data.networks.find(item=>item.id===network.id);if(['Helius','RPC Solana','Alchemy'].includes(item.walletProvider))network.walletProvider=item.walletProvider;}
+  supportedNetworkIds=new Set(supported.map(network=>network.id));
+  const select=document.getElementById('network-select');select.innerHTML=supported.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  const changed=!supported.some(n=>n.id===selectedBlockchain);select.value=changed?supported[0].id:selectedBlockchain;
+  renderSupportedOptions();closeNetworkPicker();if(changed)select.dispatchEvent(new Event('change'));else updateNetworkPicker();
+ }catch{renderSupportedOptions('Dukungan aplikasi ditampilkan. Ketersediaan layanan belum dapat diperbarui.');}
 }
 function closeNetworkPicker(restoreFocus=false){networkOptions.hidden=true;networkTrigger.setAttribute('aria-expanded','false');if(restoreFocus)networkTrigger.focus();}
 function openNetworkPicker(){networkOptions.hidden=false;networkTrigger.setAttribute('aria-expanded','true');networkOptions.querySelector(`[data-network="${selectedBlockchain}"]`).focus();}
@@ -47,6 +66,7 @@ networkLabel.addEventListener('keydown',event=>{
 document.addEventListener('click',event=>{if(!networkLabel.contains(event.target))closeNetworkPicker();});
 networkLabel.addEventListener('focusout',event=>{if(!networkLabel.contains(event.relatedTarget))closeNetworkPicker();});
 updateNetworkPicker();
+renderSupportedOptions();
 function renderNetwork(){
  const network=currentNetwork(),solana=network.id==='solana';
  const eyebrow=document.querySelector('.page-heading .eyebrow');eyebrow.textContent=`${network.name.toUpperCase()} EXPLORER`;
@@ -61,3 +81,4 @@ document.getElementById('network-select').addEventListener('change',event=>{
  if(document.getElementById('detail-dialog').open)closeDialog();state.zoom=1;state.x=state.y=0;renderNetwork();
 });
 document.addEventListener('DOMContentLoaded',renderNetwork);
+document.addEventListener('DOMContentLoaded',loadSupportedNetworks);

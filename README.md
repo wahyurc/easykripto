@@ -115,6 +115,14 @@ API publik di browser memanfaatkan cache 120 detik dan jeda permintaan; pembatas
 
 Referensi: [DEX Screener](https://docs.dexscreener.com/api/reference), [GeckoTerminal](https://api.geckoterminal.com/docs/index.html), [GoPlus](https://docs.gopluslabs.io/reference/support), [Solana RPC](https://solana.com/docs/rpc/http), [Alchemy Transfers](https://www.alchemy.com/docs/reference/transfers-api-quickstart), [Firebase token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens), [Workers secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
 
+### Logo token, holder, dan jaringan aktif
+
+- Hasil pencarian token menampilkan logo dari DEX Screener; metadata token pada respons pool GeckoTerminal menjadi sumber cadangan. Jika tidak ada gambar atau gagal dimuat, tampilkan inisial token. URL gambar wajib HTTPS dan tidak mengandung kredensial. Kartu token pantauan juga menampilkan logo yang tersedia dari pasangan pasar.
+- Detail token memuat daftar holder otomatis. Solana: pemilik akun token pada sampel RPC dengan saldo positif. Jika pemindaian akun terbesar dibatasi provider, daftar akun token GoPlus menjadi kandidat; pemilik, mint, dan saldo diverifikasi kembali melalui RPC. Daftar ini tidak mencakup seluruh holder.
+- Ethereum, Base, BNB Chain, dan Robinhood: maksimal 10 holder dari field holders pada GoPlus Token Security, dengan saldo, persentase supply, dan label kontrak/tag jika tersedia. Saldo EVM merupakan laporan GoPlus, bukan pembacaan balanceOf real time. LP holders tidak dicampur dengan holder token.
+- Setiap holder mempunyai tombol **Tambah ke pantauan**, **Salin**, dan **Explorer**. Penambahan langsung menyimpan alamat pada jaringan holder tanpa memindahkan pengguna dari detail token. Tombol menjadi **Sudah dipantau** untuk alamat yang tersimpan; batas 20 wallet tetap berlaku. Daftar holder pada halaman Peta memakai tombol yang sama.
+- Pemilih jaringan di sebelah avatar membaca GET /api/analysis/capabilities dan menampilkan jaringan yang didukung implementasi serta konfigurasi layanan. API ini tidak membutuhkan login dan hanya mengembalikan metadata dukungan, tanpa key. Jika layanan tidak dapat dimuat, daftar dukungan aplikasi ditampilkan dengan keterangan. Daftar pantauan tidak dihapus ketika jaringan tidak tersedia.
+
 ### Dashboard dan pantauan akun
 
 - Ringkasan, catatan pola, daftar aktivitas, dan peta gabungan menggunakan hasil analisis yang sama. Catatan tidak diberi harga USD atau label beli/jual tanpa bukti. Filter Masuk/Keluar mengikuti arah transfer terhadap alamat yang dipantau atau dianalisis.

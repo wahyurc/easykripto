@@ -12,6 +12,13 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
   if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type');res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');res.writeHead(204);res.end();return true;}
   if(req.method!=='GET'){send(res,405,{error:'Metode tidak didukung.'});return true;}
+  if(pathname==='/api/analysis/capabilities'){
+    const networks=[
+      {id:'solana',name:'Solana',kind:'solana',walletProvider:env.HELIUS_API_KEY?'Helius':'RPC Solana',holderProvider:'RPC Solana',holderLimit:20},
+      ...[{id:'ethereum',name:'Ethereum'},{id:'base',name:'Base'},{id:'bsc',name:'BNB Chain'},{id:'robinhood',name:'Robinhood'}].filter(()=>!!env.ALCHEMY_API_KEY).map(network=>({...network,kind:'evm',walletProvider:'Alchemy',holderProvider:'GoPlus',holderLimit:10}))
+    ];
+    send(res,200,{networks,scope:'Jaringan yang didukung implementasi aplikasi dan layanan yang dikonfigurasi; ketersediaan data bergantung penyedia.'});return true;
+  }
   try{
     const uid=await firebaseIdentity(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]);
     const now=Date.now();for(const [key,value]of limits)if(value.until<now)limits.delete(key);
