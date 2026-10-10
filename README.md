@@ -14,11 +14,48 @@ Aplikasi publik: https://wahyurc.github.io/easykripto/
 4. Konfigurasi Web Firebase berada pada `auth.js`. Konfigurasi ini bersifat publik; jangan menambahkan service account atau client secret.
 5. Buka aplikasi dan ketuk **Masuk dengan Google**. Izinkan popup untuk situs jika browser memblokir jendela Google.
 
-SDK Firebase App dan Authentication versi 13.0.0 dimuat dari CDN resmi Google. Firebase menangani verifikasi akun serta pemulihan sesi browser. Dashboard ditampilkan berdasarkan `onAuthStateChanged`, dan tombol Keluar memakai `signOut`.
+SDK Firebase App, Authentication, dan Firestore versi 13.0.0 dimuat dari CDN resmi Google. Firebase menangani verifikasi akun serta pemulihan sesi browser. Dashboard ditampilkan berdasarkan `onIdTokenChanged`, dan tombol Keluar memakai `signOut`.
 
 Alur memakai popup agar login tidak bergantung pada penyimpanan lintas domain dari redirect di GitHub Pages. Halaman tetap menjadi login sampai Firebase mengonfirmasi sesi pengguna.
 
 Data pantauan masih tersimpan lokal pada browser dan belum dipisahkan per akun. Login frontend tidak membatasi akses terhadap file HTML/JavaScript atau data demo publik. Backend analisis yang ditambahkan nanti perlu memverifikasi Firebase ID token untuk melindungi data akun.
+
+## Superadmin
+
+Hak akses menggunakan custom claims Firebase `role: "superadmin"` dan `superadmin: true`. Aplikasi membaca claims dari ID token, bukan mencocokkan email di frontend. Status tampil pada pengaturan akun. Pembacaan daftar akun dan log dilindungi Security Rules Firestore; menampilkan menu admin di browser saja tidak memberikan akses ke data.
+
+Skrip `scripts/grant-superadmin.mjs` khusus menetapkan akun `ddr8gb@gmail.com` pada proyek `easykripto-40e96`, memeriksa akun aktif dan email terverifikasi, mempertahankan claims lain, lalu membaca ulang hasil dari Firebase.
+
+1. Akun tujuan harus sudah masuk ke Easykripto setidaknya sekali.
+2. Gunakan Application Default Credentials yang memiliki izin `firebaseauth.users.get` dan `firebaseauth.users.update`, atau simpan service account proyek pada `.secrets/firebase-admin.json` yang diabaikan Git.
+3. Jalankan `npm run grant:superadmin` dari komputer pengelola. Skrip hanya boleh dijalankan di lingkungan tepercaya, bukan browser atau GitHub Pages.
+4. Setelah skrip mengonfirmasi penetapan, keluar lalu masuk kembali pada akun tujuan agar mendapatkan ID token baru. Pemberian claims tidak menjadikan akun sebagai pemilik proyek Firebase atau Google Cloud.
+
+Referensi: [custom claims Firebase](https://firebase.google.com/docs/auth/admin/custom-claims).
+
+### Dashboard dan penyimpanan data
+
+Alamat dashboard: https://wahyurc.github.io/easykripto/#superadmin . Menu **Superadmin** tersedia setelah login dengan akun yang memiliki kedua claims di atas.
+
+- Empat ringkasan: akun tersinkron, kunjungan hari ini, kunjungan tujuh hari, dan akun baru tujuh hari.
+- Tab Pengunjung: halaman, perangkat, browser, sumber domain, status login, dan waktu kunjungan.
+- Tab Akun terdaftar: nama, email, peran, tanggal pendaftaran, dan aktivitas terakhir.
+- Filter periode, pencarian pada 25 catatan yang sedang dimuat, pagination, dan tombol Perbarui data. Waktu menggunakan WITA; tujuh hari berarti hari ini dan enam hari sebelumnya.
+
+Aktivasi pada proyek Firebase `easykripto-40e96`:
+
+1. **Build → Firestore Database → Create database**: Standard edition, database `(default)`, lokasi `asia-southeast2` (Jakarta), Production mode. Tetap gunakan paket Spark.
+2. Jalankan `npm run deploy:rules` dari komputer pengelola. Skrip menerbitkan `firestore.rules`, menyimpan cadangan aturan sebelumnya di `.secrets/rules-backups/`, serta menghentikan operasi jika aturan lama berisi pengaturan lain yang perlu digabungkan.
+3. Jalankan `npm run sync:users` untuk memasukkan akun Authentication yang sudah terdaftar ke koleksi `accounts`. Tanggal pendaftaran dan aktivitas yang lebih baru dipertahankan. Tidak ada penghapusan akun.
+4. Keluar dan masuk kembali sebagai superadmin, lalu buka menu **Superadmin**. Aturan baru mungkin memerlukan beberapa menit untuk tersebar.
+
+Kredensial hanya dipakai skrip lokal. `.secrets/` diabaikan Git; jangan unggah service account ke repository atau kode browser. Service account memerlukan izin Auth untuk membaca pengguna, Firestore untuk membaca/menulis dokumen, dan Firebase Rules untuk menerbitkan aturan. Aktivasi API Firestore melalui Console memerlukan akun pengelola proyek.
+
+Akun baru disinkronkan ketika browser mengonfirmasi sesi login. Log halaman dikirim ke koleksi `visits` saat sesi diketahui dan saat navigasi berubah, termasuk halaman login. Log mulai terkumpul setelah Firestore dan rules aktif; kunjungan sebelum itu tidak dapat dipulihkan. Kunjungan adalah pembukaan halaman, bukan jumlah orang unik. IP, clipboard, private key, dan query URL tidak dicatat.
+
+Pengunjung boleh membuat log dengan struktur terbatas, tetapi tidak dapat membacanya. Catatan browser dapat terblokir atau dimanipulasi; log ini bukan audit server yang menjamin keaslian. Belum ada App Check atau pembatasan laju pengiriman. Perhatikan kuota Firestore jika situs ramai; hindari membuka rules menjadi publik untuk membaca data. Pembacaan dashboard dilakukan saat dibuka/diperbarui, tanpa polling terus-menerus.
+
+Referensi: [Security Rules](https://firebase.google.com/docs/firestore/security/rules-conditions), [penerbitan rules](https://firebase.google.com/docs/rules/manage-deploy), [daftar akun Authentication](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/projects.accounts/batchGet).
 
 Server lokal tetap dapat digunakan untuk menyajikan file. Endpoint login Google lama di `auth-server.mjs` dan konfigurasi Render masih tersedia sebagai kode sebelumnya, tetapi tidak digunakan oleh antarmuka Firebase. Hosting Render tidak diperlukan untuk login ini; jika memakai domain hosting lain, daftarkan domain tersebut di Authorized domains Firebase.
 

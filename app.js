@@ -59,8 +59,10 @@ const routes = [
  {id:'ringkasan',label:'Ringkasan',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
- {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Bedakan pembelian, penjualan, dan perpindahan aset.'}
+ {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Bedakan pembelian, penjualan, dan perpindahan aset.'},
+ {id:'superadmin',label:'Superadmin',icon:'shield',title:'Kenali pengguna. <span>Pahami kunjungannya.</span>',desc:'Pantau kunjungan dan akun terdaftar dalam satu ruang.',adminOnly:true}
 ];
+let canSuperadmin = false;
 const getWallet = id => [...demoWallets,...state.wallets].find(w=>w.id===id);
 const getToken = id => tokens.find(t=>t.id===id);
 const inPeriod = () => selectedBlockchain==='solana'?events.filter(e=>e.minutes<=state.period*60):[];
@@ -73,11 +75,13 @@ const map = document.createElement('section');map.id='interactive-map';map.class
 $('#overview-map-slot').className='';$('#overview-map-slot').append(map);
 function navigate(id){ if(location.hash===`#${id}`)renderRoute();else location.hash=id; }
 function renderRoute(){
- state.route=routes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'ringkasan';
+ const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
+ state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'ringkasan';
+ document.body.classList.toggle('superadmin-view',state.route==='superadmin');
  const r=routes.find(r=>r.id===state.route);
  $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.id}`);
  $('#page-title').innerHTML=r.title;$('#page-description').textContent=r.desc;$('#breadcrumb').textContent=r.label;document.title=`${r.label} — Easykripto`;
- const nav=routes.map(v=>`<button class="nav-button ${v.id===r.id?'active':''}" data-route="${v.id}" ${v.id===r.id?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`).join('');
+ const nav=availableRoutes.map(v=>`<button class="nav-button ${v.id===r.id?'active':''}" data-route="${v.id}" ${v.id===r.id?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`).join('');
  $('.desktop-nav').innerHTML=nav;$('.bottom-nav').innerHTML=nav;
  $(r.id==='peta'?'#full-map-slot':'#overview-map-slot').append(map);map.classList.toggle('full-map',r.id==='peta');transform();
  window.scrollTo(0,0);
@@ -194,6 +198,7 @@ document.addEventListener('click',async e=>{
   case 'toggle-motion':state.reduced=!state.reduced;save('easykripto.motion',state.reduced);b.setAttribute('aria-checked',state.reduced);motion();break;
  }
 });
+window.addEventListener('easykripto-session',event=>{canSuperadmin=event.detail.user?.role==='superadmin';document.body.classList.toggle('has-superadmin',canSuperadmin);renderRoute();});
 $('#wallet-search').addEventListener('input',renderWallets);window.addEventListener('hashchange',renderRoute);window.addEventListener('resize',transform);
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',motion);
 hydrate();renderSummary();renderActivities();renderWallets();renderMap();renderRoute();

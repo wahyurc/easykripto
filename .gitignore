@@ -1,5 +1,8 @@
 node_modules/
 .gmgn/
+.secrets/
+*-firebase-adminsdk-*.json
+service-account*.json
 client_secret_*.json
 .env
 .env.*

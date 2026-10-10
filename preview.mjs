@@ -6,7 +6,7 @@ import {handleAuth, getAppOrigin} from './auth-server.mjs';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 try{process.loadEnvFile(path.join(root,'.env'));}catch(error){if(error.code!=='ENOENT')throw error;}
-const files=new Map([['/','index.html'],['/index.html','index.html'],['/styles.css','styles.css'],['/app.js','app.js'],['/auth.js','auth.js'],['/search.js','search.js'],['/networks.js','networks.js']]);
+const files=new Map([['/','index.html'],['/index.html','index.html'],['/styles.css','styles.css'],['/app.js','app.js'],['/auth.js','auth.js'],['/search.js','search.js'],['/networks.js','networks.js'],['/admin.js','admin.js'],['/admin.css','admin.css']]);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
 const port=Number(process.env.PORT||4173);
 const host=process.env.HOST||(process.env.RENDER==='true'?'0.0.0.0':'127.0.0.1');

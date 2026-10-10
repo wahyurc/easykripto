@@ -8,7 +8,10 @@
  },
  "scripts": {
   "dev": "node preview.mjs",
-  "start": "node preview.mjs"
+  "start": "node preview.mjs",
+  "grant:superadmin": "node scripts/grant-superadmin.mjs",
+  "deploy:rules": "node scripts/deploy-firestore-rules.mjs",
+  "sync:users": "node scripts/sync-firebase-users.mjs"
  },
  "dependencies": {
   "google-auth-library": "^11.2.0"

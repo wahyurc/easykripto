@@ -6,11 +6,13 @@
   <meta name="theme-color" content="#0b1118">
   <meta name="description" content="Easykripto — jelajahi aktivitas wallet melalui peta interaktif. Prototipe dengan data simulasi.">
   <title>Easykripto — Pahami setiap pergerakan</title>
-  <link rel="stylesheet" href="styles.css?v=20261010-google-avatar">
+  <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
+  <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
   <script src="networks.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=20261010-superadmin" defer></script>
   <script src="search.js" defer></script>
-  <script src="auth.js?v=20261010-google-avatar" defer></script>
+  <script src="admin.js?v=20261010-superadmin" defer></script>
+  <script src="auth.js?v=20261010-superadmin" defer></script>
 </head>
 <body class="signed-out">
   <section class="login-screen" aria-label="Masuk ke Easykripto">
@@ -77,6 +79,23 @@
       <section id="view-peta" class="view" hidden><div id="full-map-slot"></div><div class="map-explainer"><span data-icon="info"></span><p>Garis menunjukkan transaksi yang teramati. Hubungan antarwallet tidak membuktikan pemilik yang sama.</p></div></section>
       <section id="view-pantauan" class="view" hidden><div class="section-toolbar"><div class="search-field"><span data-icon="search"></span><input id="wallet-search" type="search" placeholder="Cari nama atau alamat wallet" aria-label="Cari wallet"></div><button class="primary-button" data-action="add-wallet"><span data-icon="plus"></span><span>Tambah</span></button></div><div class="wallet-grid" id="wallet-list"></div><p class="panel-footnote">Wallet baru disimpan di perangkat ini. Pemantauan blockchain akan tersedia setelah API dihubungkan.</p></section>
       <section id="view-aktivitas" class="view" hidden><div class="section-toolbar"><div class="segmented activity-filters" aria-label="Filter jenis transaksi"><button class="active" data-type="all" aria-pressed="true">Semua</button><button data-type="buy" aria-pressed="false">Beli</button><button data-type="sell" aria-pressed="false">Jual</button><button data-type="transfer" aria-pressed="false">Transfer</button></div><span class="subtle-tag">Data simulasi</span></div><div class="panel activity-full" id="all-activity"></div></section>
+      <section id="view-superadmin" class="view admin-view" hidden aria-label="Dashboard superadmin">
+        <div class="admin-overview"><div><span class="admin-label">RUANG SUPERADMIN</span><p>Aktivitas aplikasi, dalam angka.</p></div><button id="admin-refresh" class="secondary-button" type="button">Perbarui data</button></div>
+        <div class="admin-stats">
+          <article><span>Akun terdaftar</span><strong id="admin-count-accounts">—</strong><small>Akun yang sudah tersinkron</small></article>
+          <article><span>Kunjungan hari ini</span><strong id="admin-count-today">—</strong><small>Mulai pukul 00.00 WITA</small></article>
+          <article><span>Kunjungan 7 hari</span><strong id="admin-count-week">—</strong><small>Jumlah pembukaan halaman</small></article>
+          <article><span>Akun baru 7 hari</span><strong id="admin-count-new">—</strong><small>Berdasarkan tanggal pendaftaran</small></article>
+        </div>
+        <p id="admin-status" class="admin-status" role="status" aria-live="polite">Data akan dimuat setelah akses superadmin dikonfirmasi.</p>
+        <section class="panel admin-records">
+          <div class="admin-toolbar"><div class="segmented" role="tablist" aria-label="Jenis data"><button id="admin-tab-visits" role="tab" aria-selected="true" aria-controls="admin-record-list" class="active" type="button">Pengunjung</button><button id="admin-tab-accounts" role="tab" aria-selected="false" aria-controls="admin-record-list" type="button">Akun terdaftar</button></div><span id="admin-page-label">Halaman 1</span></div>
+          <div class="admin-filters"><label class="admin-search"><span>Cari di halaman ini</span><input id="admin-search" type="search" placeholder="Cari halaman atau perangkat" autocomplete="off"></label><label><span id="admin-filter-label">Periode kunjungan</span><select id="admin-filter"><option value="all">Semua waktu</option><option value="today">Hari ini</option><option value="week">7 hari terakhir</option></select></label></div>
+          <div id="admin-record-list" class="admin-record-list" role="tabpanel" aria-labelledby="admin-tab-visits"><p class="admin-empty">Belum ada data yang dimuat.</p></div>
+          <div class="admin-pagination"><span id="admin-record-count">25 data per halaman</span><div><button id="admin-prev" class="secondary-button" type="button" disabled>Sebelumnya</button><button id="admin-next" class="secondary-button" type="button" disabled>Berikutnya</button></div></div>
+        </section>
+        <p class="admin-footnote">Kunjungan dicatat dari browser sejak pencatatan diaktifkan. Pemblokir pelacakan dapat membuat sebagian kunjungan tidak tercatat. Akun lama akan tampil setelah sinkronisasi. Semua waktu menggunakan WITA.</p>
+      </section>
       <footer class="page-footer"><span>easykripto <span class="muted">/ lihat lebih jelas.</span></span><span>Prototipe antarmuka · v0.1</span></footer>
     </main>
   </div>

@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function superadmin() {
+      return request.auth != null && request.auth.token.get('superadmin', false) == true && request.auth.token.get('role', '') == 'superadmin';
+    }
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true;
+    }
+    function validAccount(uid) {
+      let d = request.resource.data;
+      let role = superadmin() ? 'superadmin' : 'user';
+      return d.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt', 'lastSeenAt'])
+        && d.keys().hasOnly(['uid', 'name', 'email', 'role', 'createdAt', 'lastSeenAt'])
+        && d.uid == uid && d.email == request.auth.token.email
+        && d.name is string && d.name.size() <= 150 && d.role == role
+        && d.createdAt is timestamp && d.createdAt <= request.time
+        && d.lastSeenAt == request.time;
+    }
+    match /accounts/{uid} {
+      allow get: if superadmin() || owner(uid);
+      allow list: if superadmin();
+      allow create: if owner(uid) && validAccount(uid);
+      allow update: if owner(uid) && validAccount(uid) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+    match /visits/{visitId} {
+      allow read: if superadmin();
+      allow create: if visitId.matches('^[a-zA-Z0-9_-]{20,64}$')
+        && request.resource.data.keys().hasAll(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
+        && request.resource.data.keys().hasOnly(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
+        && request.resource.data.startedAt == request.time
+        && request.resource.data.page in ['masuk', 'ringkasan', 'peta', 'pantauan', 'aktivitas', 'superadmin']
+        && request.resource.data.device in ['Handphone', 'Tablet', 'Desktop']
+        && request.resource.data.browser in ['Chrome', 'Edge', 'Firefox', 'Safari', 'Lainnya']
+        && request.resource.data.source is string && request.resource.data.source.size() <= 253
+        && (request.resource.data.userId == '' || (request.auth != null && request.resource.data.userId == request.auth.uid));
+      allow update, delete: if false;
+    }
+  }
+}

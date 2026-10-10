@@ -3,7 +3,6 @@
 (() => {
   const status = document.getElementById('login-status');
   const placeholder = document.getElementById('google-placeholder');
-  const dashboardTitle = document.title;
   const firebaseConfig = {
     apiKey: 'AIzaSyAMnFu4aNNCOFNep_xXJMklFB0bpfvP-n4',
     authDomain: 'easykripto-40e96.firebaseapp.com',
@@ -17,6 +16,7 @@
   let auth = null;
   let authSdk = null;
   let loginBusy = false;
+  let authRevision = 0;
   function loginError(error) {
     const messages = {
       'auth/popup-blocked': 'Popup Google diblokir. Izinkan popup untuk situs ini, lalu ketuk tombol Google lagi.',
@@ -34,9 +34,8 @@
   function showUser(user) {
     profile = user;
     document.body.classList.toggle('signed-out', !user);
-    window.dispatchEvent(new CustomEvent('easykripto-session',{detail:{signedIn:!!user}}));
+    window.dispatchEvent(new CustomEvent('easykripto-session',{detail:{signedIn:!!user, user}}));
     if (user) {
-      document.title = dashboardTitle;
       const avatar = document.querySelector('.avatar-button');
       const initials = user.name.trim().split(/\s+/).slice(0,2).map(n=>n[0] || '').join('').toUpperCase() || 'EK';
       avatar.textContent = initials;
@@ -77,8 +76,18 @@
       auth = sdk.getAuth(appSdk.initializeApp(firebaseConfig));
       auth.languageCode = 'id';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
-      sdk.onAuthStateChanged(auth, user => {
-        showUser(user ? {id:user.uid, name:user.displayName || user.email || 'Pengguna', email:user.email || '', photoURL:user.providerData.find(provider => provider.providerId === 'google.com')?.photoURL || user.photoURL || ''} : null);
+      sdk.onIdTokenChanged(auth, async user => {
+        const revision = ++authRevision;
+        let account = null;
+        if (user) {
+          account = {id:user.uid, name:user.displayName || user.email || 'Pengguna', email:user.email || '', photoURL:user.providerData.find(provider => provider.providerId === 'google.com')?.photoURL || user.photoURL || '', role:'user', createdAt:user.metadata.creationTime};
+          try {
+            const token = await user.getIdTokenResult();
+            if (token.claims.role === 'superadmin' && token.claims.superadmin === true) account.role = 'superadmin';
+          } catch {}
+        }
+        if (revision !== authRevision) return;
+        showUser(account);
         status.textContent = user ? '' : 'Pilih akun Google untuk melanjutkan.';
         placeholder.disabled = loginBusy;
       }, error => {
@@ -123,7 +132,8 @@
       const account=document.createElement('div');account.className='detail-note';
       const label=document.createElement('strong');label.textContent=profile.name;
       const email=document.createElement('p');email.textContent=profile.email;
-      account.append(label,email);content.prepend(account);
+      const role=document.createElement('p');role.textContent=profile.role==='superadmin'?'Hak akses: Superadmin':'Hak akses: Pengguna';
+      account.append(label,email,role);content.prepend(account);
       const button=document.createElement('button');button.className='secondary-button full-width';button.dataset.logout='true';button.textContent='Keluar dari akun';content.append(button);
     }
   });
