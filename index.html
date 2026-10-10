@@ -22,22 +22,23 @@
   <link rel="stylesheet" href="pwa.css?v=20261010-pwa">
   <link rel="stylesheet" href="registration.css?v=20261011-registration">
   <link rel="stylesheet" href="watchlist.css?v=20261011-tables">
+  <link rel="stylesheet" href="wallet-categories.css?v=20261011-categories">
   <link rel="stylesheet" href="best-coins.css?v=20261011-compact-filters">
   <script src="data-config.js?v=20261010-security" defer></script>
   <script src="app-check.js?v=20261010-security" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
-  <script src="app.js?v=20261011-recticker" defer></script>
+  <script src="app.js?v=20261011-wallet-categories" defer></script>
   <script src="notifications.js?v=20261010-notifications" defer></script>
   <script src="api-telemetry.js?v=20261010-security" defer></script>
   <script src="data-client.js?v=20261011-registration" defer></script>
-  <script src="token-ui.js?v=20261010-token-holders" defer></script>
-  <script src="dashboard-data.js?v=20261011-tables" defer></script>
-  <script src="watchlist.js?v=20261011-tables" defer></script>
+  <script src="token-ui.js?v=20261011-wallet-categories" defer></script>
+  <script src="dashboard-data.js?v=20261011-map-icons" defer></script>
+  <script src="watchlist.js?v=20261011-wallet-categories" defer></script>
   <script src="search.js?v=20261011-trade-labels" defer></script>
   <script src="market-data.js?v=20261010-api-monitor" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
   <script src="best-coins.js?v=20261011-recticker" defer></script>
-  <script src="wallet-data.js?v=20261010-notifications" defer></script>
+  <script src="wallet-data.js?v=20261011-wallet-categories" defer></script>
   <script src="api-monitor-ui.js?v=20261010-security" defer></script>
   <script src="admin.js?v=20261011-recticker" defer></script>
   <script src="registration.js?v=20261011-all-approval" defer></script>
@@ -246,7 +247,7 @@
     <div class="section-heading map-heading"><div><span class="eyebrow">HUBUNGKAN TITIKNYA</span><h2>Peta pergerakan <span class="beta-label">DEMO</span></h2></div><button class="icon-button expand-map" data-route="peta" aria-label="Buka halaman peta"><span data-icon="expand"></span></button></div>
     <div class="map-toolbar"><div class="segmented map-modes" aria-label="Jenis peta"><button class="active" data-mode="token" aria-pressed="true">Wallet & token</button><button data-mode="wallet" aria-pressed="false">Antarwallet</button></div><div class="period-selector" aria-label="Periode aktivitas"><button data-period="1" aria-pressed="false">1j</button><button data-period="6" aria-pressed="false">6j</button><button class="active" data-period="24" aria-pressed="true">24j</button><button data-period="168" aria-pressed="false">7 hari</button></div></div>
     <div class="map-stage"><div class="map-caption"><span class="status-dot"></span><span class="map-count"></span></div><svg class="bubble-map" viewBox="0 0 720 460" aria-label="Peta hubungan interaktif, pilih wallet atau token untuk melihat detail"><g class="graph-world"></g></svg><div class="map-empty" hidden>Belum ada transfer pada periode ini.<small>Pilih periode yang lebih panjang.</small></div><div class="map-controls"><button class="icon-button" data-map-action="in" aria-label="Perbesar peta"><span data-icon="plus"></span></button><button class="icon-button" data-map-action="out" aria-label="Perkecil peta"><span data-icon="minus"></span></button><button class="icon-button" data-map-action="reset" aria-label="Pusatkan peta"><span data-icon="locate"></span></button></div><div class="map-hint">Geser untuk menjelajah · ketuk untuk detail</div></div>
-    <div class="map-footer"><div class="map-legend"><span><i class="legend-buy"></i>Masuk</span><span><i class="legend-sell"></i>Keluar</span><span><i class="legend-transfer"></i>Transfer</span></div><button class="text-button map-list-toggle" aria-expanded="false"><span data-icon="list"></span> Lihat daftar</button></div><div class="map-list" hidden></div>
+    <div class="map-wallet-legend"></div><div class="map-footer"><div class="map-legend"><span><i class="legend-buy"></i>Masuk</span><span><i class="legend-sell"></i>Keluar</span><span><i class="legend-transfer"></i>Transfer</span></div><button class="text-button map-list-toggle" aria-expanded="false"><span data-icon="list"></span> Lihat daftar</button></div><div class="map-list" hidden></div>
   </template>
 </body>
 </html>

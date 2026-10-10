@@ -8,6 +8,14 @@
   let mode='wallet',current,sessionId=null;
   function text(tag,value,className){const node=document.createElement(tag);node.textContent=value;if(className)node.className=className;return node;}
   function copy(address){if(!navigator.clipboard?.writeText){toast('Salin alamat melalui daftar di bawah peta.');return;}navigator.clipboard.writeText(address).then(()=>toast('Alamat disalin.')).catch(()=>toast('Salin alamat melalui daftar di bawah peta.'));}
+  function recolorWallets(){
+    for(const group of result.querySelectorAll('[data-map-wallet-address]')){
+      const category=walletCategoryFor(group.dataset.mapWalletAddress,group.dataset.mapWalletChain),circle=group.querySelector('circle');
+      circle.setAttribute('fill',category.fill);circle.setAttribute('stroke',category.color);
+      group.setAttribute('aria-label',`Detail alamat ${group.dataset.mapWalletAddress} · ${category.label}`);
+      group.querySelector('title').textContent=`${group.dataset.mapWalletAddress} · ${category.label}`;
+    }
+  }
   function graph(data){
     const holders=data.holders;
     const counts=new Map();
@@ -30,19 +38,20 @@
     }
     let zoom=1,panX=0,panY=0,dragged=false,gesture=null;const pointers=new Map();
     function transformGraph(){world.setAttribute('transform',`translate(${310+panX} ${210+panY}) scale(${zoom}) translate(-310 -210)`);}
-    function node(address,x,y,r,name,color){
-      const group=add('g',{class:'live-node',tabindex:0,role:'button','aria-label':`Detail alamat ${address}`});add('circle',{cx:x,cy:y,r,fill:color,stroke:'#91bea5','stroke-width':1.5},group);const title=add('title',{},group);title.textContent=address;const caption=add('text',{x,y:y+4,'text-anchor':'middle'},group);caption.textContent=name;
+    function node(address,x,y,r,name){
+      const category=walletCategoryFor(address,data.chain);
+      const group=add('g',{class:'live-node',tabindex:0,role:'button','aria-label':`Detail alamat ${address} · ${category.label}`,'data-map-wallet-address':address,'data-map-wallet-chain':data.chain});add('circle',{cx:x,cy:y,r,fill:category.fill,stroke:category.color,'stroke-width':2},group);const title=add('title',{},group);title.textContent=`${address} · ${category.label}`;const caption=add('text',{x,y:y+4,'text-anchor':'middle'},group);caption.textContent=name;
       const account=(data.transfers||[]).some(t=>(t.from===address&&t.fromType==='token-account')||(t.to===address&&t.toType==='token-account'));
       const show=()=>{if(dragged){dragged=false;return;}dialog(account?'Akun token':'Alamat pada peta',`<div class="address-block">${escapeHTML(address)}</div><button class="secondary-button full-width" data-copy="${escapeHTML(address)}">Salin alamat</button>${account?'<p class="detail-note">Pemilik akun token ini belum diketahui pada sampel. Alamat ini tidak dilabeli sebagai wallet pemilik.</p>':`<button class="primary-button full-width" data-open-address="${escapeHTML(address)}" data-chain="${data.chain}">Analisis transfer alamat</button>`}<p class="detail-note">Ukuran titik mengikuti ${holders?'persentase supply dalam sampel':'frekuensi transfer dalam sampel'}. Analisis hubungan tidak membuktikan pemilik yang sama.</p>`,'DATA BLOCKCHAIN');};
       group.addEventListener('click',show);group.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();dragged=false;show();}});
     }
-    if(!holders)node(data.address,310,210,42,'Wallet','#234b39');
-    sample.forEach((item,index)=>{const pos=positions.get(item.address);node(item.address,pos.x,pos.y,holders?Math.min(48,14+Math.sqrt(item.share||0)*5):Math.min(37,22+Math.sqrt(item.count||1)*3),String(index+1),'#1f354b');});
+    if(!holders)node(data.address,310,210,42,'Wallet');
+    sample.forEach((item,index)=>{const pos=positions.get(item.address);node(item.address,pos.x,pos.y,holders?Math.min(48,14+Math.sqrt(item.share||0)*5):Math.min(37,22+Math.sqrt(item.count||1)*3),String(index+1));});
     [...svg.children].filter(child=>child!==world&&child.tagName!=='defs').forEach(child=>world.append(child));
     const frame=document.createElement('div');frame.className='live-graph-frame';frame.append(svg);
     const controls=document.createElement('div');controls.className='live-graph-controls';
     for(const [label,action]of [['Perbesar','in'],['Perkecil','out'],['Pusatkan','reset']]){const button=text('button',label,'secondary-button');button.type='button';button.addEventListener('click',()=>{if(action==='reset'){zoom=1;panX=panY=0;}else zoom=Math.max(.75,Math.min(3,zoom*(action==='in'?1.2:1/1.2)));transformGraph();});controls.append(button);}
-    frame.append(controls);result.append(frame);
+    frame.append(controls);result.append(frame);const categories=document.createElement('div');categories.innerHTML=walletCategoryLegend();result.append(categories);
     const point=event=>{const p=svg.createSVGPoint();p.x=event.clientX;p.y=event.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());};
     const begin=()=>{gesture={points:[...pointers.values()],x:panX,y:panY,zoom};};
     svg.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse'&&event.button!==0)return;if(!pointers.size)dragged=false;pointers.set(event.pointerId,point(event));begin();});
@@ -90,6 +99,7 @@
   function setMode(kind){mode=kind;label.textContent=kind==='holders'?'CA token Solana':`Alamat wallet ${currentNetwork().name}`;for(const b of document.querySelectorAll('[data-live-mode]')){b.classList.toggle('active',b.dataset.liveMode===kind);b.setAttribute('aria-pressed',String(b.dataset.liveMode===kind));if(b.dataset.liveMode==='holders')b.disabled=selectedBlockchain!=='solana';}}
   function reset(){current?.abort();current=null;button.disabled=false;setMode('wallet');input.value='';status.textContent='Analisis berdasarkan alamat publik, tanpa menghubungkan wallet.';result.replaceChildren();}
   form.addEventListener('submit',event=>{event.preventDefault();void analyze(input.value.trim(),selectedBlockchain,mode);});
+  window.addEventListener('easykripto-watch-change',recolorWallets);
   window.EasyWallet={open({address,chain=selectedBlockchain,kind='wallet'}){if(chain!==selectedBlockchain){const select=document.getElementById('network-select');select.value=chain;select.dispatchEvent(new Event('change'));}closeDialog();location.hash='peta';setMode(kind);input.value=address;void analyze(address,chain,kind);}};
   for(const b of document.querySelectorAll('[data-live-mode]'))b.addEventListener('click',()=>{reset();setMode(b.dataset.liveMode);input.focus();});
   document.addEventListener('click',event=>{const b=event.target.closest('[data-analyze-wallet]');if(!b)return;const wallet=state.wallets.find(wallet=>wallet.id===b.dataset.analyzeWallet);if(wallet)window.EasyWallet.open({address:wallet.address,chain:wallet.chain});});

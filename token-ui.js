@@ -56,8 +56,7 @@
     const button=event.target.closest('[data-track-holder]');if(!button)return;const {trackHolder:address,chain,symbol}=button.dataset;
     if(!blockchainNetworks.some(n=>n.id===chain)||!validChainAddress(address,chain))return;
     const saved=state.wallets.some(w=>w.chain===chain&&equalChainAddress(w.address,address,chain));if(saved){updateButtons();return;}
-    const wallet={id:`local-${crypto.randomUUID()}`,name:`Holder ${symbol||'token'} ${short(address)}`.slice(0,80),address,chain,alert:false};
-    if(window.EasyDashboard.addWallet(wallet)){updateButtons();toast('Holder ditambahkan ke pantauan akun.');}
+    addWallet({name:`Holder ${symbol||'token'} ${short(address)}`.slice(0,80),address,chain});
   });
   window.addEventListener('easykripto-watch-change',()=>updateButtons());
 })();

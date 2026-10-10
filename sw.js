@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'a53ad2b2a562a97e';
+const RELEASE = '364f8a5af8683cfc';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-recticker",
@@ -9,12 +9,12 @@ const SHELL = [
   "api-monitor-ui.js?v=20261010-security",
   "api-telemetry.js?v=20261010-security",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261011-recticker",
+  "app.js?v=20261011-wallet-categories",
   "auth.js?v=20261011-registration",
   "best-coins.css?v=20261011-compact-filters",
   "best-coins.js?v=20261011-recticker",
   "black-theme.css?v=20261011-footer-author",
-  "dashboard-data.js?v=20261011-tables",
+  "dashboard-data.js?v=20261011-map-icons",
   "data-client.js?v=20261011-registration",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
@@ -41,10 +41,11 @@ const SHELL = [
   "registration.js?v=20261011-all-approval",
   "search.js?v=20261011-trade-labels",
   "styles.css?v=20261010-superadmin",
-  "token-ui.js?v=20261010-token-holders",
-  "wallet-data.js?v=20261010-notifications",
+  "token-ui.js?v=20261011-wallet-categories",
+  "wallet-categories.css?v=20261011-categories",
+  "wallet-data.js?v=20261011-wallet-categories",
   "watchlist.css?v=20261011-tables",
-  "watchlist.js?v=20261011-tables"
+  "watchlist.js?v=20261011-wallet-categories"
 ];
 // END GENERATED PWA RELEASE
 

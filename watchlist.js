@@ -10,7 +10,7 @@
   const number=value=>value==null?'—':new Intl.NumberFormat('id-ID',{maximumSignificantDigits:7}).format(Number(value));
   const time=value=>value?new Date(value).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Belum dimuat';
   const name=chain=>blockchainNetworks.find(n=>n.id===chain)?.name||chain;
-  const identity=(item,token=false)=>`<div class="watch-identity">${token?`<span data-watch-token-picture="${escapeHTML(item.id)}"></span>`:`<span class="wallet-avatar">${escapeHTML(item.name.slice(0,2).toUpperCase())}</span>`}<div><strong title="${escapeHTML(item.name)}">${escapeHTML(token?item.symbol:item.name)}</strong><div class="watch-address"><span title="${escapeHTML(item.address)}">${escapeHTML(short(item.address))}</span><button class="watch-copy" type="button" data-copy="${escapeHTML(item.address)}" aria-label="Salin alamat ${escapeHTML(item.name)}">${icon('copy')}</button></div></div></div>`;
+  const identity=(item,token=false)=>`<div class="watch-identity${token?'':` category-${walletCategory(item.category).id}`}">${token?`<span data-watch-token-picture="${escapeHTML(item.id)}"></span>`:`<span class="wallet-avatar">${escapeHTML(item.name.slice(0,2).toUpperCase())}</span>`}<div><div class="watch-wallet-name"><strong title="${escapeHTML(item.name)}">${escapeHTML(token?item.symbol:item.name)}</strong>${token?'':walletCategoryBadge(item.category)}</div><div class="watch-address"><span title="${escapeHTML(item.address)}">${escapeHTML(short(item.address))}</span><button class="watch-copy" type="button" data-copy="${escapeHTML(item.address)}" aria-label="Salin alamat ${escapeHTML(item.name)}">${icon('copy')}</button></div></div></div>`;
   const chain=item=>`<span class="watch-chain">${networkLogo(item.chain)}${escapeHTML(name(item.chain))}</span>`;
   function paginate(kind,items){
     const total=items.length,last=Math.max(1,Math.ceil(total/size));pages[kind]=Math.max(1,Math.min(last,pages[kind]));
@@ -21,7 +21,7 @@
   function render(model){
     if(model)data=model;if(!data)return;
     const walletQuery=el('wallet-search').value.trim().toLocaleLowerCase('id-ID'),tokenQuery=el('watch-token-search').value.trim().toLocaleLowerCase('id-ID');
-    const wallets=data.wallets.filter(item=>`${item.name} ${item.address}`.toLocaleLowerCase('id-ID').includes(walletQuery));
+    const wallets=data.wallets.filter(item=>`${item.name} ${item.address} ${walletCategory(item.category).label}`.toLocaleLowerCase('id-ID').includes(walletQuery));
     const tracked=data.tokens.filter(item=>`${item.name} ${item.symbol} ${item.address}`.toLocaleLowerCase('id-ID').includes(tokenQuery));
     el('watch-wallet-count').textContent=data.wallets.length;el('watch-token-count').textContent=data.tokens.length;
     el('wallet-list').innerHTML=paginate('wallet',wallets).map(item=>{

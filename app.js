@@ -26,6 +26,19 @@ function save(key,value){ try { localStorage.setItem(key,JSON.stringify(value));
 const tokens = [];
 const events = [];
 const state = {route:'ringkasan',mode:'token',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
+const walletCategories={
+ whale:{id:'whale',label:'Whale',color:'#f5be62',fill:'#382b13'},
+ smartmoney:{id:'smartmoney',label:'SmartMoney',color:'#7fa7ff',fill:'#172b4a'},
+ other:{id:'other',label:'Other',color:'#9aabc1',fill:'#202936'}
+};
+function walletCategory(value){return Object.hasOwn(walletCategories,value)?walletCategories[value]:walletCategories.other;}
+function walletCategoryFor(address,chain){return walletCategory(state.wallets.find(w=>w.chain===chain&&equalChainAddress(w.address,address||'',chain))?.category);}
+function walletCategoryBadge(value){const category=walletCategory(value);return `<span class="wallet-category-badge category-${category.id}"><i aria-hidden="true"></i>${category.label}</span>`;}
+function walletCategoryPicker(value='other',name='wallet-category',walletId=''){
+ const selected=walletCategory(value);
+ return `<fieldset class="wallet-category-picker"><legend>Kategori wallet</legend><div>${Object.values(walletCategories).map(category=>`<label class="category-${category.id}"><input type="radio" name="${name}" value="${category.id}" ${selected.id===category.id?'checked':''}${walletId?` data-category-wallet="${escapeHTML(walletId)}"`:''}><span><i aria-hidden="true"></i>${category.label}</span></label>`).join('')}</div><small>Label pilihanmu, bukan penilaian otomatis aplikasi.</small></fieldset>`;
+}
+function walletCategoryLegend(){return `<div class="wallet-category-legend" aria-label="Warna kategori wallet"><span>Wallet:</span>${Object.values(walletCategories).map(category=>walletCategoryBadge(category.id)).join('')}<small>Label manual · alamat lain masuk Other.</small></div>`;}
 const routes = [
  {id:'ringkasan',label:'Dashboard',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
  {id:'recticker',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
@@ -54,6 +67,7 @@ function renderRoute(){
  const nav=availableRoutes.map(v=>`<button class="nav-button ${v.id===r.id?'active':''}" data-route="${v.id}" ${v.id===r.id?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`).join('');
  $('.desktop-nav').innerHTML=nav;$('.bottom-nav').innerHTML=nav;
  $(r.id==='peta'?'#full-map-slot':'#overview-map-slot').append(map);map.classList.toggle('full-map',r.id==='peta');transform();
+ renderMap();
  window.scrollTo(0,0);
 }
 function row(e){return window.EasyDashboard?.row(e)||'';}
@@ -86,18 +100,24 @@ $('#detail-dialog').addEventListener('click',e=>{if(e.target!==e.currentTarget)r
 function showToken(id){window.EasyDashboard?.openToken(id);}
 function showWallet(id){
  const w=getWallet(id);if(!w)return;const data=window.EasyDashboard?.snapshot(w);
- dialog(w.name,`<div class="address-block" style="margin-top:20px">${escapeHTML(w.address)}</div>${data?`<p class="live-metric">${escapeHTML(data.nativeBalance)} ${escapeHTML(data.nativeSymbol)}</p><p class="detail-note">${escapeHTML(data.note)}<br>Sumber: ${escapeHTML(data.source)} · ${new Date(data.fetchedAt).toLocaleString('id-ID')}</p>`:''}<button class="secondary-button full-width" data-copy="${escapeHTML(w.address)}">${icon('copy')} Salin alamat</button><button class="primary-button full-width" data-analyze-wallet="${escapeHTML(w.id)}">Analisis wallet ${icon('arrow')}</button><div class="detail-note">Data merupakan sampel transaksi, bukan seluruh riwayat. Tidak perlu seed phrase atau private key.</div><button class="danger-button" data-remove="${escapeHTML(id)}">Hapus dari pantauan</button>`,'WALLET PANTAUAN');
+ dialog(w.name,`<div class="address-block" style="margin-top:20px">${escapeHTML(w.address)}</div>${walletCategoryPicker(w.category,'wallet-detail-category',w.id)}${data?`<p class="live-metric">${escapeHTML(data.nativeBalance)} ${escapeHTML(data.nativeSymbol)}</p><p class="detail-note">${escapeHTML(data.note)}<br>Sumber: ${escapeHTML(data.source)} · ${new Date(data.fetchedAt).toLocaleString('id-ID')}</p>`:''}<button class="secondary-button full-width" data-copy="${escapeHTML(w.address)}">${icon('copy')} Salin alamat</button><button class="primary-button full-width" data-analyze-wallet="${escapeHTML(w.id)}">Analisis wallet ${icon('arrow')}</button><div class="detail-note">Data merupakan sampel transaksi, bukan seluruh riwayat. Tidak perlu seed phrase atau private key.</div><button class="danger-button" data-remove="${escapeHTML(id)}">Hapus dari pantauan</button>`,'WALLET PANTAUAN');
 }
 function showEvents(ids){window.EasyDashboard?.showEvents(ids);}
-function addWallet(){dialog('Beri nama pada jejaknya.',`<form id="wallet-form" novalidate><div class="form-field"><label for="wallet-name">Nama wallet</label><input id="wallet-name" maxlength="32" required placeholder="Contoh: Wallet riset saya" autocomplete="off"></div><div class="form-field"><label for="wallet-address">Alamat wallet ${currentNetwork().name}</label><input id="wallet-address" required placeholder="Tempel alamat publik" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="address-hint wallet-error"><small id="address-hint">Cukup alamat publik. Tidak perlu seed phrase atau private key.</small></div><p id="wallet-error" class="form-error" role="alert"></p><button class="primary-button full-width" type="submit">Simpan wallet ${icon('plus')}</button><p class="panel-footnote">Pantauan disimpan per akun. Salinan pada perangkat tersedia jika sinkronisasi gagal.</p></form>`,'DAFTAR PANTAUAN');$('#wallet-name').focus();}
+function addWallet({name='',address='',chain=selectedBlockchain,category='other'}={}){
+ if(!window.EasyDashboard?.allowed())return;
+ if(chain!==selectedBlockchain){const select=$('#network-select');select.value=chain;select.dispatchEvent(new Event('change'));}
+ dialog('Tambahkan wallet pantauan.',`<form id="wallet-form" novalidate><div class="form-field"><label for="wallet-name">Nama wallet</label><input id="wallet-name" maxlength="80" required placeholder="Contoh: Wallet riset saya" autocomplete="off" value="${escapeHTML(name)}"></div>${walletCategoryPicker(category)}<div class="form-field"><label for="wallet-address">Alamat wallet ${currentNetwork().name}</label><input id="wallet-address" required placeholder="Tempel alamat publik" autocomplete="off" autocapitalize="off" spellcheck="false" value="${escapeHTML(address)}" aria-describedby="address-hint wallet-error"><small id="address-hint">Cukup alamat publik. Tidak perlu seed phrase atau private key.</small></div><p id="wallet-error" class="form-error" role="alert"></p><button class="primary-button full-width" type="submit">Simpan wallet ${icon('plus')}</button><p class="panel-footnote">Pantauan disimpan per akun. Salinan pada perangkat tersedia jika sinkronisasi gagal.</p></form>`,'DAFTAR PANTAUAN');$('#wallet-name').focus();
+}
 function validAddress(value){if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value))return false;const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';let n=0n;for(const c of value)n=n*58n+BigInt(alphabet.indexOf(c));let count=0;while(n>0n){count++;n>>=8n;}return count+(value.match(/^1*/)?.[0].length||0)===32;}
 document.addEventListener('submit',e=>{
  if(e.target.id!=='wallet-form')return;e.preventDefault();if(!window.EasyDashboard?.allowed())return;const name=$('#wallet-name').value.trim(),address=$('#wallet-address').value.trim();
  const error=!name?'Isi nama wallet terlebih dahulu.':!validChainAddress(address)?`Alamat tidak sesuai format ${currentNetwork().name}. ${currentNetwork().kind==='evm'?'Gunakan 0x diikuti 40 karakter heksadesimal.':'Gunakan public key Base58 32 byte.'}`:state.wallets.some(w=>w.chain===selectedBlockchain&&equalChainAddress(w.address,address))?'Alamat sudah dipantau pada jaringan ini.':'';
  if(error){$('#wallet-error').textContent=error;(!name?$('#wallet-name'):$('#wallet-address')).focus();return;}
  const id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
- if(!window.EasyDashboard.addWallet({id:`local-${id}`,name,address,chain:selectedBlockchain,alert:false}))return;closeDialog();navigate('pantauan');toast(`Wallet ${currentNetwork().name} disimpan. Mengambil sampel transaksi…`);
+ const category=walletCategory($('#wallet-form input[name="wallet-category"]:checked')?.value).id;
+ if(!window.EasyDashboard.addWallet({id:`local-${id}`,name,address,chain:selectedBlockchain,category,alert:false}))return;closeDialog();navigate('pantauan');toast(`Wallet ${currentNetwork().name} disimpan. Mengambil sampel transaksi…`);
 });
+document.addEventListener('change',event=>{const input=event.target.closest('[data-category-wallet]');if(input?.checked)window.EasyDashboard?.setWalletCategory(input.dataset.categoryWallet,input.value);});
 
 const svg=$('.bubble-map'),pointers=new Map();let gesture=null,suppressClick=false;
 function point(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}

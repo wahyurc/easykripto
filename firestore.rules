@@ -51,13 +51,14 @@ service cloud.firestore {
       function validWatch(kind, id) {
         let d = request.resource.data;
         let fields = kind == 'wallets' ? ['id','name','address','chain','alert','updatedAt'] : ['id','name','address','chain','symbol','updatedAt'];
-        return d.keys().hasAll(fields) && d.keys().hasOnly(fields)
+        let allowedFields = kind == 'wallets' ? ['id','name','address','chain','alert','updatedAt','category'] : fields;
+        return d.keys().hasAll(fields) && d.keys().hasOnly(allowedFields)
           && validWatchId(id) && d.id == id
           && d.name is string && d.name.size() > 0 && d.name.size() <= 80
           && d.chain in ['solana','ethereum','base','bsc','robinhood']
           && d.address is string
           && (d.chain == 'solana' ? d.address.matches('^[1-9A-HJ-NP-Za-km-z]{32,44}$') : d.address.matches('^0x[0-9a-fA-F]{40}$'))
-          && (kind == 'wallets' ? d.alert is bool : d.symbol is string && d.symbol.size() <= 32)
+          && (kind == 'wallets' ? d.alert is bool && d.get('category', 'other') in ['whale','smartmoney','other'] : d.symbol is string && d.symbol.size() <= 32)
           && d.updatedAt == request.time;
       }
       match /wallets/{id} {

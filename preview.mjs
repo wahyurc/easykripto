@@ -20,6 +20,7 @@ types['.webmanifest']='application/manifest+json; charset=utf-8';
 for(const file of ['registration.js','registration-admin.js','registration.css'])files.set(`/${file}`,file);
 for(const file of ['best-coins.js','best-coins.css'])files.set(`/${file}`,file);
 for(const file of ['watchlist.js','watchlist.css'])files.set(`/${file}`,file);
+files.set('/wallet-categories.css','wallet-categories.css');
 types['.svg']='image/svg+xml';
 const host=process.env.HOST||(process.env.RENDER==='true'?'0.0.0.0':'127.0.0.1');
 const appOrigin=getAppOrigin();

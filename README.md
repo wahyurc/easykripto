@@ -20,6 +20,14 @@ Tabel wallet menampilkan nama/alamat, jaringan, saldo native, waktu pembaruan at
 
 Tombol **Tambah Token** menerima CA dan mencari jaringan melalui API publik DexScreener. Jika CA EVM ditemukan pada beberapa jaringan atau belum teridentifikasi, pengguna memilih jaringan yang didukung. CA yang belum memiliki pasangan tetap dapat disimpan, dengan harga belum tersedia. Duplikat diperiksa per jaringan dan alamat. Penyimpanan serta sinkronisasi tetap terpisah per akun; pengguna biasa maksimal 20 wallet dan 20 token, superadmin tanpa batas jumlah pantauan. Pilihan ukuran halaman tidak mengubah batas akun.
 
+### Kategori wallet dan ikon peta
+
+Form Tambah Wallet, termasuk wallet yang ditambahkan dari daftar holder, menyediakan kategori **Whale**, **SmartMoney**, dan **Other**. Ini label manual milik akun, bukan hasil deteksi otomatis. Kategori disimpan bersama pantauan pada Firestore dan salinan perangkat. Wallet lama tanpa kategori dibaca sebagai Other; ubah kategorinya melalui Detail wallet. Badge dan pencarian Pantauan mengenali kategori tersebut.
+
+Lingkaran wallet pada peta gabungan dan analisis langsung menggunakan emas untuk Whale, biru untuk SmartMoney, dan abu-abu untuk Other. Legenda serta label detail membantu membedakan kategori tanpa mengandalkan warna saja. Alamat di luar pantauan masuk Other; akun token yang belum diketahui pemiliknya tetap dijelaskan sebagai akun token.
+
+Mode **Wallet & Token** menampilkan gambar token di dalam lingkaran. Gambar memakai metadata pasangan DexScreener; aset native SOL/ETH/BNB memakai logo jaringan terkait. Ikon yang tidak tersedia atau gagal dimuat memakai singkatan token. Metadata tambahan hanya dicari untuk titik token yang terlihat pada Dashboard/Peta aktif, secara berurutan, dengan cache memori sepuluh menit dan jeda dua menit jika menerima HTTP 429. Tidak ada API key frontend atau penyimpanan gambar/token akun di cache PWA.
+
 ## Pendaftaran Google/email dan persetujuan manual
 
 Halaman login menyediakan tab **Masuk** dan **Daftar baru** dengan email/kata sandi. Kata sandi dikirim ke Firebase Authentication melalui SDK; tidak disimpan dalam Firestore, localStorage, maupun log aplikasi. Tersedia tombol melihat kata sandi, konfirmasi kata sandi, pemulihan kata sandi, kirim ulang email verifikasi, dan pemeriksaan status.

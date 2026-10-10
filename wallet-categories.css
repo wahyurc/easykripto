@@ -1,0 +1,21 @@
+.category-whale{--category-color:#f5be62;--category-fill:#382b13}
+.category-smartmoney{--category-color:#7fa7ff;--category-fill:#172b4a}
+.category-other{--category-color:#9aabc1;--category-fill:#202936}
+.wallet-category-picker{margin:18px 0;padding:0;border:0;min-width:0}
+.wallet-category-picker legend{margin-bottom:10px;font-size:12px;color:#ccc}
+.wallet-category-picker>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.wallet-category-picker label{position:relative;cursor:pointer}
+.wallet-category-picker input{position:absolute;width:1px;height:1px;opacity:0}
+.wallet-category-picker label>span{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border:1px solid #333;border-radius:10px;background:#101010;color:#aaa;font-size:11px}
+.wallet-category-picker input:checked+span{border-color:var(--category-color);color:var(--category-color);background:var(--category-fill)}
+.wallet-category-picker input:focus-visible+span{outline:2px solid var(--category-color);outline-offset:3px}
+.wallet-category-picker small{display:block;font-size:10px;color:#888;line-height:1.7;margin-top:9px}
+.wallet-category-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 6px;border-radius:6px;background:var(--category-fill);color:var(--category-color);font-size:9px;line-height:1.4;white-space:nowrap}
+.wallet-category-badge i,.wallet-category-picker i{width:6px;height:6px;border-radius:50%;background:var(--category-color);flex-shrink:0}
+.watch-wallet-name{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.watch-identity .wallet-avatar{border-color:var(--category-color);color:var(--category-color);background:var(--category-fill)}
+.map-wallet-legend{padding:11px 20px 2px}
+.wallet-category-legend{display:flex;align-items:center;flex-wrap:wrap;gap:7px;color:#999;font-size:10px;margin:6px 0}
+.wallet-category-legend small{color:#777;font-size:9px}
+.map-token-image{pointer-events:none}
+@media(max-width:760px){.map-wallet-legend{padding-inline:13px}.wallet-category-legend small{width:100%;margin-top:3px}.wallet-category-picker label>span{font-size:10px;gap:4px}}
