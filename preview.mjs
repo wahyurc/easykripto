@@ -15,6 +15,9 @@ for(const file of ['data-config.js','data-client.js','token-ui.js','dashboard-da
 types['.mjs']='text/javascript; charset=utf-8';
 for(const file of ['notifications.js','notifications.css','api-telemetry.js','api-monitor-ui.js','api-monitor-ui.css'])files.set(`/${file}`,file);
 for(const file of ['dexscreener-logo.png','gmgn-logo.png'])files.set(`/${file}`,file);
+for(const file of ['pwa.js','pwa.css','sw.js','manifest.webmanifest','offline.html','offline.css','offline.js','icons/app-icon.svg','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png','icons/apple-touch-icon.png'])files.set(`/${file}`,file);
+types['.webmanifest']='application/manifest+json; charset=utf-8';
+types['.svg']='image/svg+xml';
 const host=process.env.HOST||(process.env.RENDER==='true'?'0.0.0.0':'127.0.0.1');
 const appOrigin=getAppOrigin();
 http.createServer(async(req,res)=>{

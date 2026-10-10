@@ -7,6 +7,7 @@
   "node": "24.x"
  },
  "scripts": {
+  "prepare:pwa": "node scripts/prepare-pwa.mjs",
   "dev": "node preview.mjs",
   "start": "node preview.mjs",
   "grant:superadmin": "node scripts/grant-superadmin.mjs",

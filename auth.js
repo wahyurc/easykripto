@@ -17,6 +17,7 @@
   let authSdk = null;
   let loginBusy = false;
   let authRevision = 0;
+  let loginInitializing = false;
   window.easykriptoIdToken = async () => {
     if(!auth?.currentUser)throw new Error('Masuk dengan Google untuk melanjutkan.');
     return auth.currentUser.getIdToken();
@@ -70,14 +71,17 @@
     }
   }
   async function initializeLogin() {
+    if (loginInitializing) return;
     placeholder.disabled = true;
+    if (!navigator.onLine) {status.textContent = 'Sambungkan internet untuk masuk dengan Google. Pantauan yang tersimpan tidak dihapus.';return;}
+    loginInitializing = true;
     try {
       const [appSdk, sdk] = await Promise.all([
         import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
         import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js')
       ]);
       authSdk = sdk;
-      auth = sdk.getAuth(appSdk.initializeApp(firebaseConfig));
+      auth = sdk.getAuth(appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseConfig));
       auth.languageCode = 'id';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
       sdk.onIdTokenChanged(auth, async user => {
@@ -93,7 +97,7 @@
         if (revision !== authRevision) return;
         showUser(account);
         status.textContent = user ? '' : 'Pilih akun Google untuk melanjutkan.';
-        placeholder.disabled = loginBusy;
+        placeholder.disabled = loginBusy || !navigator.onLine;
       }, error => {
         showUser(null);
         placeholder.disabled = true;
@@ -101,11 +105,15 @@
       });
     } catch (error) {
       showUser(null);
+      auth = null;
       status.textContent = error?.code ? loginError(error) : 'Layanan login tidak dapat dimuat. Periksa koneksi internet, lalu muat ulang halaman.';
+    } finally {
+      loginInitializing = false;
     }
   }
   placeholder.addEventListener('click', async () => {
     if (!auth || !authSdk || loginBusy) return;
+    if (!navigator.onLine) {status.textContent = 'Perangkat sedang offline. Sambungkan internet untuk masuk dengan Google.';return;}
     loginBusy = true;
     placeholder.disabled = true;
     placeholder.setAttribute('aria-busy', 'true');
@@ -119,9 +127,16 @@
       status.textContent = loginError(error);
     } finally {
       loginBusy = false;
-      placeholder.disabled = false;
+      placeholder.disabled = !navigator.onLine;
       placeholder.removeAttribute('aria-busy');
     }
+  });
+  window.addEventListener('offline', () => {
+    if (!profile) {placeholder.disabled = true;status.textContent = 'Sambungkan internet untuk masuk dengan Google.';}
+  });
+  window.addEventListener('online', () => {
+    if (!auth) {status.textContent = 'Menyiapkan login…';void initializeLogin();}
+    else if (!profile && !loginBusy) {placeholder.disabled = false;status.textContent = 'Pilih akun Google untuk melanjutkan.';}
   });
   document.addEventListener('click', async event => {
     const logout = event.target.closest('[data-logout]');

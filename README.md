@@ -4,6 +4,20 @@ Antarmuka analisis wallet berbahasa Indonesia yang mengutamakan handphone.
 
 Pasang dependensi dengan `npm install`, jalankan `npm run dev`, lalu buka http://localhost:4173.
 
+## PWA: aplikasi di layar utama
+
+- Tombol **Pasang aplikasi Easykripto** tersedia pada login dan pengaturan akun. Browser yang mendukung dialog pemasangan memakai `beforeinstallprompt`; browser lainnya mendapat panduan. iPhone memakai Safari → Bagikan → Tambahkan ke Layar Utama. Jika dibuka sebagai aplikasi, saran pemasangan disembunyikan.
+- Saran pemasangan pada Ringkasan dapat ditunda tujuh hari. Dialog mengikuti panel aplikasi, mendukung keyboard dan tombol Escape, serta memakai ukuran sentuhan yang sesuai handphone.
+- Manifest memakai URL relatif agar berfungsi di root localhost dan `/easykripto/` pada GitHub Pages. Tersedia ikon PNG 192/512, maskable, Apple touch icon, serta pintasan Ringkasan, Pantauan, dan Peta sesuai dukungan browser.
+- Service worker hanya menyimpan aset publik antarmuka yang tercantum pada daftar rilis. Respons API, Firebase SDK/sesi, foto profil, dan hasil analisis tidak disimpan dalam Cache Storage. Penyimpanan pantauan per akun yang sudah ada tetap bekerja seperti sebelumnya.
+- Saat aplikasi tidak dapat dijangkau, navigasi ke aplikasi menampilkan halaman offline dengan tombol mencoba kembali. Halaman ini tersedia setelah service worker berhasil dipasang saat online. Login baru, harga, sinkronisasi, dan analisis memerlukan internet. Pada sesi yang masih terbuka, data yang sudah dimuat tetap dapat dilihat dan ada indikator koneksi. Tidak ada login offline buatan.
+- Pembaruan dipersiapkan di cache baru dan ditawarkan lewat banner. Pengguna memilih **Perbarui** untuk mengaktifkan versi baru dan memuat ulang. Isi formulir yang belum disimpan dapat hilang; banner menjelaskannya. Tab lain diberi pilihan memuat ulang. Cache rilis lama dibersihkan setelah aktivasi; cache aplikasi lain tidak dihapus.
+- Pemeriksaan versi dilakukan ketika halaman kembali terlihat atau koneksi kembali tersedia, maksimal setiap 15 menit secara otomatis. Tombol pemeriksaan manual berada di pengaturan akun. Pemasangan belum menyediakan push server atau pemantauan ketika aplikasi ditutup.
+
+Sebelum memublikasikan perubahan antarmuka, jalankan `npm run prepare:pwa`. Skrip tanpa dependensi tambahan membuat ikon dan memperbarui daftar aset serta hash rilis pada `sw.js`; sertakan hasilnya dalam commit. GitHub Pages tetap menerbitkan file statis dari branch `main`. Tidak diperlukan layanan berbayar baru.
+
+Referensi browser: [pemasangan PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt), [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
+
 ## GitHub Pages dan login Google melalui Firebase
 
 Aplikasi publik: https://wahyurc.github.io/easykripto/

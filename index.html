@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Easykripto">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="description" content="Easykripto — jelajahi aktivitas wallet melalui peta interaktif. Data pasar dan sampel transaksi blockchain.">
   <title>Easykripto — Pahami setiap pergerakan</title>
   <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
@@ -13,6 +19,7 @@
   <link rel="stylesheet" href="market-feed.css?v=20261010-discovery">
   <link rel="stylesheet" href="notifications.css?v=20261010-notifications">
   <link rel="stylesheet" href="api-monitor-ui.css?v=20261010-api-monitor">
+  <link rel="stylesheet" href="pwa.css?v=20261010-pwa">
   <script src="data-config.js?v=20261010-cloudflare" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
   <script src="app.js?v=20261010-notifications" defer></script>
@@ -27,7 +34,8 @@
   <script src="wallet-data.js?v=20261010-notifications" defer></script>
   <script src="api-monitor-ui.js?v=20261010-api-monitor" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
-  <script src="auth.js?v=20261010-free-api" defer></script>
+  <script src="auth.js?v=20261010-pwa" defer></script>
+  <script src="pwa.js?v=20261010-pwa" defer></script>
 </head>
 <body class="signed-out">
   <section class="login-screen" aria-label="Masuk ke Easykripto">
@@ -41,7 +49,10 @@
       <div class="login-form-card"><span class="eyebrow">RUANG ANALISIS KAMU</span><h1>Mulai dari<br><span>rasa ingin tahu.</span></h1><p class="login-description">Masuk untuk menjelajahi peta wallet, menyusun pantauan, dan membaca pergerakan aset.</p>
         <div class="login-google-area"><div id="google-signin"></div><button id="google-placeholder" class="google-placeholder" disabled><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285f4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.6h3.2c1.9-1.8 3-4.4 3-7.5Z"/><path fill="#34a853" d="M12 22c2.7 0 5-.9 6.6-2.4L15.4 17c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.8-5.6-4.1H3.1v2.7A10 10 0 0 0 12 22Z"/><path fill="#fbbc05" d="M6.4 13.8a6 6 0 0 1 0-3.6V7.5H3.1a10 10 0 0 0 0 9l3.3-2.7Z"/><path fill="#ea4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.5l3.3 2.7C7.2 7.9 9.4 6.1 12 6.1Z"/></svg>Masuk dengan Google</button></div>
         <p id="login-status" class="login-status" role="status" aria-live="polite">Menyiapkan login…</p>
+        <div class="pwa-connection" data-pwa-connection role="status" hidden></div>
+        <div class="pwa-update" data-pwa-update role="status" hidden></div>
         <div class="login-security"><span data-icon="shield"></span><p>Cukup gunakan akun Google.<br>Tidak perlu menghubungkan wallet untuk masuk.</p></div>
+        <button class="pwa-login-install" type="button" data-pwa-install hidden><span data-icon="plus"></span> Pasang aplikasi Easykripto <span aria-hidden="true">↗</span></button>
       </div>
       <div class="login-footer"><span>Analisis dimulai dari data.</span><span>Bahasa Indonesia</span></div>
     </div>
@@ -63,6 +74,8 @@
     </header>
 
     <main id="main" tabindex="-1">
+      <div class="pwa-connection" data-pwa-connection role="status" hidden></div>
+      <div class="pwa-update" data-pwa-update role="status" hidden></div>
       <section id="dashboard-search" class="dashboard-search" aria-label="Pencarian token">
         <form id="token-search-form" class="token-search-form" role="search">
           <span class="token-search-icon" data-icon="search"></span>
@@ -72,6 +85,12 @@
           <button id="submit-token-search" class="token-search-submit" type="submit" aria-label="Cari token"><span data-icon="arrow"></span></button>
         </form>
         <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Tempel CA. Jaringan dicari otomatis; jika ada beberapa hasil, pilih jaringan token.</p>
+      </section>
+      <section id="pwa-install-card" class="pwa-install-card" aria-label="Pasang aplikasi Easykripto" hidden>
+        <img src="icons/icon-192.png" width="44" height="44" alt="" decoding="async">
+        <div><strong>Ruang analisismu. Satu ketukan.</strong><p>Pasang Easykripto di layar utama.</p></div>
+        <button class="pwa-install-action" type="button" data-pwa-install>Pasang</button>
+        <button class="pwa-dismiss" type="button" data-pwa-dismiss aria-label="Tunda saran pemasangan selama tujuh hari">×</button>
       </section>
       <section id="market-feed" class="market-feed" aria-label="Jelajahi token" hidden>
         <div class="market-feed-toolbar">
