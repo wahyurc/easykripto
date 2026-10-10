@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '079f8ebc43b12a10';
+const RELEASE = 'e041d6738354995a';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-ticker",
@@ -12,7 +12,7 @@ const SHELL = [
   "app.js?v=20261011-ticker",
   "auth.js?v=20261011-registration",
   "best-coins.css?v=20261011-ticker",
-  "best-coins.js?v=20261011-ticker",
+  "best-coins.js?v=20261011-ticker-2",
   "black-theme.css?v=20261010-provider-logos",
   "dashboard-data.js?v=20261011-registration",
   "data-client.js?v=20261011-registration",

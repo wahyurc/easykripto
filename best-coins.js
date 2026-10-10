@@ -34,9 +34,9 @@
   function values(token){
     const valuation=token.marketCap>0?token.marketCap:el('bc-fdv').checked&&token.fdv>0?token.fdv:null;
     const tx=token.transactions[windowKey]||{},buys=nonnegative(tx.buys),sells=nonnegative(tx.sells);
-    const total=buys!=null&&sells!=null?buys+sells:null,pressure=total>0?buys/total:null;
+    const total=buys!=null&&sells!=null?buys+sells:null,pressure=total>=10?buys/total:null;
     const phase=total==null||total<10?'unknown':pressure>=.6?'buy':pressure<=.4?'sell':'neutral';
-    return {valuation,valuationKind:token.marketCap>0?'MC':'FDV',buys,sells,total,phase,pressure,
+    return {valuation,valuationKind:token.marketCap>0||!valuation?'MC':'FDV',buys,sells,total,phase,pressure,
       volume:valuation&&token.volume!=null?token.volume/valuation:null,
       liquidity:valuation&&token.liquidity!=null?token.liquidity/valuation:null,momentum:number(token.changes[windowKey])};
   }

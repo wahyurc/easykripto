@@ -34,7 +34,7 @@
   <script src="search.js?v=20261010-api-monitor" defer></script>
   <script src="market-data.js?v=20261010-api-monitor" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
-  <script src="best-coins.js?v=20261011-ticker" defer></script>
+  <script src="best-coins.js?v=20261011-ticker-2" defer></script>
   <script src="wallet-data.js?v=20261010-notifications" defer></script>
   <script src="api-monitor-ui.js?v=20261010-security" defer></script>
   <script src="admin.js?v=20261011-ticker" defer></script>
@@ -162,7 +162,7 @@
           <div class="bc-filter-pair"><fieldset><legend>Rentang waktu</legend><div class="bc-chips"><label><input type="radio" name="bc-window" value="h1"><span>1 jam</span></label><label><input type="radio" name="bc-window" value="h6"><span>6 jam</span></label><label><input type="radio" name="bc-window" value="h24" checked><span>24 jam</span></label></div></fieldset><fieldset><legend>Valuasi token</legend><select id="bc-cap" aria-label="Filter valuasi token"><option value="all">Semua valuasi</option><option value="small">Di bawah $100 ribu</option><option value="medium">$100–500 ribu</option><option value="large">Di atas $500 ribu</option></select></fieldset></div>
           <fieldset><legend>Indikasi aktivitas perdagangan</legend><div class="bc-chips bc-phases"><label><input type="checkbox" name="bc-phase" value="buy" checked><span>Beli dominan</span></label><label><input type="checkbox" name="bc-phase" value="neutral" checked><span>Seimbang</span></label><label><input type="checkbox" name="bc-phase" value="sell" checked><span>Jual dominan</span></label><label><input type="checkbox" name="bc-phase" value="unknown" checked><span>Data minim</span></label></div></fieldset>
           <div class="bc-options"><label><input id="bc-complete" type="checkbox" checked> Data skor lengkap saja</label><label><input id="bc-fdv" type="checkbox" checked> Gunakan FDV jika MC belum tersedia</label><label><input id="bc-hide-risk" type="checkbox" checked> Sembunyikan risiko terdeteksi</label></div>
-          <p class="bc-hint">Volume memakai 24 jam pada semua rentang. Indikasi beli/jual berasal dari jumlah transaksi pool, bukan bukti akumulasi wallet.</p>
+          <p class="bc-hint">Volume memakai 24 jam pada semua rentang. Rasio beli dan indikasi fase membutuhkan minimal 10 transaksi pool, bukan bukti akumulasi wallet.</p>
         </section>
         <div class="bc-summary" aria-label="Ringkasan penyaringan"><article><span>Kandidat</span><strong id="bc-universe">—</strong></article><article><span>Lolos filter</span><strong id="bc-passing">—</strong></article><article><span>Risiko diperiksa</span><strong id="bc-checked">—</strong></article></div>
         <div class="bc-ranking-heading"><div><h2>Peringkat pilihanmu</h2><p id="bc-freshness">Belum ada snapshot pasar.</p></div><button id="bc-check-risk" class="secondary-button" type="button" disabled>Periksa risiko 10 teratas</button></div>
