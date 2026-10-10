@@ -19,7 +19,7 @@ let selectedBlockchain='solana';
 try{const saved=localStorage.getItem('easykripto.network');if(blockchainNetworks.some(n=>n.id===saved))selectedBlockchain=saved;}catch{}
 function currentNetwork(){return blockchainNetworks.find(n=>n.id===selectedBlockchain);}
 function validChainAddress(address,chain=selectedBlockchain){return chain==='solana'?validAddress(address):/^0x[0-9a-fA-F]{40}$/.test(address);}
-function availableWallets(){return [...(selectedBlockchain==='solana'?demoWallets:[]),...state.wallets.filter(w=>(w.chain||'solana')===selectedBlockchain)];}
+function availableWallets(){return state.wallets.filter(w=>w.chain===selectedBlockchain);}
 function equalChainAddress(a,b,chain=selectedBlockchain){return chain==='solana'?a===b:a.toLowerCase()===b.toLowerCase();}
 const networkLabel=document.createElement('div');networkLabel.className='network-picker';
 networkLabel.innerHTML='<select id="network-select" hidden aria-hidden="true" tabindex="-1">'+blockchainNetworks.map(n=>`<option value="${n.id}">${n.name}</option>`).join('')+'</select><button id="network-trigger" type="button" class="network-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="network-options"></button><div id="network-options" class="network-options" role="listbox" aria-label="Pilih jaringan blockchain" hidden>'+blockchainNetworks.map(n=>`<button type="button" role="option" tabindex="-1" data-network="${n.id}" aria-selected="false">${networkLogo(n.id)}<span>${n.name}</span><span class="network-check" aria-hidden="true">✓</span></button>`).join('')+'</div>';
@@ -52,9 +52,8 @@ function renderNetwork(){
  const eyebrow=document.querySelector('.page-heading .eyebrow');eyebrow.textContent=`${network.name.toUpperCase()} EXPLORER`;
  document.querySelector('.sidebar-bottom').innerHTML=`${networkLogo(network.id)} ${network.name} <span class="muted">/ jaringan</span>`;
  updateNetworkPicker();
- document.querySelector('.token-section').hidden=!solana;document.querySelector('.right-column').hidden=!solana;
+ document.querySelector('.token-section').hidden=false;document.querySelector('.right-column').hidden=false;
  renderSummary();renderActivities();renderWallets();renderMap();
- document.querySelector('.map-empty').innerHTML=solana?'Belum ada transfer pada periode ini.<small>Pilih periode yang lebih panjang.</small>':`Peta ${network.name} belum memiliki data.<small>Pencarian CA tersedia. Pemantauan transaksi belum terhubung.</small>`;
  window.dispatchEvent(new CustomEvent('easykripto-network',{detail:{chain:network.id}}));
 }
 document.getElementById('network-select').addEventListener('change',event=>{

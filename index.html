@@ -4,17 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1118">
-  <meta name="description" content="Easykripto — jelajahi aktivitas wallet melalui peta interaktif. Prototipe dengan data simulasi.">
+  <meta name="description" content="Easykripto — jelajahi aktivitas wallet melalui peta interaktif. Data pasar dan sampel transaksi blockchain.">
   <title>Easykripto — Pahami setiap pergerakan</title>
   <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
   <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
-  <link rel="stylesheet" href="live-data.css?v=20261010-auto-network">
+  <link rel="stylesheet" href="live-data.css?v=20261010-live-dashboard">
   <script src="data-config.js?v=20261010-cloudflare" defer></script>
-  <script src="networks.js" defer></script>
-  <script src="app.js?v=20261010-free-api" defer></script>
-  <script src="search.js?v=20261010-auto-network" defer></script>
-  <script src="market-data.js?v=20261010-free-api" defer></script>
-  <script src="wallet-data.js?v=20261010-free-api" defer></script>
+  <script src="networks.js?v=20261010-live-dashboard" defer></script>
+  <script src="app.js?v=20261010-live-dashboard" defer></script>
+  <script src="data-client.js?v=20261010-live-dashboard" defer></script>
+  <script src="dashboard-data.js?v=20261010-live-dashboard" defer></script>
+  <script src="search.js?v=20261010-live-dashboard" defer></script>
+  <script src="market-data.js?v=20261010-live-dashboard" defer></script>
+  <script src="wallet-data.js?v=20261010-live-dashboard" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
   <script src="auth.js?v=20261010-free-api" defer></script>
 </head>
@@ -41,14 +43,14 @@
     <div class="workspace-label">RUANG ANALISIS <span>01</span></div>
     <nav class="desktop-nav" aria-label="Navigasi utama"></nav>
     <div class="side-note"><span class="small-icon" data-icon="spark"></span><strong>Rasa ingin tahu,<br>bertemu data.</strong><p>Mulai dari satu wallet.<br>Lihat ke mana aset bergerak.</p><button class="text-button" data-action="guide">Kenali petanya <span data-icon="arrow"></span></button></div>
-    <div class="sidebar-bottom"><span class="chain-dot"></span> Solana <span class="muted">/ jaringan</span><span class="tiny-badge">DEMO</span></div>
+    <div class="sidebar-bottom"><span class="chain-dot"></span> Solana <span class="muted">/ jaringan</span><span class="tiny-badge">SAMPEL</span></div>
   </aside>
 
   <div class="app-shell">
     <header class="topbar">
       <a class="mobile-brand" href="#ringkasan"><span class="brand-mark">e<span></span></span>easykripto</a>
       <div class="breadcrumb">Ruang analisis <span>/</span> <strong id="breadcrumb">Ringkasan</strong></div>
-      <div class="topbar-actions"><span class="demo-pill"><span></span> Mode eksplorasi</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
+      <div class="topbar-actions"><span class="demo-pill"><span></span> Data blockchain</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
     </header>
 
     <main id="main" tabindex="-1">
@@ -63,17 +65,17 @@
         <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Tempel CA. Jaringan dicari otomatis; jika ada beberapa hasil, pilih jaringan token.</p>
       </section>
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
-      <div class="demo-notice"><span data-icon="flask"></span><span><strong>Mode eksplorasi.</strong> Kartu ringkasan dan peta contoh memakai simulasi. Cari CA atau buka menu Peta untuk mengambil data dari sumber publik.</span><button data-action="about-data" aria-label="Informasi data simulasi"><span data-icon="arrow"></span></button></div>
+      <div class="demo-notice"><span data-icon="flask"></span><span><strong>Data nyata, cakupan terbatas.</strong> Analisis wallet untuk mengisi peta dan aktivitas. Lonceng memantau sampel transaksi baru selama aplikasi terbuka.</span><button data-action="about-data" aria-label="Informasi sumber data"><span data-icon="arrow"></span></button></div>
 
       <section id="view-ringkasan" class="view" aria-label="Ringkasan">
-        <div class="stats-grid" id="stats"></div>
+        <div class="dashboard-toolbar"><button class="secondary-button" data-action="refresh-dashboard">Perbarui data</button><span>Sampel terbatas · cache 2 menit</span></div><div class="stats-grid" id="stats"></div>
         <div class="content-layout">
           <div class="main-column">
             <section class="panel map-panel" id="overview-map-slot"></section>
-            <section class="panel token-section"><div class="section-heading"><div><span class="eyebrow">DALAM RADAR</span><h2>Token yang diperhatikan</h2></div><span class="subtle-tag">Contoh · 24 jam</span></div><div id="token-cards" class="token-cards"></div><p class="panel-footnote">Aktivitas wallet pantauan, bukan seluruh pasar.</p></section>
+            <section class="panel token-section"><div class="section-heading"><div><span class="eyebrow">DALAM RADAR</span><h2>Token yang diperhatikan</h2></div><span class="subtle-tag">Harga pasangan DEX</span></div><div id="token-cards" class="token-cards"></div><p class="panel-footnote">Pantauan token akun kamu. Harga mengikuti pasangan dengan likuiditas terbesar yang ditemukan.</p></section>
           </div>
           <aside class="right-column">
-            <section class="insight-card"><div class="insight-label"><span data-icon="spark"></span> CATATAN POLA <span>SIMULASI</span></div><h2>Tiga wallet.<br>Satu arah.</h2><p>Dalam contoh 24 jam ini, <strong>Awan, Rimba, dan Sora</strong> membeli ARKA. Buka peta untuk melihat transaksi masing-masing.</p><button class="text-button" data-action="focus-arka">Telusuri ARKA <span data-icon="arrow"></span></button><div class="insight-art" aria-hidden="true"><i></i><i></i><i></i><b>A</b></div></section>
+            <section class="insight-card"><div class="insight-label">CATATAN SAMPEL</div><h2>Mulai dari satu wallet.</h2><p>Analisis wallet untuk mengisi catatan hubungan.</p><button class="text-button" data-route="peta">Telusuri peta</button></section>
             <section class="panel activity-preview"><div class="section-heading"><h2>Jejak terbaru</h2><span class="status-dot"></span></div><div id="recent-activity"></div><button class="wide-text-button" data-route="aktivitas">Lihat semua aktivitas <span data-icon="arrow"></span></button></section>
             <div class="quiet-note"><span data-icon="shield"></span><p>Data membantu memahami pola.<br>Pergerakan wallet bukan jaminan hasil.</p></div>
           </aside>
@@ -82,10 +84,10 @@
 
       <section id="view-peta" class="view" hidden>
         <section class="panel live-panel" aria-label="Analisis wallet blockchain"><div class="live-header"><div><h2>Telusuri wallet</h2><small>Peta transfer dari catatan blockchain yang tersedia.</small></div><span class="subtle-tag">Data blockchain</span></div><div class="segmented" aria-label="Jenis analisis"><button type="button" data-live-mode="wallet" class="active" aria-pressed="true">Transfer wallet</button><button type="button" data-live-mode="holders" aria-pressed="false">Holder Solana</button></div><p class="live-mode-description">Pilih transfer untuk menelusuri alamat wallet, atau holder untuk memeriksa CA token Solana.</p><form id="live-wallet-form"><label id="live-wallet-label" for="live-wallet-address">Alamat wallet</label><div class="live-form"><input id="live-wallet-address" placeholder="Tempel alamat publik" required autocomplete="off" autocapitalize="off" spellcheck="false"><button id="live-wallet-submit" class="primary-button" type="submit">Analisis alamat</button></div></form><p id="live-wallet-status" class="live-status" role="status" aria-live="polite"></p><div id="live-wallet-result"></div></section>
-        <button id="live-demo-toggle" class="secondary-button live-demo-toggle" type="button" aria-controls="full-map-slot" aria-expanded="false">Lihat peta simulasi</button><div id="full-map-slot" hidden></div><div class="map-explainer"><span data-icon="info"></span><p>Garis menunjukkan transaksi yang teramati. Hubungan antarwallet tidak membuktikan pemilik yang sama.</p></div>
+        <button id="live-demo-toggle" class="secondary-button live-demo-toggle" type="button" aria-controls="full-map-slot" aria-expanded="false">Lihat peta gabungan</button><div id="full-map-slot" hidden></div><div class="map-explainer"><span data-icon="info"></span><p>Garis menunjukkan transaksi yang teramati. Hubungan antarwallet tidak membuktikan pemilik yang sama.</p></div>
       </section>
-      <section id="view-pantauan" class="view" hidden><div class="section-toolbar"><div class="search-field"><span data-icon="search"></span><input id="wallet-search" type="search" placeholder="Cari nama atau alamat wallet" aria-label="Cari wallet"></div><button class="primary-button" data-action="add-wallet"><span data-icon="plus"></span><span>Tambah</span></button></div><div class="wallet-grid" id="wallet-list"></div><p class="panel-footnote">Wallet disimpan di perangkat ini. Buka detail untuk analisis transaksi; belum ada pemantauan latar belakang.</p></section>
-      <section id="view-aktivitas" class="view" hidden><div class="section-toolbar"><div class="segmented activity-filters" aria-label="Filter jenis transaksi"><button class="active" data-type="all" aria-pressed="true">Semua</button><button data-type="buy" aria-pressed="false">Beli</button><button data-type="sell" aria-pressed="false">Jual</button><button data-type="transfer" aria-pressed="false">Transfer</button></div><span class="subtle-tag">Data simulasi</span></div><div class="panel activity-full" id="all-activity"></div></section>
+      <section id="view-pantauan" class="view" hidden><div class="section-toolbar"><div class="search-field"><span data-icon="search"></span><input id="wallet-search" type="search" placeholder="Cari nama atau alamat wallet" aria-label="Cari wallet"></div><button class="primary-button" data-action="add-wallet"><span data-icon="plus"></span><span>Tambah</span></button></div><div class="watch-sync"><p id="watch-sync-status" role="status" aria-live="polite">Memuat pantauan…</p><button class="text-button" data-action="sync-watch">Sinkronkan</button><button class="text-button" data-action="import-watch">Impor pantauan lama perangkat</button></div><div class="wallet-grid" id="wallet-list"></div><p class="panel-footnote">Pantauan terpisah per akun Google. Lonceng memeriksa sampel baru secara bergiliran saat aplikasi terbuka.</p></section>
+      <section id="view-aktivitas" class="view" hidden><div class="section-toolbar"><div class="segmented activity-filters" aria-label="Filter jenis transaksi"><button class="active" data-type="all" aria-pressed="true">Semua</button><button data-type="incoming" aria-pressed="false">Masuk</button><button data-type="outgoing" aria-pressed="false">Keluar</button><button data-type="transfer" aria-pressed="false">Antarpantauan</button></div><span class="subtle-tag">Data blockchain</span></div><div class="panel activity-full" id="all-activity"></div></section>
       <section id="view-superadmin" class="view admin-view" hidden aria-label="Dashboard superadmin">
         <div class="admin-overview"><div><span class="admin-label">RUANG SUPERADMIN</span><p>Aktivitas aplikasi, dalam angka.</p></div><button id="admin-refresh" class="secondary-button" type="button">Perbarui data</button></div>
         <div class="admin-stats">
@@ -103,7 +105,7 @@
         </section>
         <p class="admin-footnote">Kunjungan dicatat dari browser sejak pencatatan diaktifkan. Pemblokir pelacakan dapat membuat sebagian kunjungan tidak tercatat. Akun lama akan tampil setelah sinkronisasi. Semua waktu menggunakan WITA.</p>
       </section>
-      <footer class="page-footer"><span>easykripto <span class="muted">/ lihat lebih jelas.</span></span><span>Prototipe antarmuka · v0.1</span></footer>
+      <footer class="page-footer"><span>easykripto <span class="muted">/ lihat lebih jelas.</span></span><span>Analisis blockchain · v0.2</span></footer>
     </main>
   </div>
 
@@ -115,7 +117,7 @@
     <div class="section-heading map-heading"><div><span class="eyebrow">HUBUNGKAN TITIKNYA</span><h2>Peta pergerakan <span class="beta-label">DEMO</span></h2></div><button class="icon-button expand-map" data-route="peta" aria-label="Buka halaman peta"><span data-icon="expand"></span></button></div>
     <div class="map-toolbar"><div class="segmented map-modes" aria-label="Jenis peta"><button class="active" data-mode="token" aria-pressed="true">Wallet & token</button><button data-mode="wallet" aria-pressed="false">Antarwallet</button></div><div class="period-selector" aria-label="Periode aktivitas"><button data-period="1" aria-pressed="false">1j</button><button data-period="6" aria-pressed="false">6j</button><button class="active" data-period="24" aria-pressed="true">24j</button><button data-period="168" aria-pressed="false">7 hari</button></div></div>
     <div class="map-stage"><div class="map-caption"><span class="status-dot"></span><span class="map-count"></span></div><svg class="bubble-map" viewBox="0 0 720 460" aria-label="Peta hubungan interaktif, pilih wallet atau token untuk melihat detail"><g class="graph-world"></g></svg><div class="map-empty" hidden>Belum ada transfer pada periode ini.<small>Pilih periode yang lebih panjang.</small></div><div class="map-controls"><button class="icon-button" data-map-action="in" aria-label="Perbesar peta"><span data-icon="plus"></span></button><button class="icon-button" data-map-action="out" aria-label="Perkecil peta"><span data-icon="minus"></span></button><button class="icon-button" data-map-action="reset" aria-label="Pusatkan peta"><span data-icon="locate"></span></button></div><div class="map-hint">Geser untuk menjelajah · ketuk untuk detail</div></div>
-    <div class="map-footer"><div class="map-legend"><span><i class="legend-buy"></i>Beli</span><span><i class="legend-sell"></i>Jual</span><span><i class="legend-transfer"></i>Transfer</span></div><button class="text-button map-list-toggle" aria-expanded="false"><span data-icon="list"></span> Lihat daftar</button></div><div class="map-list" hidden></div>
+    <div class="map-footer"><div class="map-legend"><span><i class="legend-buy"></i>Masuk</span><span><i class="legend-sell"></i>Keluar</span><span><i class="legend-transfer"></i>Transfer</span></div><button class="text-button map-list-toggle" aria-expanded="false"><span data-icon="list"></span> Lihat daftar</button></div><div class="map-list" hidden></div>
   </template>
 </body>
 </html>

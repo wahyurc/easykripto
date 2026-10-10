@@ -1,4 +1,5 @@
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {adminClient,projectId,database,AdminSetupError,reportError} from './firebase-admin-client.mjs';
 
 async function deploy() {
@@ -22,7 +23,10 @@ async function deploy() {
     }
     const normalized = files.map(file=>file.content).join('\n').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'').replace(/\s/g,'');
     const defaultDeny = /^rules_version=['"]2['"];servicecloud\.firestore\{match\/databases\/\{database\}\/documents\{match\/\{document=\*\*\}\{allowread,write:iffalse;\}\}\}$/;
-    if (!defaultDeny.test(normalized)) throw new AdminSetupError('Aturan aktif berisi pengaturan lain. Cadangan tersimpan di .secrets/rules-backups; gabungkan aturan terlebih dahulu sebelum penerbitan.');
+    let managed='';
+    try { managed=execFileSync('git',['show','HEAD:firestore.rules'],{cwd:new URL('..',import.meta.url),encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim(); } catch {}
+    const previousManaged=files.length===1&&managed&&files[0].content.trim()===managed;
+    if (!previousManaged && !defaultDeny.test(normalized)) throw new AdminSetupError('Aturan aktif berbeda dari aturan proyek. Cadangan tersimpan di .secrets/rules-backups; gabungkan aturan terlebih dahulu sebelum penerbitan.');
   }
   const ruleset = (await client.request({url:`${base}/rulesets`,method:'POST',data:{source:{files:[{name:'firestore.rules',content}]}},timeout:15000})).data;
   const payload = {name,rulesetName:ruleset.name};

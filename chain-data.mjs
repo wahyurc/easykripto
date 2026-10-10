@@ -2,6 +2,13 @@ export class DataError extends Error {
   constructor(message,status=502){super(message);this.status=status;}
 }
 
+export function decimalUnits(raw,decimals){
+  const value=BigInt(raw),negative=value<0n,digits=(negative?-value:value).toString().padStart(decimals+1,'0');
+  if(!decimals)return `${negative?'-':''}${digits}`;
+  const fraction=digits.slice(-decimals).replace(/0+$/,'');
+  return `${negative?'-':''}${digits.slice(0,-decimals)}${fraction?'.'+fraction:''}`;
+}
+
 export async function rpc(url,method,params,signal) {
   const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:signal||AbortSignal.timeout(10000)});
   if(response.status===429)throw new DataError('Kuota sumber blockchain sedang dibatasi. Coba beberapa saat lagi.',429);
@@ -41,7 +48,7 @@ export async function solanaWallet(url,address,signal) {
       if(!['transfer','transferChecked'].includes(parsed?.type)||!info?.source||!info.destination)return;
       if(instruction.program==='system'&&info.lamports!=null){
         if(info.source!==address&&info.destination!==address)return;
-        transfers.push({id:`${signature.signature}:${index}`,hash:signature.signature,from:info.source,to:info.destination,asset:'SOL',amount:String(Number(info.lamports)/1e9),timestamp:tx.blockTime?new Date(tx.blockTime*1000).toISOString():null,endpointType:'wallet'});
+        transfers.push({id:`${signature.signature}:${index}`,hash:signature.signature,from:info.source,to:info.destination,asset:'SOL',amount:decimalUnits(info.lamports,9),timestamp:tx.blockTime?new Date(tx.blockTime*1000).toISOString():null,endpointType:'wallet'});
       }else if(['spl-token','spl-token-2022'].includes(instruction.program)){
         const from=owners.get(info.source),to=owners.get(info.destination);
         if(from!==address&&to!==address)return;
@@ -49,11 +56,11 @@ export async function solanaWallet(url,address,signal) {
         const decimals=info.tokenAmount?.decimals??token?.uiTokenAmount?.decimals;
         const raw=info.tokenAmount?.amount??info.amount;
         if(raw==null||decimals==null)return;
-        transfers.push({id:`${signature.signature}:${index}`,hash:signature.signature,from:from||info.source,to:to||info.destination,asset:info.mint||token?.mint||'SPL',amount:String(Number(raw)/10**decimals),timestamp:tx.blockTime?new Date(tx.blockTime*1000).toISOString():null,endpointType:from&&to?'wallet':'token-account'});
+        transfers.push({id:`${signature.signature}:${index}`,hash:signature.signature,from:from||info.source,to:to||info.destination,fromType:from?'wallet':'token-account',toType:to?'wallet':'token-account',asset:info.mint||token?.mint||'SPL',assetAddress:info.mint||token?.mint||null,amount:decimalUnits(raw,decimals),timestamp:tx.blockTime?new Date(tx.blockTime*1000).toISOString():null,endpointType:from&&to?'wallet':'token-account'});
       }
     });
   }
-  return {chain:'solana',address,nativeBalance:String(Number(balance.value)/1e9),nativeSymbol:'SOL',transfers,scanned,unavailable,partial:true,note:'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
+  return {chain:'solana',address,nativeBalance:decimalUnits(balance.value,9),nativeSymbol:'SOL',transfers,scanned,unavailable,partial:true,note:'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
 }
 
 export async function solanaHolders(url,mint,signal) {
@@ -70,21 +77,23 @@ export async function solanaHolders(url,mint,signal) {
     item.raw+=BigInt(token.amount);item.accounts++;owners.set(owner,item);
   });
   const total=BigInt(supply.value.amount);
-  const holders=[...owners.values()].sort((a,b)=>a.raw>b.raw?-1:a.raw<b.raw?1:0).map(item=>({address:item.address,amount:String(Number(item.raw)/10**supply.value.decimals),share:total?Number(item.raw*1000000n/total)/10000:0,accounts:item.accounts}));
+  const holders=[...owners.values()].sort((a,b)=>a.raw>b.raw?-1:a.raw<b.raw?1:0).map(item=>({address:item.address,amount:decimalUnits(item.raw,supply.value.decimals),share:total?Number(item.raw*1000000n/total)/10000:0,accounts:item.accounts}));
   return {chain:'solana',mint,holders,sampledTokenAccounts:accounts.length,partial:true,note:'Pemilik dari maksimal 20 akun token terbesar, bukan seluruh holder. Persentase terhadap supply saat ini. Wallet pool/exchange belum diberi label; kepemilikan bukan bukti hubungan antarwallet.'};
 }
 
 export async function evmWallet(url,chain,address,signal) {
   address=address.toLowerCase();
   const balance=await rpc(url,'eth_getBalance',[address,'latest'],signal);
-  const nativeBalance=String(Number(BigInt(balance))/1e18);
+  const nativeBalance=decimalUnits(balance,18);
   const results=[];
   for(const direction of ['fromAddress','toAddress'])results.push(await rpc(url,'alchemy_getAssetTransfers',[{fromBlock:'0x0',toBlock:'latest',[direction]:address,category:['external','erc20'],excludeZeroValue:true,withMetadata:true,order:'desc',maxCount:'0x19'}],signal));
   const unique=new Map();
   for(const result of results)for(const transfer of result.transfers||[]) {
     const id=transfer.uniqueId||`${transfer.hash}:${transfer.from}:${transfer.to}:${transfer.rawContract?.address||''}:${transfer.value}`;
-    unique.set(id,{id,hash:transfer.hash,from:transfer.from?.toLowerCase(),to:transfer.to?.toLowerCase(),asset:transfer.asset||transfer.rawContract?.address||'Token',amount:transfer.value==null?null:String(transfer.value),timestamp:transfer.metadata?.blockTimestamp||null,endpointType:'wallet'});
+    const raw=transfer.rawContract;
+    const amount=raw?.value!=null&&raw?.decimal!=null?decimalUnits(raw.value,Number(raw.decimal)):transfer.value==null?null:String(transfer.value);
+    unique.set(id,{id,hash:transfer.hash,from:transfer.from?.toLowerCase(),to:transfer.to?.toLowerCase(),asset:transfer.asset||raw?.address||'Token',assetAddress:raw?.address||null,amount,timestamp:transfer.metadata?.blockTimestamp||null,endpointType:'wallet'});
   }
   const transfers=[...unique.values()].sort((a,b)=>(Date.parse(b.timestamp)||0)-(Date.parse(a.timestamp)||0));
-  return {chain,address,nativeBalance,nativeSymbol:'ETH',transfers,scanned:transfers.length,partial:true,moreAvailable:results.some(result=>result.pageKey),note:'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
+  return {chain,address,nativeBalance,nativeSymbol:chain==='bsc'?'BNB':'ETH',transfers,scanned:transfers.length,partial:true,moreAvailable:results.some(result=>result.pageKey),note:'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
 }

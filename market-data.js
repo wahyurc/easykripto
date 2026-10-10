@@ -2,13 +2,17 @@
 
 (() => {
   const cache=new Map(),nextRequest={};
-  const networks={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc'};
-  const chainIds={ethereum:'1',base:'8453',bsc:'56'};
+  const networks={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc',robinhood:'robinhood'};
+  const chainIds={ethereum:'1',base:'8453',bsc:'56',robinhood:'4663'};
   const money=value=>value==null||!Number.isFinite(Number(value))?'Tidak tersedia':new Intl.NumberFormat('id-ID',{style:'currency',currency:'USD',maximumSignificantDigits:5}).format(Number(value));
   async function json(url,signal,provider){
     const saved=cache.get(url);if(saved&&saved.until>Date.now())return saved.data;
-    if((nextRequest[provider]||0)>Date.now())throw new Error('Tunggu beberapa detik sebelum memuat data berikutnya.');
-    nextRequest[provider]=Date.now()+2200;
+    const slot=Math.max(Date.now(),nextRequest[provider]||0);nextRequest[provider]=slot+2200;
+    if(slot>Date.now())await new Promise((resolve,reject)=>{
+      if(signal?.aborted){reject(new DOMException('Dibatalkan','AbortError'));return;}
+      const abort=()=>{clearTimeout(timer);reject(new DOMException('Dibatalkan','AbortError'));};
+      const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},slot-Date.now());signal?.addEventListener('abort',abort,{once:true});
+    });
     const timeout=AbortSignal.timeout(12000);
     const response=await fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
     if(response.status===429)throw new Error('Kuota penyedia sedang dibatasi. Coba lagi beberapa saat lagi.');
@@ -39,7 +43,7 @@
       const pools=await json(`https://api.geckoterminal.com/api/v2/networks/${network}/tokens/${encodeURIComponent(ca)}/pools?page=1`,signal,'gecko');
       const match=id=>chain==='solana'?id===`${network}_${ca}`:id?.toLowerCase()===`${network}_${ca}`.toLowerCase();
       const pool=(pools.data||[]).filter(p=>match(p.relationships?.base_token?.data?.id)||match(p.relationships?.quote_token?.data?.id)).sort((a,b)=>Number(b.attributes?.reserve_in_usd||0)-Number(a.attributes?.reserve_in_usd||0))[0];
-      const address=pool?.attributes?.address;if(!address||!validChainAddress(address,chain))throw new Error('Pool grafik belum tersedia untuk token ini.');
+      const address=pool?.attributes?.address;if(!address||!(validChainAddress(address,chain)||(chain!=='solana'&&/^0x[0-9a-fA-F]{64}$/.test(address))))throw new Error('Pool grafik belum tersedia untuk token ini.');
       const side=match(pool.relationships.base_token.data.id)?'base':'quote';
       // Space the two GeckoTerminal calls within its public rate budget.
       await new Promise((resolve,reject)=>{if(signal.aborted){reject(new DOMException('Aborted','AbortError'));return;}const abort=()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));};const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);resolve();},2300);signal.addEventListener('abort',abort,{once:true});});
@@ -77,7 +81,7 @@
     if(chartRoot)void chart(chain,ca,signal,chartRoot);
     if(riskRoot)void risk(chain,ca,signal,riskRoot);
   };
-  document.getElementById('detail-dialog').addEventListener('close',()=>analysis?.abort());
+  document.getElementById('detail-dialog').addEventListener('close',()=>{if(!document.getElementById('detail-dialog').open)analysis?.abort();});
   window.addEventListener('easykripto-network',()=>analysis?.abort());
   window.addEventListener('easykripto-session',event=>{if(!event.detail.signedIn)analysis?.abort();});
 })();

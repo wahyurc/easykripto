@@ -21,7 +21,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
     const query=new URL(req.url,'http://localhost').searchParams,chain=query.get('chain'),address=query.get('address');
     const mode=pathname==='/api/analysis/holders'?'holders':pathname==='/api/analysis/wallet'?'wallet':null;
     if(!mode)throw new DataError('Analisis tidak tersedia.',404);
-    if(!['solana','ethereum','base'].includes(chain)||(mode==='holders'&&chain!=='solana'))throw new DataError('Analisis tersedia untuk wallet Solana, Ethereum/Base, serta holder Solana.',400);
+    if(!['solana','ethereum','base','bsc','robinhood'].includes(chain)||(mode==='holders'&&chain!=='solana'))throw new DataError('Analisis wallet tersedia di lima jaringan. Analisis holder tersedia untuk Solana.',400);
     if(!validAddress(address,chain))throw new DataError('Alamat tidak sesuai jaringan.',400);
     const apiKey=chain==='solana'?env.HELIUS_API_KEY:env.ALCHEMY_API_KEY;
     if(!apiKey&&chain!=='solana')throw new DataError('Analisis Alchemy belum diaktifkan oleh pengelola.',503);
@@ -31,7 +31,8 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
     if(active>=2)throw new DataError('Analisis sedang penuh. Coba beberapa saat lagi.',429);
     active++;
     try{
-      const url=chain==='solana'?(apiKey?`https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(apiKey)}`:'https://api.mainnet-beta.solana.com'):`https://${chain==='base'?'base-mainnet':'eth-mainnet'}.g.alchemy.com/v2/${encodeURIComponent(apiKey)}`;
+      const hosts={ethereum:'eth-mainnet',base:'base-mainnet',bsc:'bnb-mainnet',robinhood:'robinhood-mainnet'};
+      const url=chain==='solana'?(apiKey?`https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(apiKey)}`:'https://api.mainnet-beta.solana.com'):`https://${hosts[chain]}.g.alchemy.com/v2/${encodeURIComponent(apiKey)}`;
       const signal=AbortSignal.timeout(35000);
       const data=chain==='solana'?(mode==='holders'?await solanaHolders(url,address,signal):await solanaWallet(url,address,signal)):await evmWallet(url,chain,address,signal);
       const result={...data,source:chain==='solana'?(apiKey?'Helius':'RPC publik Solana'):'Alchemy',fetchedAt:new Date().toISOString()};
