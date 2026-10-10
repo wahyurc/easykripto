@@ -70,7 +70,8 @@ Referensi: [login Google Firebase](https://firebase.google.com/docs/auth/web/goo
 - Format alamat Solana diperiksa sebagai public key Base58 32 byte; EVM sebagai 0x + 40 digit heksadesimal. Validasi format belum membuktikan bahwa alamat adalah kontrak token.
 - Peta serta aktivitas simulasi hanya tersedia di Solana. Jaringan lain menampilkan status belum memiliki data pemantauan.
 
-- Pencarian CA Solana di bagian teratas Ringkasan; data pasar dari API publik DEX Screener setelah pengguna mencari.
+- Pencarian CA di bagian teratas Ringkasan. Menempelkan satu CA memulai pencarian otomatis: format Solana dikenali langsung, sedangkan CA EVM dicari melalui API publik DEX Screener dengan kecocokan alamat persis pada jaringan yang tersedia di aplikasi.
+- Jika hasil pencarian menunjukkan satu jaringan, pemilih jaringan dashboard mengikuti hasil tersebut. Jika alamat ditemukan pada beberapa jaringan, aplikasi menampilkan pilihan beserta logo. Jika data belum tersedia, pengguna dapat memilih jaringan sebagai cadangan untuk memeriksa grafik/risiko. Hasil pencarian DEX Screener terbatas pada indeks dan hasil yang dikembalikan penyedia; tidak membuktikan bahwa CA hanya ada pada jaringan yang ditemukan.
 - Tombol Tempel membaca clipboard setelah diketuk. Deteksi CA otomatis hanya berjalan saat halaman aktif dan izin clipboard-read sudah diberikan.
 - Clipboard tidak disimpan; hanya alamat yang dipilih untuk pencarian dikirim ke DEX Screener. Browser tanpa izin mendukung penempelan manual.
 

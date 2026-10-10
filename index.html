@@ -8,11 +8,11 @@
   <title>Easykripto — Pahami setiap pergerakan</title>
   <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
   <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
-  <link rel="stylesheet" href="live-data.css?v=20261010-free-api">
+  <link rel="stylesheet" href="live-data.css?v=20261010-auto-network">
   <script src="data-config.js?v=20261010-cloudflare" defer></script>
   <script src="networks.js" defer></script>
   <script src="app.js?v=20261010-free-api" defer></script>
-  <script src="search.js?v=20261010-free-api" defer></script>
+  <script src="search.js?v=20261010-auto-network" defer></script>
   <script src="market-data.js?v=20261010-free-api" defer></script>
   <script src="wallet-data.js?v=20261010-free-api" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
@@ -55,12 +55,12 @@
       <section id="dashboard-search" class="dashboard-search" aria-label="Pencarian token">
         <form id="token-search-form" class="token-search-form" role="search">
           <span class="token-search-icon" data-icon="search"></span>
-          <label class="sr-only" for="token-search-input">Cari token atau alamat kontrak Solana</label>
-          <input id="token-search-input" type="search" placeholder="Cari token atau tempel CA Solana" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="token-search-status">
+          <label class="sr-only" for="token-search-input">Cari token dengan CA, jaringan otomatis</label>
+          <input id="token-search-input" type="search" placeholder="Tempel CA · jaringan otomatis" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="token-search-status">
           <button id="paste-ca" class="paste-ca-button" type="button" aria-label="Tempel alamat kontrak dari clipboard"><span data-icon="copy"></span><span id="paste-ca-label">Tempel</span><i class="clipboard-indicator" hidden></i></button>
           <button id="submit-token-search" class="token-search-submit" type="submit" aria-label="Cari token"><span data-icon="arrow"></span></button>
         </form>
-        <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Cari berdasarkan CA Solana atau nama token contoh: ARKA, NOMI, KORA.</p>
+        <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Tempel CA. Jaringan dicari otomatis; jika ada beberapa hasil, pilih jaringan token.</p>
       </section>
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
       <div class="demo-notice"><span data-icon="flask"></span><span><strong>Mode eksplorasi.</strong> Kartu ringkasan dan peta contoh memakai simulasi. Cari CA atau buka menu Peta untuk mengambil data dari sumber publik.</span><button data-action="about-data" aria-label="Informasi data simulasi"><span data-icon="arrow"></span></button></div>
