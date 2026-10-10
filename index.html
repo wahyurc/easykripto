@@ -11,16 +11,21 @@
   <link rel="stylesheet" href="live-data.css?v=20261010-token-holders">
   <link rel="stylesheet" href="black-theme.css?v=20261010-provider-logos">
   <link rel="stylesheet" href="market-feed.css?v=20261010-discovery">
+  <link rel="stylesheet" href="notifications.css?v=20261010-notifications">
+  <link rel="stylesheet" href="api-monitor-ui.css?v=20261010-api-monitor">
   <script src="data-config.js?v=20261010-cloudflare" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
-  <script src="app.js?v=20261010-live-dashboard" defer></script>
+  <script src="app.js?v=20261010-notifications" defer></script>
+  <script src="notifications.js?v=20261010-notifications" defer></script>
+  <script src="api-telemetry.js?v=20261010-api-monitor" defer></script>
   <script src="data-client.js?v=20261010-live-dashboard" defer></script>
   <script src="token-ui.js?v=20261010-token-holders" defer></script>
-  <script src="dashboard-data.js?v=20261010-superadmin-unlimited" defer></script>
-  <script src="search.js?v=20261010-provider-logos" defer></script>
-  <script src="market-data.js?v=20261010-discovery" defer></script>
+  <script src="dashboard-data.js?v=20261010-notifications" defer></script>
+  <script src="search.js?v=20261010-api-monitor" defer></script>
+  <script src="market-data.js?v=20261010-api-monitor" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
-  <script src="wallet-data.js?v=20261010-token-holders" defer></script>
+  <script src="wallet-data.js?v=20261010-notifications" defer></script>
+  <script src="api-monitor-ui.js?v=20261010-api-monitor" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
   <script src="auth.js?v=20261010-free-api" defer></script>
 </head>
@@ -54,7 +59,7 @@
     <header class="topbar">
       <a class="mobile-brand" href="#ringkasan"><span class="brand-mark">e<span></span></span>easykripto</a>
       <div class="breadcrumb">Ruang analisis <span>/</span> <strong id="breadcrumb">Ringkasan</strong></div>
-      <div class="topbar-actions"><span class="demo-pill"><span></span> Data blockchain</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
+      <div class="topbar-actions"><span class="demo-pill"><span></span> Data blockchain</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button id="notification-trigger" class="notification-trigger" type="button" aria-label="Notifikasi" aria-haspopup="dialog" aria-controls="notification-dialog" aria-expanded="false"><span data-icon="bell"></span><span id="notification-badge" class="notification-badge" hidden></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
     </header>
 
     <main id="main" tabindex="-1">
@@ -119,6 +124,18 @@
           <article><span>Akun baru 7 hari</span><strong id="admin-count-new">—</strong><small>Berdasarkan tanggal pendaftaran</small></article>
         </div>
         <p id="admin-status" class="admin-status" role="status" aria-live="polite">Data akan dimuat setelah akses superadmin dikonfirmasi.</p>
+        <section id="api-monitor" class="api-monitor" aria-label="Pemantauan penggunaan API" hidden>
+          <header class="api-monitor-header"><div><span class="eyebrow">KESEHATAN LAYANAN DATA</span><h2>Penggunaan API</h2><p>Kenali pemakaian, pembatasan, dan respons setiap sumber data.</p></div><div class="api-monitor-controls"><label class="sr-only" for="api-period">Periode grafik API</label><select id="api-period"><option value="24h">24 jam</option><option value="7d">7 hari</option></select><button id="api-refresh" class="secondary-button" type="button">Perbarui</button></div></header>
+          <p id="api-monitor-status" class="api-monitor-status" role="status" aria-live="polite">Menyiapkan statistik API…</p>
+          <div class="api-monitor-stats"><article><span>Permintaan provider</span><strong id="api-count-requests">—</strong><small>Di luar permintaan ke Worker</small></article><article><span>Respons berhasil</span><strong id="api-count-success">—</strong><small>HTTP dan hasil JSON/RPC</small></article><article><span>Pembatasan HTTP 429</span><strong id="api-count-limited">—</strong><small>Pada provider dalam periode ini</small></article><article><span>Respons rata-rata</span><strong id="api-count-latency">—</strong><small>Durasi panggilan yang tercatat</small></article></div>
+          <p id="api-worker-cache" class="api-monitor-footnote"></p>
+          <div class="api-charts"><section class="api-chart-card"><h3>Aktivitas permintaan</h3><div class="api-chart-legend"><span><i></i>Berhasil</span><span><i></i>Gagal</span></div><div id="api-usage-chart" class="api-usage-chart"></div><p id="api-chart-empty" class="api-chart-empty">Grafik akan terisi setelah ada permintaan API yang tercatat.</p><details class="api-chart-details"><summary>Lihat angka grafik</summary><div class="api-table-scroll"><table><caption>Permintaan per waktu · WITA</caption><thead><tr><th scope="col">Waktu</th><th scope="col">Permintaan</th><th scope="col">Gagal</th><th scope="col">Rata-rata</th></tr></thead><tbody id="api-chart-table"></tbody></table></div></details></section><section class="api-chart-card"><h3>Distribusi provider</h3><div id="api-provider-chart" class="api-provider-chart"></div><p>Permintaan Worker tidak dicampur agar panggilan RPC tidak terhitung dua kali.</p></section></div>
+          <h3 class="api-provider-title">Status provider &amp; batas pantauan</h3><div id="api-provider-cards" class="api-provider-cards"></div>
+          <details id="api-budget-settings" class="api-budget-settings"><summary>Atur batas pemantauan harian</summary><p>Batas ini untuk peringatan pemakaian Easykripto, bukan kuota resmi paket provider. Hari dimulai pukul 00.00 WITA. Kosongkan jumlah untuk menonaktifkan batas; tidak ada pemblokiran otomatis.</p><form id="api-budget-form" class="api-budget-form"><label>Provider<select id="api-budget-provider"><option value="helius">Helius</option><option value="alchemy">Alchemy</option><option value="solana-rpc">RPC Solana</option><option value="dexscreener">DEX Screener</option><option value="gecko">GeckoTerminal</option><option value="goplus">GoPlus</option><option value="worker">Cloudflare Worker</option></select></label><label>Batas permintaan / hari<input id="api-budget-limit" type="number" inputmode="numeric" min="1" max="100000000" placeholder="Belum diatur"></label><label>Peringatan (%)<input id="api-budget-alert" type="number" min="50" max="99" value="80" required></label><button id="api-budget-save" class="primary-button" type="submit">Simpan batas</button></form><p id="api-budget-status" class="api-budget-status" role="status" aria-live="polite"></p></details>
+          <div class="api-log-heading"><h3>Log permintaan terbaru</h3><button id="api-export" class="secondary-button" type="button" disabled>Unduh CSV</button></div><div class="api-log-filters"><label>Provider<select id="api-log-provider"><option value="">Semua provider</option><option value="helius">Helius</option><option value="alchemy">Alchemy</option><option value="solana-rpc">RPC Solana</option><option value="dexscreener">DEX Screener</option><option value="gecko">GeckoTerminal</option><option value="goplus">GoPlus</option><option value="worker">Cloudflare Worker</option></select></label><label><input id="api-log-errors" type="checkbox">Hanya gagal</label></div>
+          <div class="api-table-scroll"><table><caption>Log server dan laporan browser · tanpa API key atau alamat wallet</caption><thead><tr><th scope="col">Waktu</th><th scope="col">Provider</th><th scope="col">Jaringan</th><th scope="col">Metode</th><th scope="col">Status</th><th scope="col">Durasi</th><th scope="col">Sumber</th></tr></thead><tbody id="api-log-table"></tbody></table><p id="api-log-empty" class="api-log-empty">Belum ada log pada filter ini.</p></div><div class="api-log-footer"><span id="api-log-count"></span><button id="api-log-more" class="secondary-button" type="button" hidden>Muat log sebelumnya</button></div>
+          <p id="api-last-update" class="api-monitor-footnote"></p><p class="api-monitor-footnote">Panel diperbarui setiap 60 detik selama superadmin membuka aplikasi pada tab aktif. Log server mencatat panggilan RPC nyata; data API publik berasal dari laporan browser dan dapat tidak lengkap. HTTP 429 berarti pembatasan permintaan, bukan bukti kuota bulanan habis. Penggunaan di luar Easykripto, credit/CU provider, dan quota tagihan akun belum terhubung. Lihat pemakaian resmi di <a href="https://dashboard.helius.dev/" target="_blank" rel="noopener noreferrer">Helius</a>, <a href="https://dashboard.alchemy.com/" target="_blank" rel="noopener noreferrer">Alchemy</a>, atau <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a>.</p>
+        </section>
         <section class="panel admin-records">
           <div class="admin-toolbar"><div class="segmented" role="tablist" aria-label="Jenis data"><button id="admin-tab-visits" role="tab" aria-selected="true" aria-controls="admin-record-list" class="active" type="button">Pengunjung</button><button id="admin-tab-accounts" role="tab" aria-selected="false" aria-controls="admin-record-list" type="button">Akun terdaftar</button></div><span id="admin-page-label">Halaman 1</span></div>
           <div class="admin-filters"><label class="admin-search"><span>Cari di halaman ini</span><input id="admin-search" type="search" placeholder="Cari halaman atau perangkat" autocomplete="off"></label><label><span id="admin-filter-label">Periode kunjungan</span><select id="admin-filter"><option value="all">Semua waktu</option><option value="today">Hari ini</option><option value="week">7 hari terakhir</option></select></label></div>
@@ -132,6 +149,20 @@
   </div>
 
   <nav class="bottom-nav" aria-label="Navigasi handphone"></nav>
+  <dialog id="notification-dialog" aria-labelledby="notification-title" aria-describedby="notification-storage-note">
+    <header class="notification-header"><div><h2 id="notification-title">Notifikasi</h2><p id="notification-summary" role="status" aria-live="polite">Semua sudah dibaca</p></div><button id="notification-close" class="icon-button" type="button" aria-label="Tutup notifikasi"><span data-icon="close"></span></button></header>
+    <div class="notification-tools"><button id="notification-read-all" type="button">Tandai semua dibaca</button><button id="notification-clear-read" type="button">Hapus yang dibaca</button></div>
+    <div class="notification-filters" role="group" aria-label="Filter notifikasi"><button type="button" data-notice-filter="all" aria-pressed="true">Semua</button><button type="button" data-notice-filter="unread" aria-pressed="false">Belum dibaca</button><button type="button" data-notice-filter="activity" aria-pressed="false">Aktivitas</button><button type="button" data-notice-filter="system" aria-pressed="false">Sistem</button></div>
+    <div id="notification-list" class="notification-list" tabindex="-1"></div>
+    <footer class="notification-footer"><p id="notification-monitor-status" class="notification-monitor"></p><details class="notification-preferences"><summary>Preferensi notifikasi</summary>
+      <label><span>Aktivitas wallet<small>Transfer baru pada sampel wallet dengan lonceng aktif</small></span><input type="checkbox" data-notice-preference="activity" checked></label>
+      <label><span>Pantauan<small>Penambahan aset dan perubahan lonceng</small></span><input type="checkbox" data-notice-preference="watch" checked></label>
+      <label><span>Sistem dan analisis<small>Koneksi, sinkronisasi, dan kegagalan sumber data</small></span><input type="checkbox" data-notice-preference="system" checked></label>
+      <label id="notification-api-preference" hidden><span>Penggunaan API<small>Peringatan pemantauan khusus superadmin</small></span><input type="checkbox" data-notice-preference="api" checked></label>
+      <label><span>Notifikasi browser<small id="notification-permission-status">Belum meminta izin browser</small></span><input id="notification-browser-switch" type="checkbox" data-notice-preference="browser"></label>
+      <p class="notification-footnote">Pemantauan berjalan saat aplikasi terbuka dan tab terlihat; cache analisis 2 menit. Belum mendukung push ketika aplikasi ditutup. Dukungan notifikasi perangkat bergantung browser.</p>
+    </details><p id="notification-storage-note" class="notification-footnote">Riwayat 30 hari, maksimal 100 notifikasi per akun di perangkat ini. Tidak disinkronkan antarperangkat.</p></footer>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="sheet-handle"></div><div class="dialog-top"><span class="eyebrow" id="dialog-eyebrow">DETAIL</span><button class="icon-button" data-action="close-dialog" aria-label="Tutup panel"><span data-icon="close"></span></button></div><div id="dialog-content"></div></dialog>
 

@@ -13,7 +13,7 @@ async function publicKeys(){
   })();
   try{await refreshing;}finally{refreshing=null;}
 }
-export async function firebaseIdentity(token){
+export async function firebaseClaims(token){
   if(!token||token.length>12000)throw new DataError('Masuk dengan Google untuk menganalisis wallet.',401);
   try{
     const parts=token.split('.');if(parts.length!==3)throw new Error();
@@ -28,6 +28,7 @@ export async function firebaseIdentity(token){
     const payload=JSON.parse(new TextDecoder().decode(decode(parts[1]))),now=Math.floor(Date.now()/1000);
     if(payload.aud!==projectId||payload.iss!==`https://securetoken.google.com/${projectId}`||typeof payload.sub!=='string'||!payload.sub||payload.sub.length>128||payload.email_verified!==true)throw new Error();
     if(!Number.isFinite(payload.exp)||payload.exp<=now||!Number.isFinite(payload.iat)||payload.iat>now+30||payload.exp>payload.iat+3900||!Number.isFinite(payload.auth_time)||payload.auth_time>now+30)throw new Error();
-    return payload.sub;
+    return payload;
   }catch(error){if(error instanceof DataError)throw error;throw new DataError('Sesi tidak dapat diverifikasi. Keluar lalu masuk kembali.',401);}
 }
+export async function firebaseIdentity(token){return (await firebaseClaims(token)).sub;}

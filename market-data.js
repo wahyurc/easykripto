@@ -15,7 +15,7 @@
       const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},slot-Date.now());signal?.addEventListener('abort',abort,{once:true});
     });
     const timeout=AbortSignal.timeout(12000);
-    const response=await fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
+    const response=await window.EasyAPILog.fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
     if(response.status===429)throw new Error('Kuota penyedia sedang dibatasi. Coba lagi beberapa saat lagi.');
     if(!response.ok)throw new Error('Sumber data belum tersedia untuk token ini.');
     const data=await response.json();if(cache.size>150)cache.clear();cache.set(url,{data,fetchedAt:Date.now(),until:Date.now()+120000});return data;

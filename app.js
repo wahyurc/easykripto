@@ -37,7 +37,7 @@ let canSuperadmin = false;
 const getWallet = id => state.wallets.find(w=>w.id===id);
 const age = m => m<60?`${m} mnt`:m<1440?`${Math.floor(m/60)} jam`:`${Math.floor(m/1440)} hari`;
 let toastTimer;
-function toast(text){ $('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4000); }
+function toast(text){if(window.EasyNotifications){window.EasyNotifications.toast(text);return;} $('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4000); }
 
 const map = document.createElement('section');map.id='interactive-map';map.className='panel';map.append($('#map-template').content.cloneNode(true));
 $('#overview-map-slot').className='';$('#overview-map-slot').append(map);
@@ -79,7 +79,7 @@ function dialog(title,content,eyebrow='DETAIL DATA'){
  if(!d.open){d.showModal();document.body.style.overflow='hidden';}
 }
 function closeDialog(){$('#detail-dialog').close();}
-$('#detail-dialog').addEventListener('close',()=>{document.body.style.overflow='';if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
+$('#detail-dialog').addEventListener('close',()=>{document.body.style.overflow=$('#notification-dialog')?.open?'hidden':'';if(returnFocus?.isConnected&&!$('#notification-dialog')?.open)returnFocus.focus({preventScroll:true});});
 $('#detail-dialog').addEventListener('click',e=>{if(e.target!==e.currentTarget)return;const b=e.currentTarget.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)closeDialog();});
 function showToken(id){window.EasyDashboard?.openToken(id);}
 function showWallet(id){

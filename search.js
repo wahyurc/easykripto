@@ -109,7 +109,7 @@
       let data=cachedPairs;
       if(!data){
         const endpoint=chain?`https://api.dexscreener.com/token-pairs/v1/${chain}/${encodeURIComponent(ca)}`:`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(ca)}`;
-        const response=await fetch(endpoint,{signal:current.signal,credentials:'omit'});
+        const response=await window.EasyAPILog.fetch(endpoint,{signal:current.signal,credentials:'omit'});
         if(response.status===429)throw new Error('Pencarian dibatasi penyedia data. Tunggu sebentar lalu coba lagi.');
         if(!response.ok)throw new Error('Data token belum dapat dimuat. Coba beberapa saat lagi.');
         data=await response.json();

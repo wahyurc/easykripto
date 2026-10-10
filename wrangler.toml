@@ -3,6 +3,14 @@ main = "api-worker.mjs"
 compatibility_date = "2026-10-10"
 workers_dev = true
 
+[[d1_databases]]
+binding = "API_LOGS"
+database_name = "easykripto-api-monitor"
+database_id = "25c386e9-0b1e-49bc-a07b-7bd06eb6fd10"
+
+[triggers]
+crons = ["17 * * * *"]
+
 [vars]
 API_ALLOWED_ORIGINS = "https://wahyurc.github.io,http://localhost:4173"
 

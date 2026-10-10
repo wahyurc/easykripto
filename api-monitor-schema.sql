@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS api_events (
+  id TEXT PRIMARY KEY,
+  at INTEGER NOT NULL,
+  provider TEXT NOT NULL,
+  method TEXT NOT NULL,
+  chain TEXT NOT NULL,
+  status INTEGER NOT NULL,
+  ok INTEGER NOT NULL,
+  duration INTEGER NOT NULL,
+  source TEXT NOT NULL,
+  cached INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS api_events_at ON api_events(at DESC, id DESC);
+CREATE TABLE IF NOT EXISTS api_hourly (
+  hour INTEGER NOT NULL,
+  provider TEXT NOT NULL,
+  source TEXT NOT NULL,
+  requests INTEGER NOT NULL DEFAULT 0,
+  errors INTEGER NOT NULL DEFAULT 0,
+  limited INTEGER NOT NULL DEFAULT 0,
+  duration INTEGER NOT NULL DEFAULT 0,
+  cached INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(hour, provider, source)
+);
+CREATE TABLE IF NOT EXISTS api_budgets (
+  provider TEXT PRIMARY KEY,
+  daily_limit INTEGER,
+  alert_percent INTEGER NOT NULL DEFAULT 80,
+  updated_at INTEGER NOT NULL
+);
