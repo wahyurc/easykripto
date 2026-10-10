@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: easykripto
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: pnpm install --frozen-lockfile
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: NODE_ENV
+        value: production
+      - key: GOOGLE_CLIENT_ID
+        value: 827707517945-hq8ha74rjjrs2l4iso6b0mabsdoh5r3q.apps.googleusercontent.com

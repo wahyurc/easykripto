@@ -9,14 +9,21 @@ const random = () => randomBytes(32).toString('base64url');
 const cookies = request => Object.fromEntries((request.headers.cookie || '').split(';').map(s=>s.trim().split('=')).filter(p=>p.length===2));
 function equal(a,b){return typeof a==='string'&&typeof b==='string'&&Buffer.byteLength(a)===Buffer.byteLength(b)&&timingSafeEqual(Buffer.from(a),Buffer.from(b));}
 function reply(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));}
-function cookie(name,value,maxAge){return `${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`;}
+export function getAppOrigin(){
+ const configured=process.env.APP_ORIGIN||process.env.RENDER_EXTERNAL_URL||`http://localhost:${process.env.PORT||4173}`;
+ const url=new URL(configured);
+ if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.pathname!=='/'||url.search||url.hash)throw new Error('APP_ORIGIN harus berupa origin HTTP atau HTTPS tanpa path.');
+ if(process.env.RENDER==='true'&&url.protocol!=='https:')throw new Error('APP_ORIGIN di Render harus menggunakan HTTPS.');
+ return url.origin;
+}
+function cookie(name,value,maxAge){return `${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${getAppOrigin().startsWith('https://')?'; Secure':''}`;}
 async function body(req){let text='';for await(const chunk of req){text+=chunk;if(Buffer.byteLength(text)>16384)throw new Error('BODY_TOO_LARGE');}return JSON.parse(text);}
 
 export async function handleAuth(req,res,pathname){
  if(!pathname.startsWith('/api/auth/'))return false;
  const now=Date.now();for(const [id,s] of sessions)if(s.expires<=now)sessions.delete(id);for(const [id,s] of challenges)if(s.expires<=now)challenges.delete(id);
  const jar=cookies(req),clientId=process.env.GOOGLE_CLIENT_ID||'';
- const origin=process.env.APP_ORIGIN||`http://localhost:${process.env.PORT||4173}`;
+ const origin=getAppOrigin();
  if(req.method==='GET'&&pathname==='/api/auth/session'){
   reply(res,200,{user:sessions.get(jar.ek_session)?.user||null});return true;
  }

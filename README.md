@@ -4,6 +4,25 @@ Antarmuka analisis wallet berbahasa Indonesia yang mengutamakan handphone.
 
 Pasang dependensi dengan `npm install`, jalankan `npm run dev`, lalu buka http://localhost:4173.
 
+## Hosting Render Free
+
+[Deploy Easykripto ke Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fwahyurc%2Feasykripto)
+
+1. Login ke Render dan hubungkan repositori `wahyurc/easykripto`.
+2. Gunakan Blueprint `render.yaml` di branch `main`. Periksa bahwa layanan memakai paket **Free** sebelum deployment.
+3. Konfigurasi sudah mencakup Node.js 24, pemasangan dependensi, server HTTP, health check, dan Google Client ID publik.
+4. Setelah layanan berstatus Live, salin URL HTTPS yang diberikan Render.
+5. Di Google Cloud, buka OAuth Client ID aplikasi, lalu tambahkan origin URL Render pada **Authorized JavaScript origins**, tanpa path atau garis miring terakhir. Pertahankan origin localhost bila masih digunakan.
+6. Buka URL Render dan masuk dengan Google. Untuk alur Google Identity Services ini tidak perlu client secret atau redirect URI baru.
+
+Server memakai `RENDER_EXTERNAL_URL` sebagai origin login dan mengaktifkan cookie Secure otomatis. Jangan menyalin `APP_ORIGIN=http://localhost:4173` ke Render. Untuk domain kustom, set `APP_ORIGIN` ke origin HTTPS domain dan daftarkan origin yang sama di Google Cloud.
+
+GitHub menyimpan kode, sedangkan frontend dan API login dijalankan bersama pada URL Render. GitHub Pages belum memiliki server login.
+
+Paket Free dapat tidur setelah 15 menit tanpa aktivitas; kunjungan berikutnya bisa menunggu sekitar satu menit. Sesi masih tersimpan di memori sehingga restart atau deployment ulang mengharuskan login ulang. Data pantauan lokal tetap bergantung pada browser dan origin: data dari localhost atau GitHub Pages tidak otomatis berpindah ke alamat Render.
+
+Referensi: [Render Blueprint](https://render.com/docs/blueprint-spec), [batas layanan gratis](https://render.com/docs/free), [konfigurasi Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid).
+
 ## Login Google
 
 1. Buat OAuth Client ID bertipe Web application di Google Cloud dan siapkan consent screen.

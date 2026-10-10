@@ -23,6 +23,11 @@
     } else document.title = 'Masuk — Easykripto';
   }
   async function initializeLogin() {
+    if (location.hostname.endsWith('.github.io')) {
+      showUser(null);
+      status.textContent = 'Login belum tersedia di alamat ini. Buka alamat Easykripto yang diberikan pengelola untuk masuk.';
+      return;
+    }
     try {
       const current = await api('/api/auth/session');
       if (current.user) { showUser(current.user); return; }
