@@ -38,11 +38,31 @@
     if (user) {
       document.title = dashboardTitle;
       const avatar = document.querySelector('.avatar-button');
-      avatar.textContent = user.name.split(/\s+/).slice(0,2).map(n=>n[0]).join('').toUpperCase();
+      const initials = user.name.trim().split(/\s+/).slice(0,2).map(n=>n[0] || '').join('').toUpperCase() || 'EK';
+      avatar.textContent = initials;
+      if (user.photoURL) {
+        try {
+          const photoUrl = new URL(user.photoURL);
+          if (photoUrl.protocol === 'https:') {
+            const picture = document.createElement('img');
+            picture.alt = '';
+            picture.decoding = 'async';
+            picture.referrerPolicy = 'no-referrer';
+            picture.addEventListener('error', () => {
+              if (avatar.contains(picture)) avatar.textContent = initials;
+            }, {once:true});
+            picture.src = photoUrl.href;
+            avatar.replaceChildren(picture);
+          }
+        } catch {}
+      }
       avatar.setAttribute('aria-label', `Akun ${user.name}`);
       window.dispatchEvent(new Event('resize'));
     } else {
       document.title = 'Masuk — Easykripto';
+      const avatar = document.querySelector('.avatar-button');
+      avatar.textContent = 'EK';
+      avatar.setAttribute('aria-label', 'Pengaturan tampilan');
       document.querySelector('dialog[open]')?.close();
     }
   }
@@ -58,7 +78,7 @@
       auth.languageCode = 'id';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
       sdk.onAuthStateChanged(auth, user => {
-        showUser(user ? {id:user.uid, name:user.displayName || user.email || 'Pengguna', email:user.email || ''} : null);
+        showUser(user ? {id:user.uid, name:user.displayName || user.email || 'Pengguna', email:user.email || '', photoURL:user.providerData.find(provider => provider.providerId === 'google.com')?.photoURL || user.photoURL || ''} : null);
         status.textContent = user ? '' : 'Pilih akun Google untuk melanjutkan.';
         placeholder.disabled = loginBusy;
       }, error => {
