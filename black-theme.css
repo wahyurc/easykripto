@@ -1,6 +1,7 @@
 :root{--bg:#000;--panel:#050505;--panel2:#111;--line:#252525;--text:#f5f5f5;--muted:#939393;--accent:#19c79e;--teal:#19c79e;--red:#ef737d;--violet:#aca1ee}
 .token-trade-link,.token-detail-link{display:flex;justify-content:center;align-items:center;gap:8px;min-height:48px;text-decoration:none}
 .token-provider-logo{width:24px;height:24px;flex-shrink:0;object-fit:contain;border-radius:5px;background:#000}
+.page-footer .footer-author{color:var(--accent);text-decoration:underline;text-underline-offset:3px}.page-footer .footer-author:hover{color:#fff}
 html,body,.app-shell,main,.sidebar,.topbar,.bottom-nav,.login-screen,.login-art,.login-main{background:#000;color:var(--text)}
 .sidebar,.topbar,.bottom-nav,.sidebar-bottom,.wallet-card-footer,.token-card-bottom,.activity-row,.map-list,.map-stage,.admin-pagination,.holder-list,.holder-row,.data-table-scroll th,.data-table-scroll td{border-color:var(--line)}
 .login-art:before{background-image:radial-gradient(#ffffff18 .8px,transparent .8px)}
