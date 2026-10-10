@@ -34,7 +34,7 @@ try{
     ...['HELIUS_API_KEY','ALCHEMY_API_KEY'].map(name=>({type:'secret_text',name,text:process.env[name].trim()}))];
   const form=new FormData();
   form.append('metadata',new Blob([JSON.stringify({main_module:'api-worker.mjs',compatibility_date:'2026-10-10',bindings})],{type:'application/json'}));
-  for(const file of ['api-worker.mjs','analytics-api.mjs','firebase-token.mjs','chain-data.mjs','api-monitor.mjs','app-check.mjs']){
+  for(const file of ['api-worker.mjs','analytics-api.mjs','firebase-token.mjs','chain-data.mjs','api-monitor.mjs','app-check.mjs','registration-access.mjs']){
     form.append(file,new Blob([readFileSync(file)],{type:'application/javascript+module'}),file);
   }
   await api(`${root}/scripts/${workerName}`,{method:'PUT',body:form});

@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '3d5bc5c431ce7767';
+const RELEASE = '05b5547f9459c55d';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261010-security",
@@ -9,11 +9,11 @@ const SHELL = [
   "api-monitor-ui.js?v=20261010-security",
   "api-telemetry.js?v=20261010-security",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261010-notifications",
-  "auth.js?v=20261010-security",
+  "app.js?v=20261011-registration",
+  "auth.js?v=20261011-registration",
   "black-theme.css?v=20261010-provider-logos",
-  "dashboard-data.js?v=20261010-notifications",
-  "data-client.js?v=20261010-security",
+  "dashboard-data.js?v=20261011-registration",
+  "data-client.js?v=20261011-registration",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
   "icons/apple-touch-icon.png",
@@ -33,6 +33,9 @@ const SHELL = [
   "offline.js",
   "pwa.css?v=20261010-pwa",
   "pwa.js?v=20261010-pwa",
+  "registration-admin.js?v=20261011-registration",
+  "registration.css?v=20261011-registration",
+  "registration.js?v=20261011-registration",
   "search.js?v=20261010-api-monitor",
   "styles.css?v=20261010-superadmin",
   "token-ui.js?v=20261010-token-holders",

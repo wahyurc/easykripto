@@ -18,8 +18,17 @@
   let loginBusy = false;
   let authRevision = 0;
   let loginInitializing = false;
+  window.EasyAuth = {
+    ready:()=>!!auth&&!!authSdk,
+    emailLogin:(email,password)=>authSdk.signInWithEmailAndPassword(auth,email,password),
+    async register(email,password,name){const result=await authSdk.createUserWithEmailAndPassword(auth,email,password);await authSdk.updateProfile(result.user,{displayName:name});return result.user;},
+    verifyEmail:()=>authSdk.sendEmailVerification(auth.currentUser,{url:new URL('./',document.querySelector('link[rel="manifest"]').href).href}),
+    resetPassword:email=>authSdk.sendPasswordResetEmail(auth,email,{url:new URL('./',document.querySelector('link[rel="manifest"]').href).href}),
+    async refreshUser(){if(!auth?.currentUser)return;await authSdk.reload(auth.currentUser);await auth.currentUser.getIdToken(true);},
+    logout:()=>authSdk.signOut(auth)
+  };
   window.easykriptoIdToken = async () => {
-    if(!auth?.currentUser)throw new Error('Masuk dengan Google untuk melanjutkan.');
+    if(!auth?.currentUser||!profile)throw new Error('Masuk ke akun yang sudah disetujui untuk melanjutkan.');
     return auth.currentUser.getIdToken();
   };
   function loginError(error) {
@@ -97,9 +106,10 @@
           } catch {}
         }
         if (revision !== authRevision) return;
-        showUser(account);
-        status.textContent = user ? '' : 'Pilih akun Google untuk melanjutkan.';
+        void window.EasyRegistration.watch(user,account,showUser);
+        status.textContent = user ? '' : 'Masuk dengan Google atau email untuk melanjutkan.';
         placeholder.disabled = loginBusy || !navigator.onLine;
+        window.EasyRegistration.ready();
       }, error => {
         showUser(null);
         placeholder.disabled = true;

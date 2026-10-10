@@ -61,7 +61,7 @@ export async function handleAPIMonitor(req,res,pathname,env){
   if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type, X-Firebase-AppCheck');res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.writeHead(204);res.end();return true;}
   try{
     await requireAppCheck(req,env);
-    const claims=await firebaseClaims(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]);
+    const claims=await firebaseClaims(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1],req.headers['x-firebase-appcheck']);
     const telemetry=pathname==='/api/monitor/events';
     if(!telemetry&&(claims.role!=='superadmin'||claims.superadmin!==true))throw new DataError('Khusus superadmin.',403);
     if(!env.API_LOGS)throw new DataError('Penyimpanan log API belum tersedia. Pengelola perlu mengaktifkan Cloudflare D1.',503);

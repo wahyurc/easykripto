@@ -5,7 +5,30 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email_verified == true && request.auth.token.get('superadmin', false) == true && request.auth.token.get('role', '') == 'superadmin';
     }
     function owner(uid) {
-      return request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true;
+      return request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true && approvedAccess(uid);
+    }
+    function approvedAccess(uid) {
+      return superadmin() || (exists(/databases/$(database)/documents/registrations/$(uid))
+        ? get(/databases/$(database)/documents/registrations/$(uid)).data.status == 'approved'
+        : request.auth.token.firebase.sign_in_provider == 'google.com');
+    }
+    match /registrations/{uid} {
+      allow get: if superadmin() || (request.auth != null && request.auth.uid == uid);
+      allow list: if superadmin();
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider == 'password'
+        && request.resource.data.keys().hasAll(['uid','name','email','status','createdAt'])
+        && request.resource.data.keys().hasOnly(['uid','name','email','status','createdAt'])
+        && request.resource.data.uid == uid && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 150
+        && request.resource.data.status == 'pending' && request.resource.data.createdAt == request.time;
+      allow update: if superadmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt','reviewedBy','reason'])
+        && request.resource.data.status in ['approved','rejected']
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reason is string && request.resource.data.reason.size() <= 300;
+      allow delete: if false;
     }
     function validAccount(uid) {
       let d = request.resource.data;

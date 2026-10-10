@@ -39,7 +39,7 @@
   function persist(){
     if(!user)return;
     const value=watch(),uid=user.id,version=epoch;save(localKey(),{...value,pending:true,baseline:syncedWatch});
-    syncMessage='Menyimpan pantauan ke akun Google…';renderAll();
+    syncMessage='Menyimpan pantauan ke akun Easykripto…';renderAll();
     syncQueue=syncQueue.catch(()=>{}).then(async()=>{
       if(version!==epoch)return;
       if(!navigator.onLine)throw new Error('Perangkat sedang offline');
@@ -56,8 +56,8 @@
         for(const id of existing.keys())if(!wanted.has(id)){batch.delete(sdk.doc(db,'accounts',uid,kind,id));changes++;if(changes>=400)await flush();}
       }
       await flush();
-      if(version===epoch){syncedWatch=value;const current=watch(),pending=JSON.stringify(current)!==JSON.stringify(value);save(localKey(),{...current,pending,baseline:value});syncMessage=pending?'Menyimpan perubahan berikutnya…':'Pantauan tersinkron ke akun Google.';if(syncFailed&&!pending){syncFailed=false;notice({category:'system',level:'success',title:'Pantauan kembali tersinkron',message:'Perubahan pantauan sudah tersimpan pada akun Google.',key:'sync-recovered',action:{type:'route',route:'pantauan'}});}renderAll();}
-    }).catch(()=>{if(version===epoch){syncFailed=true;syncMessage='Belum tersinkron. Salinan akun tersedia pada perangkat ini.';renderAll();notice({category:'system',level:'warning',title:'Pantauan belum tersinkron',message:'Perubahan masih tersimpan pada perangkat ini. Periksa koneksi, lalu sinkronkan ulang agar tersimpan pada akun Google.',key:'sync-failed',action:{type:'sync'}});}});
+      if(version===epoch){syncedWatch=value;const current=watch(),pending=JSON.stringify(current)!==JSON.stringify(value);save(localKey(),{...current,pending,baseline:value});syncMessage=pending?'Menyimpan perubahan berikutnya…':'Pantauan tersinkron ke akun Easykripto.';if(syncFailed&&!pending){syncFailed=false;notice({category:'system',level:'success',title:'Pantauan kembali tersinkron',message:'Perubahan pantauan sudah tersimpan pada akun Easykripto.',key:'sync-recovered',action:{type:'route',route:'pantauan'}});}renderAll();}
+    }).catch(()=>{if(version===epoch){syncFailed=true;syncMessage='Belum tersinkron. Salinan akun tersedia pada perangkat ini.';renderAll();notice({category:'system',level:'warning',title:'Pantauan belum tersinkron',message:'Perubahan masih tersimpan pada perangkat ini. Periksa koneksi, lalu sinkronkan ulang agar tersimpan pada akun Easykripto.',key:'sync-failed',action:{type:'sync'}});}});
   }
   function rebuildEvents(){
     const watched=new Set(state.wallets.map(w=>key(w.chain,w.address))),unique=new Map();
@@ -226,7 +226,7 @@
         applyWatch(merged);ready=true;persist();
       }
       else if(!remote.wallets.length&&!remote.tokens.length&&(local.wallets.length||local.tokens.length)){ready=true;persist();}
-      else{applyWatch(remote);save(localKey(),watch());syncMessage='Pantauan tersinkron ke akun Google.';}
+      else{applyWatch(remote);save(localKey(),watch());syncMessage='Pantauan tersinkron ke akun Easykripto.';}
     }catch{if(version!==epoch)return;syncFailed=true;syncedWatch={wallets:normalize(cached.baseline?.wallets,'wallets'),tokens:normalize(cached.baseline?.tokens,'tokens')};syncMessage='Sinkronisasi belum tersedia. Menggunakan salinan akun pada perangkat ini.';notice({category:'system',level:'warning',title:'Pantauan cloud belum dapat dimuat',message:'Aplikasi menggunakan salinan akun pada perangkat ini. Sinkronkan ulang saat koneksi dan layanan tersedia.',key:'sync-load-failed',action:{type:'sync'}});}
     if(version!==epoch)return;ready=true;renderAll();schedule();
     void refreshTokens();const first=availableWallets()[0];if(first)void refreshWallet(first.id,true);

@@ -12,7 +12,7 @@
   });
   window.EasyData={
     async analyze({chain,address,kind='wallet',signal,onWait}){
-      if(!session)throw new Error('Masuk dengan Google terlebih dahulu.');
+      if(!session)throw new Error('Masuk ke akun terlebih dahulu.');
       if(!blockchainNetworks.some(n=>n.id===chain)||!validChainAddress(address,chain))throw new Error('Alamat tidak sesuai jaringan.');
       if(kind==='holders'&&chain!=='solana')throw new Error('Data holder saat ini tersedia untuk Solana.');
       const key=`${chain}:${kind}:${chain==='solana'?address:address.toLowerCase()}`;

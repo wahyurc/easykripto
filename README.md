@@ -1,5 +1,19 @@
 # Easykripto frontend
 
+## Pendaftaran email dan persetujuan manual
+
+Halaman login menyediakan tab **Masuk** dan **Daftar baru** dengan email/kata sandi. Kata sandi dikirim ke Firebase Authentication melalui SDK; tidak disimpan dalam Firestore, localStorage, maupun log aplikasi. Tersedia tombol melihat kata sandi, konfirmasi kata sandi, pemulihan kata sandi, kirim ulang email verifikasi, dan pemeriksaan status.
+
+Alur akun email: buat akun → dokumen `registrations/{uid}` berstatus `pending` → konfirmasi alamat email → persetujuan superadmin → akses dashboard. Pengguna dapat melihat status miliknya sebelum email terverifikasi. Akun email yang belum memiliki dokumen persetujuan tetap ditolak. Jika permintaan penyimpanan awal gagal, login/pemeriksaan status mencoba membuat pengajuan yang belum ada tanpa membuat akun baru.
+
+Superadmin membuka **Dashboard superadmin → Persetujuan pendaftaran**, memilih Menunggu/Disetujui/Ditolak/Semua, lalu meninjau pendaftaran. Persetujuan dan penolakan membutuhkan konfirmasi; alasan penolakan wajib pada antarmuka. Nama/email/UID/tanggal pendaftaran tidak dapat diubah dalam keputusan. Dokumen mencatat keputusan terakhir, alasan, waktu server, dan UID peninjau. Persetujuan dapat dicabut atau penolakan diubah menjadi persetujuan. Daftar dimuat per 25 dokumen; kategori status memakai urutan dokumen bawaan, sementara Semua memakai tanggal pendaftaran terbaru. Belum ada email otomatis untuk keputusan admin; pengguna melihat perubahan saat aplikasi aktif atau memeriksa status.
+
+Rules menolak perubahan status oleh pengguna biasa dan akses pantauan sebelum email terkonfirmasi serta status approved. Endpoint API memeriksa dokumen persetujuan menggunakan ID token pengguna pada setiap verifikasi sesi, sebelum menggunakan cache analisis. Status tidak disalin ke token sehingga keputusan baru tidak menunggu token kedaluwarsa. App Check token diteruskan pada permintaan tersebut jika tersedia. Kegagalan verifikasi status menutup akses. Backend superadmin tetap membutuhkan dua custom claims dan email terverifikasi.
+
+Akun Google tanpa pengajuan email tetap dapat masuk seperti sebelumnya. Pengajuan yang sudah ada pada UID yang sama tetap harus disetujui meski pengguna masuk dengan Google. Tidak ada peninjauan manual baru terhadap semua akun Google. Pengelola dapat mengaktifkan provider email/password dengan `node scripts/enable-email-auth.mjs`; skrip hanya mengubah dua field konfigurasi provider dan tidak mengaktifkan billing atau Identity Platform upgrade.
+
+Pemeriksaan regresi API tersedia pada `scripts/check-registration-access.mjs`. Delapan skenario logika persetujuan menggunakan respons tiruan. Bagian pengujian Rules memakai API test Firebase dengan mock resource; kredensial yang digunakan saat implementasi ditolak karena IAM_PERMISSION_DENIED. Karena itu pengujian Rules otomatis dan alur inbox pengguna belum dikonfirmasi. Skrip tidak membuat akun pengguna atau mengirim email pengujian.
+
 Antarmuka analisis wallet berbahasa Indonesia yang mengutamakan handphone.
 
 Pasang dependensi dengan `npm install`, jalankan `npm run dev`, lalu buka http://localhost:4173.

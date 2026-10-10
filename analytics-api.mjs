@@ -24,7 +24,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
   const started=Date.now(),observed=[];let uid=null,requestChain='auto',requestKind='wallet',cached=false,responseStatus=200;
   try{
     await requireAppCheck(req,env);
-    uid=await firebaseIdentity(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]);
+    uid=await firebaseIdentity(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1],req.headers['x-firebase-appcheck']);
     const now=Date.now();for(const [key,value]of limits)if(value.until<now)limits.delete(key);
     const limit=limits.get(uid)||{used:0,until:now+60000};
     if(limit.used>=4||limits.size>=10000)throw new DataError('Maksimal 4 analisis per menit. Tunggu sebentar.',429);
