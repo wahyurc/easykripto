@@ -28,6 +28,7 @@ const events = [];
 const state = {route:'ringkasan',mode:'token',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
 const routes = [
  {id:'ringkasan',label:'Ringkasan',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
+ {id:'bestcoin',label:'Best Coin',icon:'spark',title:'Saring peluang. <span>Baca datanya.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
  {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Lihat transfer masuk, keluar, dan hubungan antarwallet.'},
