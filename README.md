@@ -4,36 +4,25 @@ Antarmuka analisis wallet berbahasa Indonesia yang mengutamakan handphone.
 
 Pasang dependensi dengan `npm install`, jalankan `npm run dev`, lalu buka http://localhost:4173.
 
-## Hosting Render Free
+## GitHub Pages dan login Google melalui Firebase
 
-[Deploy Easykripto ke Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fwahyurc%2Feasykripto)
+Aplikasi publik: https://wahyurc.github.io/easykripto/
 
-1. Login ke Render dan hubungkan repositori `wahyurc/easykripto`.
-2. Gunakan Blueprint `render.yaml` di branch `main`. Periksa bahwa layanan memakai paket **Free** sebelum deployment.
-3. Konfigurasi sudah mencakup Node.js 24, pemasangan dependensi, server HTTP, health check, dan Google Client ID publik.
-4. Setelah layanan berstatus Live, salin URL HTTPS yang diberikan Render.
-5. Di Google Cloud, buka OAuth Client ID aplikasi, lalu tambahkan origin URL Render pada **Authorized JavaScript origins**, tanpa path atau garis miring terakhir. Pertahankan origin localhost bila masih digunakan.
-6. Buka URL Render dan masuk dengan Google. Untuk alur Google Identity Services ini tidak perlu client secret atau redirect URI baru.
+1. Gunakan proyek Firebase `easykripto-40e96` pada paket Spark.
+2. Aktifkan **Authentication → Sign-in method → Google**, pilih email dukungan, lalu simpan.
+3. Di **Authentication → Settings → Authorized domains**, daftarkan `wahyurc.github.io` dan `localhost`.
+4. Konfigurasi Web Firebase berada pada `auth.js`. Konfigurasi ini bersifat publik; jangan menambahkan service account atau client secret.
+5. Buka aplikasi dan ketuk **Masuk dengan Google**. Izinkan popup untuk situs jika browser memblokir jendela Google.
 
-Server memakai `RENDER_EXTERNAL_URL` sebagai origin login dan mengaktifkan cookie Secure otomatis. Jangan menyalin `APP_ORIGIN=http://localhost:4173` ke Render. Untuk domain kustom, set `APP_ORIGIN` ke origin HTTPS domain dan daftarkan origin yang sama di Google Cloud.
+SDK Firebase App dan Authentication versi 13.0.0 dimuat dari CDN resmi Google. Firebase menangani verifikasi akun serta pemulihan sesi browser. Dashboard ditampilkan berdasarkan `onAuthStateChanged`, dan tombol Keluar memakai `signOut`.
 
-GitHub menyimpan kode, sedangkan frontend dan API login dijalankan bersama pada URL Render. GitHub Pages belum memiliki server login.
+Alur memakai popup agar login tidak bergantung pada penyimpanan lintas domain dari redirect di GitHub Pages. Halaman tetap menjadi login sampai Firebase mengonfirmasi sesi pengguna.
 
-Paket Free dapat tidur setelah 15 menit tanpa aktivitas; kunjungan berikutnya bisa menunggu sekitar satu menit. Sesi masih tersimpan di memori sehingga restart atau deployment ulang mengharuskan login ulang. Data pantauan lokal tetap bergantung pada browser dan origin: data dari localhost atau GitHub Pages tidak otomatis berpindah ke alamat Render.
+Data pantauan masih tersimpan lokal pada browser dan belum dipisahkan per akun. Login frontend tidak membatasi akses terhadap file HTML/JavaScript atau data demo publik. Backend analisis yang ditambahkan nanti perlu memverifikasi Firebase ID token untuk melindungi data akun.
 
-Referensi: [Render Blueprint](https://render.com/docs/blueprint-spec), [batas layanan gratis](https://render.com/docs/free), [konfigurasi Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid).
+Server lokal tetap dapat digunakan untuk menyajikan file. Endpoint login Google lama di `auth-server.mjs` dan konfigurasi Render masih tersedia sebagai kode sebelumnya, tetapi tidak digunakan oleh antarmuka Firebase. Hosting Render tidak diperlukan untuk login ini; jika memakai domain hosting lain, daftarkan domain tersebut di Authorized domains Firebase.
 
-## Login Google
-
-1. Buat OAuth Client ID bertipe Web application di Google Cloud dan siapkan consent screen.
-2. Tambahkan `http://localhost:4173` pada Authorized JavaScript origins.
-3. Salin `.env.example` menjadi `.env`, isi `GOOGLE_CLIENT_ID`, lalu mulai ulang server.
-4. Untuk produksi, gunakan origin HTTPS yang sesuai pada Google Cloud dan `APP_ORIGIN`.
-
-Client secret tidak diperlukan. ID token diverifikasi di server menggunakan `google-auth-library`, termasuk audience, issuer, masa berlaku, dan nonce sesi login.
-Sesi memakai cookie HttpOnly. Penyimpanan sesi masih di memori sehingga restart server mengharuskan login ulang; ganti dengan penyimpanan sesi bersama untuk deployment produksi.
-Alamat wallet tetap tersimpan lokal pada browser, belum dipisahkan menjadi data akun di backend.
-Halaman login menjadi tampilan awal; dashboard muncul setelah sesi Google diverifikasi.
+Referensi: [login Google Firebase](https://firebase.google.com/docs/auth/web/google-signin), [persistensi sesi](https://firebase.google.com/docs/auth/web/auth-state-persistence), [login dan penyimpanan lintas domain](https://firebase.google.com/docs/auth/web/redirect-best-practices).
 
 ## Fitur
 

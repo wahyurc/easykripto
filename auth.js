@@ -3,61 +3,98 @@
 (() => {
   const status = document.getElementById('login-status');
   const placeholder = document.getElementById('google-placeholder');
-  const container = document.getElementById('google-signin');
+  const dashboardTitle = document.title;
+  const firebaseConfig = {
+    apiKey: 'AIzaSyAMnFu4aNNCOFNep_xXJMklFB0bpfvP-n4',
+    authDomain: 'easykripto-40e96.firebaseapp.com',
+    projectId: 'easykripto-40e96',
+    storageBucket: 'easykripto-40e96.firebasestorage.app',
+    messagingSenderId: '625824114212',
+    appId: '1:625824114212:web:a9b63f76160432561adab1',
+    measurementId: 'G-YZR9K7BPN2'
+  };
   let profile = null;
-  async function api(path, options = {}) {
-    const response = await fetch(path, {credentials:'same-origin', ...options});
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Tidak dapat melanjutkan login.');
-    return data;
+  let auth = null;
+  let authSdk = null;
+  let loginBusy = false;
+  function loginError(error) {
+    const messages = {
+      'auth/popup-blocked': 'Popup Google diblokir. Izinkan popup untuk situs ini, lalu ketuk tombol Google lagi.',
+      'auth/popup-closed-by-user': 'Login dibatalkan. Ketuk tombol Google untuk mencoba lagi.',
+      'auth/cancelled-popup-request': 'Jendela login sudah terbuka. Lanjutkan di jendela Google.',
+      'auth/unauthorized-domain': 'Login belum tersedia untuk alamat ini. Hubungi pengelola aplikasi.',
+      'auth/operation-not-allowed': 'Login Google belum tersedia. Hubungi pengelola aplikasi.',
+      'auth/network-request-failed': 'Koneksi login terputus. Periksa koneksi internet, lalu coba lagi.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan login. Tunggu sebentar, lalu coba lagi.',
+      'auth/web-storage-unsupported': 'Browser tidak mengizinkan penyimpanan sesi. Izinkan data situs, lalu muat ulang halaman.',
+      'auth/user-disabled': 'Akun ini dinonaktifkan. Hubungi pengelola aplikasi.'
+    };
+    return messages[error?.code] || 'Login belum dapat diselesaikan. Muat ulang halaman dan coba lagi.';
   }
   function showUser(user) {
     profile = user;
     document.body.classList.toggle('signed-out', !user);
     window.dispatchEvent(new CustomEvent('easykripto-session',{detail:{signedIn:!!user}}));
     if (user) {
+      document.title = dashboardTitle;
       const avatar = document.querySelector('.avatar-button');
       avatar.textContent = user.name.split(/\s+/).slice(0,2).map(n=>n[0]).join('').toUpperCase();
       avatar.setAttribute('aria-label', `Akun ${user.name}`);
       window.dispatchEvent(new Event('resize'));
-    } else document.title = 'Masuk — Easykripto';
+    } else {
+      document.title = 'Masuk — Easykripto';
+      document.querySelector('dialog[open]')?.close();
+    }
   }
   async function initializeLogin() {
-    if (location.hostname.endsWith('.github.io')) {
-      showUser(null);
-      status.textContent = 'Login belum tersedia di alamat ini. Buka alamat Easykripto yang diberikan pengelola untuk masuk.';
-      return;
-    }
+    placeholder.disabled = true;
     try {
-      const current = await api('/api/auth/session');
-      if (current.user) { showUser(current.user); return; }
+      const [appSdk, sdk] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js')
+      ]);
+      authSdk = sdk;
+      auth = sdk.getAuth(appSdk.initializeApp(firebaseConfig));
+      auth.languageCode = 'id';
+      await sdk.setPersistence(auth, sdk.browserLocalPersistence);
+      sdk.onAuthStateChanged(auth, user => {
+        showUser(user ? {id:user.uid, name:user.displayName || user.email || 'Pengguna', email:user.email || ''} : null);
+        status.textContent = user ? '' : 'Pilih akun Google untuk melanjutkan.';
+        placeholder.disabled = loginBusy;
+      }, error => {
+        showUser(null);
+        placeholder.disabled = true;
+        status.textContent = loginError(error);
+      });
+    } catch (error) {
       showUser(null);
-      const config = await api('/api/auth/config');
-      if (!config.clientId) { status.textContent = 'Login Google sedang disiapkan. Silakan kembali setelah layanan diaktifkan.'; return; }
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client?hl=id';
-      script.async = true;
-      script.onerror = () => { status.textContent = 'Google tidak dapat dimuat. Periksa koneksi lalu muat ulang halaman.'; };
-      script.onload = () => {
-        google.accounts.id.initialize({client_id:config.clientId, nonce:config.nonce, auto_select:false, callback:async ({credential}) => {
-          status.textContent = 'Memverifikasi akun…';
-          try {
-            const result = await api('/api/auth/google', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential})});
-            showUser(result.user);status.textContent='';location.hash='ringkasan';
-          } catch (error) { status.textContent = `${error.message} Muat ulang halaman untuk mencoba lagi.`; }
-        }});
-        placeholder.hidden = true;
-        google.accounts.id.renderButton(container,{theme:'outline',size:'large',shape:'pill',text:'signin_with',locale:'id',width:Math.min(360,container.parentElement.clientWidth)});
-        status.textContent = 'Pilih akun Google untuk melanjutkan.';
-      };
-      document.head.append(script);
-    } catch { showUser(null);status.textContent='Layanan login belum dapat dihubungi. Jalankan aplikasi melalui server, lalu coba lagi.'; }
+      status.textContent = error?.code ? loginError(error) : 'Layanan login tidak dapat dimuat. Periksa koneksi internet, lalu muat ulang halaman.';
+    }
   }
+  placeholder.addEventListener('click', async () => {
+    if (!auth || !authSdk || loginBusy) return;
+    loginBusy = true;
+    placeholder.disabled = true;
+    placeholder.setAttribute('aria-busy', 'true');
+    status.textContent = 'Lanjutkan di jendela Google…';
+    try {
+      const provider = new authSdk.GoogleAuthProvider();
+      provider.setCustomParameters({prompt:'select_account'});
+      await authSdk.signInWithPopup(auth, provider);
+      location.hash = 'ringkasan';
+    } catch (error) {
+      status.textContent = loginError(error);
+    } finally {
+      loginBusy = false;
+      placeholder.disabled = false;
+      placeholder.removeAttribute('aria-busy');
+    }
+  });
   document.addEventListener('click', async event => {
     const logout = event.target.closest('[data-logout]');
     if (logout) {
       logout.disabled=true;
-      try { await api('/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});location.reload(); }
+      try { await authSdk.signOut(auth);location.hash='ringkasan'; }
       catch { logout.disabled=false;logout.textContent='Gagal keluar. Coba lagi.'; }
       return;
     }
