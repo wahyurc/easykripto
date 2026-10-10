@@ -1,6 +1,7 @@
 node_modules/
 .gmgn/
 .secrets/
+api-keys/
 .wrangler/
 .dev.vars
 .dev.vars.*
