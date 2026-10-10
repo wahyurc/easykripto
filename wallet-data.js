@@ -103,7 +103,7 @@
   window.EasyWallet={open({address,chain=selectedBlockchain,kind='wallet'}){if(chain!==selectedBlockchain){const select=document.getElementById('network-select');select.value=chain;select.dispatchEvent(new Event('change'));}closeDialog();location.hash='peta';setMode(kind);input.value=address;void analyze(address,chain,kind);}};
   for(const b of document.querySelectorAll('[data-live-mode]'))b.addEventListener('click',()=>{reset();setMode(b.dataset.liveMode);input.focus();});
   document.addEventListener('click',event=>{const b=event.target.closest('[data-analyze-wallet]');if(!b)return;const wallet=state.wallets.find(wallet=>wallet.id===b.dataset.analyzeWallet);if(wallet)window.EasyWallet.open({address:wallet.address,chain:wallet.chain});});
-  document.getElementById('live-demo-toggle').addEventListener('click',event=>{const show=event.currentTarget.getAttribute('aria-expanded')!=='true';event.currentTarget.setAttribute('aria-expanded',String(show));document.getElementById('full-map-slot').hidden=!show;event.currentTarget.textContent=show?'Sembunyikan peta gabungan':'Lihat peta gabungan';window.dispatchEvent(new Event('resize'));});
+  document.getElementById('live-demo-toggle').addEventListener('click',event=>{const show=event.currentTarget.getAttribute('aria-expanded')!=='true';event.currentTarget.setAttribute('aria-expanded',String(show));document.getElementById('full-map-slot').hidden=!show;event.currentTarget.textContent=show?'Sembunyikan peta aliran dana':'Lihat peta aliran dana';window.dispatchEvent(new Event('resize'));});
   window.addEventListener('easykripto-network',reset);
   window.addEventListener('easykripto-session',event=>{const uid=event.detail.user?.id||null;if(uid!==sessionId){sessionId=uid;reset();}});
   reset();

@@ -25,7 +25,7 @@ function save(key,value){ try { localStorage.setItem(key,JSON.stringify(value));
 
 const tokens = [];
 const events = [];
-const state = {route:'ringkasan',mode:'token',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
+const state = {route:'ringkasan',mode:'token',mapAsset:'all',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
 const walletCategories={
  whale:{id:'whale',label:'Whale',color:'#f5be62',fill:'#382b13'},
  smartmoney:{id:'smartmoney',label:'SmartMoney',color:'#7fa7ff',fill:'#172b4a'},
