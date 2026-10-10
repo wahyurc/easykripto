@@ -129,7 +129,9 @@ Referensi: [DEX Screener](https://docs.dexscreener.com/api/reference), [GeckoTer
 
 ### Detail token dan jaringan
 
-- Tombol **Trading token ini** pada detail token membuka halaman GMGN.ai untuk CA dan jaringan yang sama (Solana, Ethereum, Base, BNB, Robinhood), dalam tab baru. Tersedia juga ketika pasangan DEX Screener belum ditemukan. Tautan hanya membuka halaman trading; tidak mengirim transaksi dari Easykripto.
+- Tombol **Detail Token** memakai logo DEX Screener. Logo DEX Screener dan GMGN disimpan sebagai aset PNG lokal dari cache favicon domain sehingga tidak bergantung pada pemuatan gambar eksternal saat membuka detail.
+
+- Tombol **Trade Token ini** dengan logo GMGN pada detail token membuka halaman GMGN.ai untuk CA dan jaringan yang sama (Solana, Ethereum, Base, BNB, Robinhood), dalam tab baru. Tersedia juga ketika pasangan DEX Screener belum ditemukan. Tautan hanya membuka halaman trading; tidak mengirim transaksi dari Easykripto.
 
 - Hasil pencarian token menampilkan logo dari DEX Screener; metadata token pada respons pool GeckoTerminal menjadi sumber cadangan. Jika tidak ada gambar atau gagal dimuat, tampilkan inisial token. URL gambar wajib HTTPS dan tidak mengandung kredensial. Kartu token pantauan juga menampilkan logo yang tersedia dari pasangan pasar.
 - Detail token memuat daftar holder otomatis. Solana: pemilik akun token pada sampel RPC dengan saldo positif. Jika pemindaian akun terbesar dibatasi provider, daftar akun token GoPlus menjadi kandidat; pemilik, mint, dan saldo diverifikasi kembali melalui RPC. Daftar ini tidak mencakup seluruh holder.
