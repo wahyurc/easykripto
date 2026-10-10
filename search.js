@@ -16,7 +16,7 @@
       const trade=document.createElement('a');trade.className='primary-button full-width token-trade-link';
       trade.href=`https://gmgn.ai/${gmgnChain}/token/${encodeURIComponent(ca)}`;
       trade.target='_blank';trade.rel='noopener noreferrer';
-      trade.innerHTML=`<img class="token-provider-logo" src="gmgn-logo.png" alt="" width="24" height="24">Trade Token ini ${icon('arrow')}`;
+      trade.innerHTML=`<img class="token-provider-logo" src="gmgn-logo.png" alt="" width="24" height="24">Trade di GMGN.io ${icon('arrow')}`;
       trade.setAttribute('aria-label','Trade Token ini di GMGN.ai, buka tab baru');
       content.append(trade);
     }
