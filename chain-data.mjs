@@ -31,6 +31,39 @@ export function validAddress(address,chain){
   return bytes+(address.match(/^1*/)?.[0].length||0)===32;
 }
 
+const usdc={solana:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',ethereum:'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',base:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'};
+const nativeTokens={solana:'So11111111111111111111111111111111111111112',ethereum:'0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',base:'0x4200000000000000000000000000000000000006',bsc:'0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'};
+const priceCache=new Map();
+async function walletAssets(url,chain,address,nativeBalance,signal,observe){
+  const assets=[],contract=usdc[chain];let usdcBalance=null,partial=false;
+  try{
+    if(chain==='solana'){
+      const accounts=new Map();
+      for(const programId of ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA','TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']){
+        try{const result=await rpc(url,'getTokenAccountsByOwner',[address,{programId},{encoding:'jsonParsed',commitment:'confirmed'}],signal,observe);for(const row of result.value||[]){const info=row.account?.data?.parsed?.info,t=info?.tokenAmount;if(!info?.mint||!/^\d+$/.test(t?.amount||''))continue;const item=accounts.get(info.mint)||{raw:0n,decimals:t.decimals};item.raw+=BigInt(t.amount);accounts.set(info.mint,item);}}catch{partial=true;}
+      }
+      const stable=accounts.get(contract);if(!partial||stable)usdcBalance=stable?decimalUnits(stable.raw,stable.decimals):'0';
+      for(const [address,item]of accounts)if(item.raw>0n)assets.push({address,amount:decimalUnits(item.raw,item.decimals)});
+    }else{
+      if(contract)try{usdcBalance=decimalUnits(await rpc(url,'eth_call',[{to:contract,data:`0x70a08231${address.slice(2).padStart(64,'0')}`},'latest'],signal,observe),6);}catch{partial=true;}
+      const result=await rpc(url,'alchemy_getTokenBalances',[address,'erc20'],signal,observe),positive=(result.tokenBalances||[]).filter(t=>!t.error&&/^0x[0-9a-f]+$/i.test(t.tokenBalance||'')&&BigInt(t.tokenBalance)>0n);
+      if(result.pageKey||positive.length>20||(result.tokenBalances||[]).some(t=>t.error))partial=true;
+      for(let i=0;i<Math.min(positive.length,20);i+=4)await Promise.all(positive.slice(i,Math.min(i+4,20)).map(async token=>{try{const meta=await rpc(url,'alchemy_getTokenMetadata',[token.contractAddress],signal,observe);if(!Number.isInteger(meta.decimals)||meta.decimals<0||meta.decimals>255)throw new Error();assets.push({address:token.contractAddress.toLowerCase(),amount:decimalUnits(token.tokenBalance,meta.decimals)});}catch{partial=true;}}));
+    }
+  }catch{partial=true;}
+  if(contract&&usdcBalance!==null){const index=assets.findIndex(a=>a.address===contract);if(index>=0)assets.splice(index,1);if(Number(usdcBalance)>0)assets.unshift({address:contract,amount:usdcBalance});}
+  const priceChain=chain==='robinhood'?'ethereum':chain,native=nativeTokens[priceChain],selected=assets.slice(0,29),prices=new Map();if(assets.length>29)partial=true;
+  const addresses=[...new Set([native,...selected.map(a=>a.address).filter(a=>a!==contract)].filter(Boolean))],cacheKey=`${priceChain}:${addresses.slice().sort().join(',')}`;
+  try{
+    let pairs=priceCache.get(cacheKey)?.until>Date.now()?priceCache.get(cacheKey).pairs:null;
+    if(!pairs){const started=Date.now();let response;try{response=await fetch(`https://api.dexscreener.com/tokens/v1/${priceChain}/${addresses.join(',')}`,{signal:AbortSignal.timeout(8000)});if(!response.ok)throw new Error();pairs=await response.json();if(!Array.isArray(pairs))throw new Error();}finally{observe?.({provider:'dexscreener',method:'wallet_asset_prices',status:response?.status||0,ok:response?.ok===true,duration:Date.now()-started});}if(priceCache.size>=100)priceCache.delete(priceCache.keys().next().value);priceCache.set(cacheKey,{pairs,until:Date.now()+120000});}
+    for(const p of pairs){const ca=p.baseToken?.address;if(p.chainId!==priceChain||!ca||!Number.isFinite(Number(p.priceUsd))||Number(p.priceUsd)<=0)continue;const id=priceChain==='solana'?ca:ca.toLowerCase(),old=prices.get(id);if(!old||Number(p.liquidity?.usd||0)>old.liquidity)prices.set(id,{price:Number(p.priceUsd),liquidity:Number(p.liquidity?.usd||0)});}
+  }catch{partial=true;}
+  let total=0,priced=0,missing=0;
+  for(const a of [{address:native,amount:nativeBalance},...selected]){const amount=Number(a.amount),price=a.address===contract?1:prices.get(a.address)?.price;if(amount===0)continue;if(!Number.isFinite(amount)||amount<0||price===undefined||!Number.isFinite(amount*price)){missing++;continue;}total+=amount*price;priced++;}
+  return {usdcBalance,usdcSupported:!!contract,assetValue:{usd:priced||(!missing&&!partial)?total:null,partial:partial||missing>0,pricedAssets:priced,unpricedAssets:missing,at:Date.now(),basis:'Native + token terbaca dengan harga DexScreener; USDC acuan 1 USD. Maks. 20 ERC-20 dan 29 token dinilai. Tidak mencakup NFT, DeFi, staking atau rent akun token.'}};
+}
+
 export async function solanaWallet(url,address,signal,observe) {
   const balance=await rpc(url,'getBalance',[address,{commitment:'confirmed'}],signal,observe);
   const signatures=await rpc(url,'getSignaturesForAddress',[address,{limit:8,commitment:'confirmed'}],signal,observe);
@@ -63,7 +96,7 @@ export async function solanaWallet(url,address,signal,observe) {
       }
     });
   }
-  return {chain:'solana',address,nativeBalance:decimalUnits(balance.value,9),nativeSymbol:'SOL',transfers,scanned,unavailable,partial:true,note:'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
+  return {chain:'solana',address,nativeBalance:decimalUnits(balance.value,9),nativeSymbol:'SOL',...await walletAssets(url,'solana',address,decimalUnits(balance.value,9),signal,observe),transfers,scanned,unavailable,partial:true,note:'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
 }
 
 export async function solanaHolders(url,mint,signal,observe) {
@@ -109,5 +142,5 @@ export async function evmWallet(url,chain,address,signal,observe) {
     unique.set(id,{id,hash:transfer.hash,from:transfer.from?.toLowerCase(),to:transfer.to?.toLowerCase(),asset:transfer.asset||raw?.address||'Token',assetAddress:raw?.address||null,amount,timestamp:transfer.metadata?.blockTimestamp||null,endpointType:'wallet'});
   }
   const transfers=[...unique.values()].sort((a,b)=>(Date.parse(b.timestamp)||0)-(Date.parse(a.timestamp)||0));
-  return {chain,address,nativeBalance,nativeSymbol:chain==='bsc'?'BNB':'ETH',transfers,scanned:transfers.length,partial:true,moreAvailable:results.some(result=>result.pageKey),note:'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
+  return {chain,address,nativeBalance,nativeSymbol:chain==='bsc'?'BNB':'ETH',...await walletAssets(url,chain,address,nativeBalance,signal,observe),transfers,scanned:transfers.length,partial:true,moreAvailable:results.some(result=>result.pageKey),note:'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
 }

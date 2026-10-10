@@ -33,6 +33,9 @@ try{
     {type:'plain_text',name:'APP_CHECK_REQUIRED',text:process.env.APP_CHECK_REQUIRED==='true'?'true':'false'},
     ...['HELIUS_API_KEY','ALCHEMY_API_KEY'].map(name=>({type:'secret_text',name,text:process.env[name].trim()}))];
   const form=new FormData();
+  const existingSettings=await api(`${root}/scripts/${workerName}/settings`,{allowMissing:true});
+  const existingAppCheck=existingSettings?.bindings?.find(binding=>binding.name==='APP_CHECK_REQUIRED');
+  if(process.env.APP_CHECK_REQUIRED===undefined&&existingAppCheck?.type==='plain_text')bindings.find(binding=>binding.name==='APP_CHECK_REQUIRED').text=existingAppCheck.text;
   form.append('metadata',new Blob([JSON.stringify({main_module:'api-worker.mjs',compatibility_date:'2026-10-10',bindings})],{type:'application/json'}));
   for(const file of ['api-worker.mjs','analytics-api.mjs','firebase-token.mjs','chain-data.mjs','api-monitor.mjs','app-check.mjs','registration-access.mjs']){
     form.append(file,new Blob([readFileSync(file)],{type:'application/javascript+module'}),file);
