@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'bb153abd135e3ddc';
+const RELEASE = '7cb80276d2ad35fe';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-dashboard",
@@ -14,7 +14,7 @@ const SHELL = [
   "best-coins.css?v=20261011-ticker",
   "best-coins.js?v=20261011-ticker-2",
   "black-theme.css?v=20261010-provider-logos",
-  "dashboard-data.js?v=20261011-registration",
+  "dashboard-data.js?v=20261011-tables",
   "data-client.js?v=20261011-registration",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
@@ -27,6 +27,7 @@ const SHELL = [
   "market-data.js?v=20261010-api-monitor",
   "market-feed.css?v=20261010-discovery",
   "market-feed.js?v=20261010-discovery",
+  "mastrtrade-logo.png",
   "networks.js?v=20261010-token-holders",
   "notifications.css?v=20261010-notifications",
   "notifications.js?v=20261010-notifications",
@@ -38,10 +39,12 @@ const SHELL = [
   "registration-admin.js?v=20261011-registration",
   "registration.css?v=20261011-registration",
   "registration.js?v=20261011-registration",
-  "search.js?v=20261011-mastrtrade",
+  "search.js?v=20261011-mastrtrade-logo",
   "styles.css?v=20261010-superadmin",
   "token-ui.js?v=20261010-token-holders",
-  "wallet-data.js?v=20261010-notifications"
+  "wallet-data.js?v=20261010-notifications",
+  "watchlist.css?v=20261011-tables",
+  "watchlist.js?v=20261011-tables"
 ];
 // END GENERATED PWA RELEASE
 

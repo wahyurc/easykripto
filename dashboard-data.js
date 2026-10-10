@@ -100,11 +100,7 @@
     $$('.activity-filters button').forEach(b=>{const active=b.dataset.type===state.type;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active);});
   }
   function wallets(){
-    const query=$('#wallet-search').value.trim().toLowerCase();
-    $('#wallet-list').innerHTML=availableWallets().filter(w=>`${w.name} ${w.address}`.toLowerCase().includes(query)).map(w=>{
-      const data=snapshots.get(key(w.chain,w.address)),waiting=busy.has(w.id),error=errors.get(w.id);
-      return `<article class="wallet-card"><div class="wallet-card-heading"><span class="wallet-avatar">${escapeHTML(w.name.slice(0,2).toUpperCase())}</span><div><h3>${escapeHTML(w.name)}</h3><small>${escapeHTML(short(w.address))}</small></div></div><div class="wallet-status"><span class="chain-dot"></span>${waiting?'Memuat sampel…':error?escapeHTML(error):data?`${escapeHTML(format(data.nativeBalance))} ${escapeHTML(data.nativeSymbol)} · ${new Date(data.fetchedAt).toLocaleTimeString('id-ID')}`:'Belum dianalisis'}</div><div class="wallet-card-footer"><button class="text-button" data-wallet="${escapeHTML(w.id)}">Detail ${icon('arrow')}</button><button class="text-button" data-refresh-wallet="${escapeHTML(w.id)}" ${waiting?'disabled':''}>Perbarui</button><button class="icon-button" data-alert="${escapeHTML(w.id)}" aria-label="Pantau transaksi baru ${escapeHTML(w.name)}" aria-pressed="${!!state.alerts[w.id]}">${icon('bell')}</button></div></article>`;
-    }).join('')||empty('Belum ada wallet yang cocok. Tambahkan alamat publik pada jaringan ini.');
+    window.EasyWatchlist?.render({wallets:availableWallets(),tokens:tokens.filter(t=>t.chain===selectedBlockchain),snapshot:w=>snapshots.get(key(w.chain,w.address)),market:t=>markets.get(key(t.chain,t.address)),waiting:w=>busy.has(w.id),error:w=>errors.get(w.id)});
   }
   function mapView(){
     const list=feed().filter(e=>e.minutes<=state.period*60),nodes=new Map(),groups=new Map();nodeLookup=new Map();
@@ -189,7 +185,7 @@
         const body=await response.json();const pairs=(Array.isArray(body)?body:[]).filter(p=>p.chainId===token.chain&&typeof p.baseToken?.address==='string'&&equalChainAddress(p.baseToken.address,token.address,token.chain)).sort((a,b)=>Number(b.liquidity?.usd||0)-Number(a.liquidity?.usd||0));
         if(version===epoch)markets.set(id,{pair:pairs[0],at:Date.now(),error:pairs.length?null:'Pasangan belum ditemukan'});
       }catch(error){if(version===epoch)markets.set(id,{error:'Harga belum dapat dimuat',at:Date.now()});}
-      if(version===epoch)renderSummary();
+      if(version===epoch){renderSummary();renderWallets();}
     }
   }
   function schedule(){
@@ -237,7 +233,8 @@
     toggleAlert(id){if(!allowed())return;state.alerts[id]=!state.alerts[id];persist();if(state.alerts[id])void refreshWallet(id,true);const wallet=state.wallets.find(w=>w.id===id);if(wallet)notice({category:'watch',level:'info',title:state.alerts[id]?'Lonceng wallet diaktifkan':'Lonceng wallet dimatikan',message:state.alerts[id]?wallet.name+': pemeriksaan bergiliran setiap 65 detik saat tab aktif. Cache 2 menit; snapshot pertama menjadi pembanding.':wallet.name+': pemeriksaan otomatis dihentikan. Wallet tetap tersimpan pada pantauan.',key:'alert:'+id+':'+state.alerts[id],action:{type:'route',route:'pantauan'}});schedule();},
     trackToken({chain,address,name,symbol,pair}){if(!allowed())return;if(tokens.some(t=>key(t.chain,t.address)===key(chain,address))){toast('Token sudah ada dalam pantauan.');return;}if(tokens.length>=watchLimit()){toast('Maksimal 20 token per akun.');return;}tokens.push({id:crypto.randomUUID(),chain,address,name:String(name||'Token').slice(0,80),symbol:String(symbol||'Token').slice(0,32)});if(pair)markets.set(key(chain,address),{pair,at:Date.now()});persist();notice({category:'watch',level:'success',title:'Token ditambahkan ke pantauan',message:String(symbol||name||'Token'),context:chainName(chain)+' · '+short(address),key:'watch-token:'+key(chain,address),action:{type:'token',chain,address}});},
     openToken(id){const token=tokens.find(t=>t.id===id);if(token)window.EasyTokenSearch.open({chain:token.chain,address:token.address});},
-    snapshot(wallet){return snapshots.get(key(wallet.chain,wallet.address));}
+    snapshot(wallet){return snapshots.get(key(wallet.chain,wallet.address));},
+    async refreshTokenPrices(){if(allowed())await refreshTokens();}
   };
   document.addEventListener('click',async event=>{
     const b=event.target.closest('button');if(!b)return;const d=b.dataset;

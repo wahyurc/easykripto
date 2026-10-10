@@ -12,6 +12,14 @@ Rasio beli sebagai komponen skor dan indikasi beli/jual membutuhkan minimal 10 t
 
 **Periksa risiko 10 teratas** memanggil GoPlus bergiliran untuk maksimal 10 kandidat yang sedang teratas saat tombol ditekan. Cache risiko sepuluh menit; jumlah holder ditampilkan jika dilaporkan. Flag Solana: mintable, freezable, closable; EVM: is_honeypot, cannot_sell_all, is_blacklisted. Label membedakan belum diperiksa, data minim, flag terdeteksi, dan tidak ada flag pada field yang dilaporkan. Filter risiko hanya menyingkirkan flag terdeteksi, sehingga token belum diperiksa tetap terlihat dengan labelnya. Hasil bukan audit kontrak atau jaminan aman. Detail token dan pantauan memakai alur akun yang sudah ada; log kunjungan mengenali route baru.
 
+## Pantauan wallet dan token
+
+Halaman **Pantauan** menyediakan tabel wallet dan token terpisah pada jaringan yang dipilih. Masing-masing memiliki pencarian, jumlah hasil, serta tombol Sebelumnya/Berikutnya. Pilihan **10/20/50/100 data per halaman** berlaku pada kedua tabel dan diingat pada perangkat. Pagination memotong daftar akun yang sudah dimuat, bukan memuat data per halaman dari server. Pada handphone, tabel dapat digeser ke samping untuk melihat semua kolom.
+
+Tabel wallet menampilkan nama/alamat, jaringan, saldo native, waktu pembaruan atau pesan kesalahan, serta aksi Detail, Perbarui, notifikasi, dan hapus dengan konfirmasi. Tabel token menampilkan ikon, ticker/CA, jaringan, harga USD, perubahan 24 jam, status pembaruan, Detail, dan hapus dengan konfirmasi. Harga memakai pasangan DexScreener dengan likuiditas terbesar yang ditemukan; data yang tidak tersedia ditampilkan sebagai tanda kosong atau pesan status.
+
+Tombol **Tambah Token** menerima CA dan mencari jaringan melalui API publik DexScreener. Jika CA EVM ditemukan pada beberapa jaringan atau belum teridentifikasi, pengguna memilih jaringan yang didukung. CA yang belum memiliki pasangan tetap dapat disimpan, dengan harga belum tersedia. Duplikat diperiksa per jaringan dan alamat. Penyimpanan serta sinkronisasi tetap terpisah per akun; pengguna biasa maksimal 20 wallet dan 20 token, superadmin tanpa batas jumlah pantauan. Pilihan ukuran halaman tidak mengubah batas akun.
+
 ## Pendaftaran email dan persetujuan manual
 
 Halaman login menyediakan tab **Masuk** dan **Daftar baru** dengan email/kata sandi. Kata sandi dikirim ke Firebase Authentication melalui SDK; tidak disimpan dalam Firestore, localStorage, maupun log aplikasi. Tersedia tombol melihat kata sandi, konfirmasi kata sandi, pemulihan kata sandi, kirim ulang email verifikasi, dan pemeriksaan status.

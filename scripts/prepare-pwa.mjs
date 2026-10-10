@@ -50,7 +50,7 @@ await fs.writeFile(path.join(iconDir,'app-icon.svg'),'<svg xmlns="http://www.w3.
 
 const html=await fs.readFile(path.join(root,'index.html'),'utf8');
 const resources=[...html.matchAll(/(?:src|href)="([^"#]+)"/g)].map(match=>match[1]).filter(value=>/^(?:[\w-]+\.(?:js|css|png)|manifest\.webmanifest|icons\/[\w-]+\.(?:png|svg))(?:\?[^#]*)?$/.test(value));
-const shell=[...new Set([...resources,'offline.html','offline.css','offline.js','icons/icon-512.png','icons/icon-maskable-512.png'])].sort();
+const shell=[...new Set([...resources,'offline.html','offline.css','offline.js','icons/icon-512.png','icons/icon-maskable-512.png','mastrtrade-logo.png'])].sort();
 const swPath=path.join(root,'sw.js'),sw=await fs.readFile(swPath,'utf8');
 const marker=/\/\/ BEGIN GENERATED PWA RELEASE[\s\S]*?\/\/ END GENERATED PWA RELEASE/;
 if(!marker.test(sw))throw new Error('Missing service worker release block');

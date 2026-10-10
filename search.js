@@ -30,7 +30,7 @@
         if(!pool)mastr.title='Pilih token atau tempel CA pada jaringan tujuan di MastrTrade.';
       }
       mastr.target='_blank';mastr.rel='noopener noreferrer';
-      mastr.innerHTML=`${icon('transfer')} Trade di MastrTrade ${icon('arrow')}`;
+      mastr.innerHTML=`<img class="token-provider-logo" src="mastrtrade-logo.png" alt="" width="24" height="24">Trade di MastrTrade ${icon('arrow')}`;
       mastr.setAttribute('aria-label','Trade token di MastrTrade, buka tab baru');
       content.append(mastr);
     }
