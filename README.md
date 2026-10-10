@@ -117,6 +117,18 @@ Referensi: [DEX Screener](https://docs.dexscreener.com/api/reference), [GeckoTer
 
 ### Logo token, holder, dan jaringan aktif
 
+### Daftar token di bawah pencarian
+
+- **Baru**: token dasar dari 20 pool baru pada jaringan terpilih dari GeckoTerminal, dengan alamat token unik dan urutan waktu pool terbaru. Pool baru tidak membuktikan token baru dibuat.
+- **Trending**: token dasar dari 20 pool trending GeckoTerminal; token yang berulang digabung, memakai data pasangan paling likuid pada hasil. Urutan mengikuti posisi pool pada hasil penyedia.
+- **Holder terbanyak**: maksimal 20 kandidat gabungan trending dan baru, diperiksa satu per satu lewat API publik GoPlus tanpa key/deposit. Urutan memakai `holder_count`, bukan jumlah entri holder sampel. Peringkat mencakup kandidat yang berhasil diperiksa, bukan seluruh pasar. Progres dan data yang tidak tersedia ditampilkan; Solana memakai API Beta. Tidak menggunakan peringkat komunitas atau badge whale buatan.
+- Ketuk baris untuk membuka detail token, grafik, risiko, daftar holder, dan tombol pantauan yang sudah tersedia. Logo token memakai metadata GeckoTerminal, dengan inisial jika gambar tidak tersedia. Logo jaringan berada di sudut gambar token.
+- Tampilan berbahasa Indonesia mengikuti daftar mobile: tiga tab horizontal, panel penjelasan yang dapat ditutup, rank, logo, simbol, MC/FDV, harga USD, perubahan 24 jam, dan jumlah holder pada tab terkait. Sepuluh baris pertama ditampilkan, sisanya melalui **Lihat lebih banyak**. MC yang belum tersedia memakai FDV dengan label berbeda.
+- Daftar pasar memakai cache 5 menit, hitungan holder 10 menit, dan antrean API publik yang sama dengan grafik/risiko. Refresh tetap menghormati cache provider 2 menit. Tidak ada polling pasar otomatis; pemindaian dijeda saat tab tersembunyi, membuka dialog, keluar, atau pindah halaman/jaringan. Sumber yang tidak mendukung suatu jaringan menampilkan status data tidak tersedia.
+- Latar utama, login, navigasi, dashboard, dan superadmin hitam `#000000`, dengan permukaan gelap, batas abu-abu, teks putih, aksen teal, serta warna perubahan positif/negatif.
+
+### Detail token dan jaringan
+
 - Hasil pencarian token menampilkan logo dari DEX Screener; metadata token pada respons pool GeckoTerminal menjadi sumber cadangan. Jika tidak ada gambar atau gagal dimuat, tampilkan inisial token. URL gambar wajib HTTPS dan tidak mengandung kredensial. Kartu token pantauan juga menampilkan logo yang tersedia dari pasangan pasar.
 - Detail token memuat daftar holder otomatis. Solana: pemilik akun token pada sampel RPC dengan saldo positif. Jika pemindaian akun terbesar dibatasi provider, daftar akun token GoPlus menjadi kandidat; pemilik, mint, dan saldo diverifikasi kembali melalui RPC. Daftar ini tidak mencakup seluruh holder.
 - Ethereum, Base, BNB Chain, dan Robinhood: maksimal 10 holder dari field holders pada GoPlus Token Security, dengan saldo, persentase supply, dan label kontrak/tag jika tersedia. Saldo EVM merupakan laporan GoPlus, bukan pembacaan balanceOf real time. LP holders tidak dicampur dengan holder token.

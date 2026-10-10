@@ -6,6 +6,7 @@
   const chainIds={ethereum:'1',base:'8453',bsc:'56',robinhood:'4663'};
   const money=value=>value==null||!Number.isFinite(Number(value))?'Tidak tersedia':new Intl.NumberFormat('id-ID',{style:'currency',currency:'USD',maximumSignificantDigits:5}).format(Number(value));
   async function json(url,signal,provider){
+    if(signal?.aborted)throw new DOMException('Dibatalkan','AbortError');
     const saved=cache.get(url);if(saved&&saved.until>Date.now())return saved.data;
     const slot=Math.max(Date.now(),nextRequest[provider]||0);nextRequest[provider]=slot+2200;
     if(slot>Date.now())await new Promise((resolve,reject)=>{
@@ -17,8 +18,26 @@
     const response=await fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
     if(response.status===429)throw new Error('Kuota penyedia sedang dibatasi. Coba lagi beberapa saat lagi.');
     if(!response.ok)throw new Error('Sumber data belum tersedia untuk token ini.');
-    const data=await response.json();if(cache.size>150)cache.clear();cache.set(url,{data,until:Date.now()+120000});return data;
+    const data=await response.json();if(cache.size>150)cache.clear();cache.set(url,{data,fetchedAt:Date.now(),until:Date.now()+120000});return data;
   }
+  window.EasyMarket={
+    async pools(chain,kind,signal){
+      const network=networks[chain];
+      if(!network||!['new','trending'].includes(kind))throw new Error('Daftar pasar belum tersedia pada jaringan ini.');
+      const url=`https://api.geckoterminal.com/api/v2/networks/${network}/${kind==='new'?'new_pools':'trending_pools'}?include=base_token,quote_token&page=1`;
+      const data=await json(url,signal,'gecko');
+      return {data,fetchedAt:cache.get(url)?.fetchedAt||Date.now()};
+    },
+    async security(chain,address,signal){
+      const path=chain==='solana'?'solana/token_security':chainIds[chain]?`token_security/${chainIds[chain]}`:null;
+      if(!path)throw new Error('Jumlah holder belum tersedia pada jaringan ini.');
+      const url=`https://api.gopluslabs.io/api/v1/${path}?contract_addresses=${encodeURIComponent(address)}`;
+      const response=await json(url,signal,'goplus');
+      const key=Object.keys(response.result||{}).find(key=>equalChainAddress(key,address,chain));
+      if(response.code!==1||!response.result?.[key])throw new Error('Jumlah holder belum tersedia.');
+      return {data:response.result[key],fetchedAt:cache.get(url)?.fetchedAt||Date.now()};
+    }
+  };
   function target(id){return document.getElementById(id);}
   function candleChart(root,candles){
     root.replaceChildren();

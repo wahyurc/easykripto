@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b1118">
+  <meta name="theme-color" content="#000000">
   <meta name="description" content="Easykripto — jelajahi aktivitas wallet melalui peta interaktif. Data pasar dan sampel transaksi blockchain.">
   <title>Easykripto — Pahami setiap pergerakan</title>
   <link rel="stylesheet" href="styles.css?v=20261010-superadmin">
   <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
   <link rel="stylesheet" href="live-data.css?v=20261010-token-holders">
+  <link rel="stylesheet" href="black-theme.css?v=20261010-discovery">
+  <link rel="stylesheet" href="market-feed.css?v=20261010-discovery">
   <script src="data-config.js?v=20261010-cloudflare" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
   <script src="app.js?v=20261010-live-dashboard" defer></script>
@@ -16,7 +18,8 @@
   <script src="token-ui.js?v=20261010-token-holders" defer></script>
   <script src="dashboard-data.js?v=20261010-token-holders" defer></script>
   <script src="search.js?v=20261010-token-holders" defer></script>
-  <script src="market-data.js?v=20261010-token-holders" defer></script>
+  <script src="market-data.js?v=20261010-discovery" defer></script>
+  <script src="market-feed.js?v=20261010-discovery" defer></script>
   <script src="wallet-data.js?v=20261010-token-holders" defer></script>
   <script src="admin.js?v=20261010-superadmin" defer></script>
   <script src="auth.js?v=20261010-free-api" defer></script>
@@ -64,6 +67,24 @@
           <button id="submit-token-search" class="token-search-submit" type="submit" aria-label="Cari token"><span data-icon="arrow"></span></button>
         </form>
         <p id="token-search-status" class="token-search-status" role="status" aria-live="polite">Tempel CA. Jaringan dicari otomatis; jika ada beberapa hasil, pilih jaringan token.</p>
+      </section>
+      <section id="market-feed" class="market-feed" aria-label="Jelajahi token" hidden>
+        <div class="market-feed-toolbar">
+          <div class="market-feed-tabs" role="tablist" aria-label="Kategori token">
+            <button id="feed-tab-new" type="button" role="tab" aria-selected="false" aria-controls="feed-panel" tabindex="-1" data-feed-tab="new">Baru</button>
+            <button id="feed-tab-trending" type="button" role="tab" aria-selected="true" aria-controls="feed-panel" data-feed-tab="trending"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2c1 5-3 6-3 9-2-1-2-3-2-3-3 3-4 6-3 9a7 7 0 0 0 14-1c0-4-3-7-6-14Z"/></svg>Trending</button>
+            <button id="feed-tab-holders" type="button" role="tab" aria-selected="false" aria-controls="feed-panel" tabindex="-1" data-feed-tab="holders">Holder terbanyak</button>
+          </div>
+          <button id="feed-refresh" class="feed-icon-button" type="button" aria-label="Perbarui daftar token"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7V3m0 4h-4M4 17v4m0-4h4M5 8a8 8 0 0 1 13-3l2 2M4 17l2 2a8 8 0 0 0 13-3"/></svg></button>
+        </div>
+        <div id="feed-panel" role="tabpanel" aria-labelledby="feed-tab-trending" tabindex="0">
+          <div id="feed-explainer" class="feed-explainer"><div><h2 id="feed-title">Trending</h2><p id="feed-description"></p></div><button id="feed-close-explainer" class="feed-icon-button" type="button" aria-label="Tutup penjelasan kategori">×</button></div>
+          <div class="feed-meta"><span id="feed-network"></span><button id="feed-help" type="button" hidden>Tentang daftar ini</button></div>
+          <p id="feed-status" class="feed-status" role="status" aria-live="polite"></p>
+          <ol id="feed-list" class="feed-list" aria-label="Daftar token"></ol>
+          <button id="feed-more" class="feed-more" type="button" hidden>Lihat lebih banyak</button>
+          <p id="feed-source" class="feed-source"></p>
+        </div>
       </section>
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
       <div class="demo-notice"><span data-icon="flask"></span><span><strong>Data nyata, cakupan terbatas.</strong> Analisis wallet untuk mengisi peta dan aktivitas. Lonceng memantau sampel transaksi baru selama aplikasi terbuka.</span><button data-action="about-data" aria-label="Informasi sumber data"><span data-icon="arrow"></span></button></div>
