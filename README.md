@@ -95,7 +95,7 @@ Menu **Peta → Transfer wallet** menerima alamat publik Solana, Ethereum, atau 
 
 ### Data Solana dan batas cakupan
 
-Jika layanan API belum dipasang di GitHub Pages, Solana menggunakan RPC publik `api.mainnet-beta.solana.com` dari browser. RPC ini dapat membatasi akses/rate; kegagalan ditampilkan tanpa mengganti hasil dengan simulasi. Setelah Helius diaktifkan pada layanan API, data Solana melewati Helius.
+Layanan API untuk GitHub Pages tersedia pada `https://easykripto-data.easykripto-wahyurc.workers.dev`. Analisis Solana melewati Helius; Ethereum/Base melewati Alchemy. Jika URL layanan dikosongkan pada konfigurasi frontend, Solana kembali menggunakan RPC publik `api.mainnet-beta.solana.com` dari browser, yang dapat membatasi akses/rate. Kegagalan ditampilkan tanpa mengganti hasil dengan simulasi.
 
 Transfer wallet Solana diambil dari maksimal 8 transaksi terbaru yang menyebut alamat wallet, memeriksa instruksi utama dan internal. Transfer SPL yang hanya menyebut akun token dapat tidak terjangkau oleh pencarian alamat wallet. Titik yang pemiliknya belum diketahui tetap merupakan akun token dan diberi keterangan. Metode ini belum membentuk riwayat lengkap atau klasifikasi beli/jual.
 
@@ -103,10 +103,10 @@ Transfer Ethereum/Base melalui Alchemy mencakup maksimal 25 masuk dan 25 keluar,
 
 ### Mengaktifkan API dengan key
 
-1. Buat key **Free** pada Helius dan Alchemy. Simpan `HELIUS_API_KEY` dan `ALCHEMY_API_KEY` dalam `.env` untuk server lokal, atau gunakan Workers secrets untuk Cloudflare. Jangan memasukkannya ke `data-config.js`, GitHub, atau frontend.
+1. Buat key **Free** pada Helius dan Alchemy. Simpan `HELIUS_API_KEY` dan `ALCHEMY_API_KEY` dalam `.env` untuk server lokal, atau gunakan Workers secrets untuk Cloudflare. Jangan memasukkannya ke `data-config.js`, file repository, atau frontend. GitHub Actions Secrets terenkripsi dapat digunakan untuk otomatisasi; tidak dibaca langsung oleh GitHub Pages.
 2. Server lokal `npm run dev` menyediakan `/api/analysis/wallet` dan `/api/analysis/holders`. Setelah perubahan environment, restart server lokal. Endpoint menerima Firebase ID token pengguna melalui header Bearer dan memverifikasi signature RSA, issuer, audience, expiry, auth_time, dan email terverifikasi. Pemeriksaan pencabutan sesi belum diterapkan.
-3. Untuk GitHub Pages, deploy `api-worker.mjs` melalui Cloudflare Workers Free dengan konfigurasi `wrangler.toml`. Setelah akses Cloudflare tersedia, gunakan Wrangler untuk deploy, lalu pasang secret dengan `wrangler secret put HELIUS_API_KEY` dan `wrangler secret put ALCHEMY_API_KEY`. Tidak ada service account Firebase yang diperlukan oleh Worker ini.
-4. Isi `window.EASYKRIPTO_API_ORIGIN` pada `data-config.js` dengan origin HTTPS Worker yang benar-benar sudah diterbitkan, lalu push perubahan frontend. Nilai awal kosong; belum ada Worker yang diterbitkan oleh konfigurasi ini.
+3. Worker `easykripto-data` telah diterbitkan dengan key provider sebagai bindings `secret_text`. Untuk menerbitkan ulang dari komputer pengelola, jalankan `npm run deploy:api` dari root proyek. Skrip membaca token dari `CLOUDFLARE_API_TOKEN` atau file lokal `api-keys/CLOUDFLARE_API_KEY`, serta key provider dari `.env`. Token memerlukan izin Workers Scripts Write dan akses daftar akun. Jika ada beberapa akun, tentukan `CLOUDFLARE_ACCOUNT_ID` dalam environment lokal. Skrip memakai subdomain akun yang sudah ada; pada akun baru membuat `easykripto-wahyurc`. Tidak ada service account Firebase yang diperlukan oleh Worker ini.
+4. `window.EASYKRIPTO_API_ORIGIN` pada `data-config.js` menunjuk origin HTTPS Worker. Jika berpindah akun/subdomain, gunakan origin yang dilaporkan skrip deployment, lalu push perubahan frontend. Ringkasan deployment disimpan lokal pada `.secrets/cloudflare-deployment.json` yang diabaikan Git.
 
 Pembatasan layanan: cache hasil 120 detik, maksimal 4 analisis per UID/menit dan 2 pekerjaan aktif pada satu instance. Pada Cloudflare batas/cache bersifat per isolate, bukan global lintas pusat data. Endpoint tidak mengizinkan URL RPC arbitrer atau metode penandatanganan/transaksi. Hasil dan pesan error tidak menyertakan API key. Gunakan paket Free provider agar penggunaan tidak beralih menjadi overage berbayar.
 

@@ -11,7 +11,8 @@
   "start": "node preview.mjs",
   "grant:superadmin": "node scripts/grant-superadmin.mjs",
   "deploy:rules": "node scripts/deploy-firestore-rules.mjs",
-  "sync:users": "node scripts/sync-firebase-users.mjs"
+  "sync:users": "node scripts/sync-firebase-users.mjs",
+  "deploy:api": "node scripts/deploy-cloudflare.mjs"
  },
  "dependencies": {
   "google-auth-library": "^11.2.0"
