@@ -11,6 +11,15 @@
   let reading=false,request=null,automaticNetworkChange=false,chosenChain=null,chosenPairs=null;
   function enrichToken(chain,ca,pair){
     const content=document.getElementById('dialog-content');
+    const gmgnChain={solana:'sol',ethereum:'eth',base:'base',bsc:'bsc',robinhood:'robinhood'}[chain];
+    if(gmgnChain&&validChainAddress(ca,chain)){
+      const trade=document.createElement('a');trade.className='primary-button full-width token-trade-link';
+      trade.href=`https://gmgn.ai/${gmgnChain}/token/${encodeURIComponent(ca)}`;
+      trade.target='_blank';trade.rel='noopener noreferrer';
+      trade.innerHTML=`Trading token ini ${icon('arrow')}`;
+      trade.setAttribute('aria-label','Trading token ini di GMGN.ai, buka tab baru');
+      content.append(trade);
+    }
     window.EasyTokenUI.setDialogIcon({imageUrl:pair?.info?.imageUrl,label:pair?.baseToken?.symbol||'Token'});
     const holdersBlock=document.createElement('section');holdersBlock.className='token-data-block token-holders-block';
     const holdersTitle=document.createElement('h3');holdersTitle.textContent='Wallet pemegang token';
