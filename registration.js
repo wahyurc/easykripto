@@ -42,15 +42,15 @@
     const rejected=registration?.status==='rejected',approved=registration?.status==='approved';
     el('registration-gate-badge').textContent=error?'STATUS BELUM TERSEDIA':rejected?'PENDAFTARAN DITOLAK':approved?'DISETUJUI SUPERADMIN':'MENUNGGU VERIFIKASI';
     el('registration-gate-title').textContent=error?'Status belum dapat diperiksa.':rejected?'Pendaftaran belum disetujui.':!current.emailVerified?'Konfirmasi email kamu.':'Menunggu persetujuan superadmin.';
-    el('registration-gate-message').textContent=error?'Akses dashboard tetap ditutup sampai status persetujuan berhasil diperiksa.':rejected?(registration.reason||'Superadmin belum menyetujui pendaftaran ini. Hubungi pengelola jika membutuhkan penjelasan.'):!current.emailVerified?'Buka email konfirmasi dari Easykripto/Firebase, lalu ketuk tautan verifikasi. Periksa juga folder spam.':approved?'Persetujuan diterima. Menyiapkan dashboard…':'Email sudah dikonfirmasi. Superadmin akan meninjau pendaftaranmu secara manual. Kamu tidak perlu mendaftar ulang.';
+    el('registration-gate-message').textContent=error?'Akses dashboard tetap ditutup sampai status persetujuan berhasil diperiksa.':rejected?(registration.reason||'Superadmin belum menyetujui pendaftaran ini. Hubungi pengelola jika membutuhkan penjelasan.'):!current.emailVerified?'Buka email konfirmasi dari Easykripto/Firebase, lalu ketuk tautan verifikasi. Periksa juga folder spam.':approved?'Persetujuan diterima. Menyiapkan dashboard…':'Alamat email sudah terverifikasi. Pendaftaranmu akan ditinjau superadmin secara manual, termasuk jika kamu masuk dengan Google. Kamu tidak perlu mendaftar ulang.';
     el('registration-email-step').classList.toggle('complete',current.emailVerified);
+    el('registration-email-step').textContent=current.emailVerified?'Alamat email terverifikasi':'Konfirmasi alamat email';
     el('registration-review-step').classList.toggle('complete',approved);el('registration-review-step').classList.toggle('rejected',rejected);
     el('registration-review-step').textContent=rejected?'Pendaftaran ditolak':approved?'Disetujui superadmin':'Persetujuan superadmin';
     el('registration-resend').hidden=current.emailVerified||rejected;
   }
   function apply(user,account,document){
     registration=document;
-    if(!document&&user.providerData.every(provider=>provider.providerId!=='password')){current=null;el('auth-entry').hidden=false;el('registration-gate').hidden=true;complete(account);return;}
     current=user;
     if(user.emailVerified&&document?.status==='approved'){
       complete({...account,name:document.name||account.name});renderGate();
@@ -62,11 +62,11 @@
     if(!user){commit(null);renderGate();return;}
     // Do not expose the dashboard while its authorization is being resolved.
     commit(null);el('auth-entry').hidden=true;renderGate(true);
-    if(account.role==='superadmin'){current=null;renderGate();commit(account);return;}
+    if(account.role==='superadmin'&&user.emailVerified){current=null;renderGate();commit(account);return;}
     try{
       const {sdk,db}=await services();if(version!==epoch)return;
-      const ref=sdk.doc(db,'registrations',user.uid),password=user.providerData.some(provider=>provider.providerId==='password');
-      if(password)await sdk.runTransaction(db,async transaction=>{
+      const ref=sdk.doc(db,'registrations',user.uid);
+      await sdk.runTransaction(db,async transaction=>{
         const snapshot=await transaction.get(ref);
         if(!snapshot.exists())transaction.set(ref,{uid:user.uid,name:registrationName.trim().slice(0,150),email:user.email,status:'pending',createdAt:sdk.serverTimestamp()});
       });

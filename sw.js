@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'c4b40212125c1729';
+const RELEASE = 'c9ce9a51dc79243d';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-dashboard",
@@ -38,7 +38,7 @@ const SHELL = [
   "pwa.js?v=20261010-pwa",
   "registration-admin.js?v=20261011-registration",
   "registration.css?v=20261011-registration",
-  "registration.js?v=20261011-registration",
+  "registration.js?v=20261011-all-approval",
   "search.js?v=20261011-trade-labels",
   "styles.css?v=20261010-superadmin",
   "token-ui.js?v=20261010-token-holders",

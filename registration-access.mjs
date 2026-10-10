@@ -6,7 +6,6 @@ export async function requireApprovedRegistration(payload,token,appCheckToken){
   let response;
   try{response=await fetch(url,{headers:{Authorization:`Bearer ${token}`,...(appCheckToken?{'X-Firebase-AppCheck':appCheckToken}:{})},signal:AbortSignal.timeout(10000)});}catch{throw new DataError('Status persetujuan akun belum dapat diperiksa.',503);}
   if(response.status===404){
-    if(payload.firebase?.sign_in_provider==='google.com')return;
     throw new DataError('Daftarkan akun dan tunggu persetujuan superadmin.',403);
   }
   if(!response.ok)throw new DataError('Status persetujuan akun belum dapat diverifikasi.',503);

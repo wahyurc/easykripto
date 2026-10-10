@@ -40,7 +40,7 @@
   <script src="wallet-data.js?v=20261010-notifications" defer></script>
   <script src="api-monitor-ui.js?v=20261010-security" defer></script>
   <script src="admin.js?v=20261011-dashboard" defer></script>
-  <script src="registration.js?v=20261011-registration" defer></script>
+  <script src="registration.js?v=20261011-all-approval" defer></script>
   <script src="registration-admin.js?v=20261011-registration" defer></script>
   <script src="auth.js?v=20261011-registration" defer></script>
   <script src="pwa.js?v=20261010-pwa" defer></script>
@@ -57,6 +57,7 @@
       <div class="login-form-card"><span class="eyebrow">RUANG ANALISIS KAMU</span><h1>Mulai dari<br><span>rasa ingin tahu.</span></h1><p class="login-description">Masuk untuk menjelajahi peta wallet, menyusun pantauan, dan membaca pergerakan aset.</p>
         <div id="auth-entry">
         <div class="login-google-area"><div id="google-signin"></div><button id="google-placeholder" class="google-placeholder" disabled><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285f4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.6h3.2c1.9-1.8 3-4.4 3-7.5Z"/><path fill="#34a853" d="M12 22c2.7 0 5-.9 6.6-2.4L15.4 17c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.8-5.6-4.1H3.1v2.7A10 10 0 0 0 12 22Z"/><path fill="#fbbc05" d="M6.4 13.8a6 6 0 0 1 0-3.6V7.5H3.1a10 10 0 0 0 0 9l3.3-2.7Z"/><path fill="#ea4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.5l3.3 2.7C7.2 7.9 9.4 6.1 12 6.1Z"/></svg>Masuk dengan Google</button></div>
+        <p class="auth-note">Semua akun baru, melalui Google maupun email, perlu persetujuan superadmin sebelum menggunakan aplikasi.</p>
         <div class="auth-divider"><span>atau gunakan email</span></div>
         <div class="auth-tabs" role="tablist" aria-label="Akses dengan email"><button id="email-login-tab" type="button" role="tab" aria-selected="true" aria-controls="email-auth-panel">Masuk</button><button id="email-register-tab" type="button" role="tab" aria-selected="false" aria-controls="email-auth-panel" tabindex="-1">Daftar baru</button></div>
         <div id="email-auth-panel" role="tabpanel" aria-labelledby="email-login-tab">
@@ -186,8 +187,8 @@
       </section>
       <section id="view-aktivitas" class="view" hidden><div class="section-toolbar"><div class="segmented activity-filters" aria-label="Filter jenis transaksi"><button class="active" data-type="all" aria-pressed="true">Semua</button><button data-type="incoming" aria-pressed="false">Masuk</button><button data-type="outgoing" aria-pressed="false">Keluar</button><button data-type="transfer" aria-pressed="false">Antarpantauan</button></div><span class="subtle-tag">Data blockchain</span></div><div class="panel activity-full" id="all-activity"></div></section>
       <section id="view-superadmin" class="view admin-view" hidden aria-label="Dashboard superadmin">
-        <section id="registration-admin" class="panel registration-admin" aria-label="Persetujuan pendaftaran email" hidden>
-          <div class="registration-admin-header"><div><h2>Persetujuan pendaftaran</h2><p>Tinjau akun email. Hanya superadmin yang dapat mengubah keputusan.</p></div><button id="registration-admin-refresh" class="secondary-button" type="button">Perbarui</button></div>
+        <section id="registration-admin" class="panel registration-admin" aria-label="Persetujuan pendaftaran Google dan email" hidden>
+          <div class="registration-admin-header"><div><h2>Persetujuan pendaftaran</h2><p>Tinjau akun Google dan email. Hanya superadmin yang dapat mengubah keputusan.</p></div><button id="registration-admin-refresh" class="secondary-button" type="button">Perbarui</button></div>
           <div class="registration-admin-filter" aria-label="Status pendaftaran"><button type="button" data-registration-filter="pending" aria-pressed="true">Menunggu</button><button type="button" data-registration-filter="approved" aria-pressed="false">Disetujui</button><button type="button" data-registration-filter="rejected" aria-pressed="false">Ditolak</button><button type="button" data-registration-filter="all" aria-pressed="false">Semua</button></div>
           <p id="registration-admin-status" class="registration-admin-status" role="status" aria-live="polite"></p><div id="registration-admin-list"></div><div class="registration-admin-footer"><span id="registration-admin-count">25 pendaftaran per halaman</span><button id="registration-admin-more" class="secondary-button" type="button" hidden>Lihat lebih banyak</button></div>
         </section>

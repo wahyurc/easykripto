@@ -13,7 +13,7 @@ async function check(){
     for(const state of ['pending','rejected']){value=state;await assert.rejects(requireApprovedRegistration(claims,'example-token'),error=>error.status===403);}
     value='approved';await requireApprovedRegistration(claims,'example-token');
     status=404;await assert.rejects(requireApprovedRegistration(claims,'example-token'),error=>error.status===403);
-    await requireApprovedRegistration({...claims,firebase:{sign_in_provider:'google.com'}},'example-token');
+    await assert.rejects(requireApprovedRegistration({...claims,firebase:{sign_in_provider:'google.com'}},'example-token'),error=>error.status===403);
     status=200;value='pending';await assert.rejects(requireApprovedRegistration({...claims,firebase:{sign_in_provider:'google.com'}},'example-token'),error=>error.status===403);
     const before=requests;await requireApprovedRegistration({...claims,role:'superadmin',superadmin:true},'example-token');assert.equal(requests,before);
     status=403;await assert.rejects(requireApprovedRegistration(claims,'example-token'),error=>error.status===503);
@@ -37,7 +37,7 @@ async function check(){
   add('Other wallet denied','accounts/user-b/wallets/item','get',auth(),'DENY',approved);
   add('Unverified approved user denied','accounts/user-a/wallets/item','get',auth('user-a','password',false),'DENY',approved);
   add('Missing registration password user denied','accounts/user-a/wallets/item','get',auth(),'DENY',[mock('exists',false)]);
-  add('Existing Google user allowed','accounts/user-a/wallets/item','get',auth('user-a','google.com'),'ALLOW',[mock('exists',false)]);
+  add('Missing registration Google user denied','accounts/user-a/wallets/item','get',auth('user-a','google.com'),'DENY',[mock('exists',false)]);
   add('Anonymous visits denied','visits/12345678901234567890','create',null,'DENY');
   add('Self approval denied','registrations/user-a','update',auth(),'DENY');
   const response=await client.request({url:`https://firebaserules.googleapis.com/v1/projects/${projectId}:test`,method:'POST',data:{source:{files:[{name:'firestore.rules',content:source}]},testSuite:{testCases:cases.map(item=>item.test)}},timeout:30000});
