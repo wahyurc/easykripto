@@ -25,19 +25,19 @@
   <script src="data-config.js?v=20261010-security" defer></script>
   <script src="app-check.js?v=20261010-security" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
-  <script src="app.js?v=20261011-ticker" defer></script>
+  <script src="app.js?v=20261011-dashboard" defer></script>
   <script src="notifications.js?v=20261010-notifications" defer></script>
   <script src="api-telemetry.js?v=20261010-security" defer></script>
   <script src="data-client.js?v=20261011-registration" defer></script>
   <script src="token-ui.js?v=20261010-token-holders" defer></script>
   <script src="dashboard-data.js?v=20261011-registration" defer></script>
-  <script src="search.js?v=20261010-api-monitor" defer></script>
+  <script src="search.js?v=20261011-mastrtrade" defer></script>
   <script src="market-data.js?v=20261010-api-monitor" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
   <script src="best-coins.js?v=20261011-ticker-2" defer></script>
   <script src="wallet-data.js?v=20261010-notifications" defer></script>
   <script src="api-monitor-ui.js?v=20261010-security" defer></script>
-  <script src="admin.js?v=20261011-ticker" defer></script>
+  <script src="admin.js?v=20261011-dashboard" defer></script>
   <script src="registration.js?v=20261011-registration" defer></script>
   <script src="registration-admin.js?v=20261011-registration" defer></script>
   <script src="auth.js?v=20261011-registration" defer></script>
@@ -86,7 +86,7 @@
   </section>
   <a class="skip-link" href="#main">Langsung ke konten</a>
   <aside class="sidebar">
-    <a class="brand" href="#ringkasan" aria-label="Easykripto, halaman ringkasan"><span class="brand-mark">e<span></span></span><span>easy<span class="brand-light">kripto</span><small>IKUTI DATANYA.</small></span></a>
+    <a class="brand" href="#ringkasan" aria-label="Easykripto, halaman Dashboard"><span class="brand-mark">e<span></span></span><span>easy<span class="brand-light">kripto</span><small>IKUTI DATANYA.</small></span></a>
     <div class="workspace-label">RUANG ANALISIS <span>01</span></div>
     <nav class="desktop-nav" aria-label="Navigasi utama"></nav>
     <div class="side-note"><span class="small-icon" data-icon="spark"></span><strong>Rasa ingin tahu,<br>bertemu data.</strong><p>Mulai dari satu wallet.<br>Lihat ke mana aset bergerak.</p><button class="text-button" data-action="guide">Kenali petanya <span data-icon="arrow"></span></button></div>
@@ -96,7 +96,7 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="mobile-brand" href="#ringkasan"><span class="brand-mark">e<span></span></span>easykripto</a>
-      <div class="breadcrumb">Ruang analisis <span>/</span> <strong id="breadcrumb">Ringkasan</strong></div>
+      <div class="breadcrumb">Ruang analisis <span>/</span> <strong id="breadcrumb">Dashboard</strong></div>
       <div class="topbar-actions"><span class="demo-pill"><span></span> Data blockchain</span><button class="icon-button" data-action="guide" aria-label="Panduan penggunaan"><span data-icon="help"></span></button><button id="notification-trigger" class="notification-trigger" type="button" aria-label="Notifikasi" aria-haspopup="dialog" aria-controls="notification-dialog" aria-expanded="false"><span data-icon="bell"></span><span id="notification-badge" class="notification-badge" hidden></span></button><button class="avatar-button" data-action="settings" aria-label="Pengaturan tampilan">EK</button></div>
     </header>
 
@@ -140,7 +140,7 @@
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
       <div class="demo-notice"><span data-icon="flask"></span><span><strong>Data nyata, cakupan terbatas.</strong> Analisis wallet untuk mengisi peta dan aktivitas. Lonceng memantau sampel transaksi baru selama aplikasi terbuka.</span><button data-action="about-data" aria-label="Informasi sumber data"><span data-icon="arrow"></span></button></div>
 
-      <section id="view-ringkasan" class="view" aria-label="Ringkasan">
+      <section id="view-ringkasan" class="view" aria-label="Dashboard">
         <div class="dashboard-toolbar"><button class="secondary-button" data-action="refresh-dashboard">Perbarui data</button><span>Sampel terbatas · cache 2 menit</span></div><div class="stats-grid" id="stats"></div>
         <div class="content-layout">
           <div class="main-column">

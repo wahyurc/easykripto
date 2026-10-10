@@ -20,6 +20,20 @@
       trade.setAttribute('aria-label','Trade Token ini di GMGN.ai, buka tab baru');
       content.append(trade);
     }
+    if(validChainAddress(ca,chain)){
+      const mastr=document.createElement('a');mastr.className='secondary-button full-width token-trade-link';
+      const address=encodeURIComponent(ca);
+      if(chain==='solana')mastr.href=`https://mastrtrade.com/?t=${address}#/trade/${address}`;
+      else {
+        const pool=validChainAddress(pair?.pairAddress||'',chain)?`/${address}/${encodeURIComponent(pair.pairAddress)}`:'';
+        mastr.href=`https://mastrtrade.com/#/multichain/${encodeURIComponent(chain)}${pool}`;
+        if(!pool)mastr.title='Pilih token atau tempel CA pada jaringan tujuan di MastrTrade.';
+      }
+      mastr.target='_blank';mastr.rel='noopener noreferrer';
+      mastr.innerHTML=`${icon('transfer')} Trade di MastrTrade ${icon('arrow')}`;
+      mastr.setAttribute('aria-label','Trade token di MastrTrade, buka tab baru');
+      content.append(mastr);
+    }
     window.EasyTokenUI.setDialogIcon({imageUrl:pair?.info?.imageUrl,label:pair?.baseToken?.symbol||'Token'});
     const holdersBlock=document.createElement('section');holdersBlock.className='token-data-block token-holders-block';
     const holdersTitle=document.createElement('h3');holdersTitle.textContent='Wallet pemegang token';
