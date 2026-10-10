@@ -91,7 +91,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
         && request.resource.data.keys().hasOnly(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
         && request.resource.data.startedAt == request.time
-        && request.resource.data.page in ['masuk', 'ringkasan', 'bestcoin', 'peta', 'pantauan', 'aktivitas', 'superadmin']
+        && request.resource.data.page in ['masuk', 'ringkasan', 'recticker', 'bestcoin', 'peta', 'pantauan', 'aktivitas', 'superadmin']
         && request.resource.data.device in ['Handphone', 'Tablet', 'Desktop']
         && request.resource.data.browser in ['Chrome', 'Edge', 'Firefox', 'Safari', 'Lainnya']
         && request.resource.data.source is string && request.resource.data.source.size() <= 253

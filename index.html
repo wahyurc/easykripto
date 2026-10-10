@@ -26,7 +26,7 @@
   <script src="data-config.js?v=20261010-security" defer></script>
   <script src="app-check.js?v=20261010-security" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
-  <script src="app.js?v=20261011-dashboard" defer></script>
+  <script src="app.js?v=20261011-recticker" defer></script>
   <script src="notifications.js?v=20261010-notifications" defer></script>
   <script src="api-telemetry.js?v=20261010-security" defer></script>
   <script src="data-client.js?v=20261011-registration" defer></script>
@@ -36,10 +36,10 @@
   <script src="search.js?v=20261011-trade-labels" defer></script>
   <script src="market-data.js?v=20261010-api-monitor" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
-  <script src="best-coins.js?v=20261011-ticker-2" defer></script>
+  <script src="best-coins.js?v=20261011-recticker" defer></script>
   <script src="wallet-data.js?v=20261010-notifications" defer></script>
   <script src="api-monitor-ui.js?v=20261010-security" defer></script>
-  <script src="admin.js?v=20261011-dashboard" defer></script>
+  <script src="admin.js?v=20261011-recticker" defer></script>
   <script src="registration.js?v=20261011-all-approval" defer></script>
   <script src="registration-admin.js?v=20261011-registration" defer></script>
   <script src="auth.js?v=20261011-registration" defer></script>
@@ -158,7 +158,7 @@
         </div>
       </section>
 
-      <section id="view-bestcoin" class="view best-coins" hidden aria-label="Rekomendasi Ticker">
+      <section id="view-recticker" class="view best-coins" hidden aria-label="Rekomendasi Ticker">
         <div class="bc-toolbar"><span id="bc-network" class="subtle-tag"></span><div><button id="bc-method" class="text-button" type="button"><span data-icon="info"></span> Cara membaca</button><button id="bc-refresh" class="secondary-button" type="button">Perbarui</button></div></div>
         <section class="panel bc-filters" aria-label="Filter peringkat">
           <fieldset><legend>Komponen skor</legend><div class="bc-chips"><label><input type="checkbox" name="bc-criterion" value="volume" checked><span>Volume / valuasi</span></label><label><input type="checkbox" name="bc-criterion" value="liquidity" checked><span>Likuiditas / valuasi</span></label><label><input type="checkbox" name="bc-criterion" value="pressure" checked><span>Rasio beli</span></label><label><input type="checkbox" name="bc-criterion" value="momentum"><span>Momentum harga</span></label></div></fieldset>

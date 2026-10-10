@@ -28,7 +28,7 @@ const events = [];
 const state = {route:'ringkasan',mode:'token',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
 const routes = [
  {id:'ringkasan',label:'Dashboard',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
- {id:'bestcoin',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
+ {id:'recticker',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
  {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Lihat transfer masuk, keluar, dan hubungan antarwallet.'},
@@ -44,6 +44,7 @@ const map = document.createElement('section');map.id='interactive-map';map.class
 $('#overview-map-slot').className='';$('#overview-map-slot').append(map);
 function navigate(id){ if(location.hash===`#${id}`)renderRoute();else location.hash=id; }
 function renderRoute(){
+ if(location.hash==='#bestcoin')history.replaceState(history.state,'',`${location.pathname}${location.search}#recticker`);
  const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
  state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'ringkasan';
  document.body.classList.toggle('superadmin-view',state.route==='superadmin');

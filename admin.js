@@ -4,7 +4,7 @@
   const el = id => document.getElementById(id);
   const status = el('admin-status');
   const list = el('admin-record-list');
-  const routeNames = {masuk:'Halaman login',ringkasan:'Dashboard',bestcoin:'Rekomendasi Ticker',peta:'Peta',pantauan:'Pantauan',aktivitas:'Aktivitas',superadmin:'Superadmin'};
+  const routeNames = {masuk:'Halaman login',ringkasan:'Dashboard',recticker:'Rekomendasi Ticker',bestcoin:'Rekomendasi Ticker',peta:'Peta',pantauan:'Pantauan',aktivitas:'Aktivitas',superadmin:'Superadmin'};
   const dateFormat = new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Makassar'});
   const numberFormat = new Intl.NumberFormat('id-ID');
   let servicePromise, account = null, authorized = false, authEpoch = 0, listRevision = 0;

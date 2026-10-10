@@ -1,7 +1,7 @@
 'use strict';
 
 (() => {
-  const el=id=>document.getElementById(id),root=el('view-bestcoin');
+  const el=id=>document.getElementById(id),root=el('view-recticker');
   const labels={volume:'Volume / valuasi 24 jam',liquidity:'Likuiditas / valuasi',pressure:'Rasio transaksi beli',momentum:'Perubahan harga'};
   const phases={buy:'Beli dominan',neutral:'Seimbang',sell:'Jual dominan',unknown:'Data minim'};
   const cache=new Map(),securityCache=new Map();
@@ -12,7 +12,7 @@
   const usd=n=>n==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(n);
   const percent=n=>n==null?'—':`${n>0?'+':''}${n.toLocaleString('id-ID',{maximumFractionDigits:2})}%`;
   const ratio=n=>n==null?'—':n.toLocaleString('id-ID',{maximumFractionDigits:3});
-  const active=()=>signedIn&&location.hash==='#bestcoin'&&!document.hidden;
+  const active=()=>signedIn&&location.hash==='#recticker'&&!document.hidden;
   function stop(){controller?.abort();controller=null;busy=false;checking=false;controls();}
   function controls(){
     root.setAttribute('aria-busy',String(busy||checking));
