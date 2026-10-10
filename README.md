@@ -188,3 +188,9 @@ Font Google Fonts bersifat opsional dengan fallback sistem. Ikon dan graf tersed
 - Panel diperbarui setiap 60 detik selama superadmin membuka tab aktif. Cache statistik 15 detik per isolate. Kuota credit/CU, pemakaian di luar aplikasi, sisa tagihan akun provider, serta total pemakaian akun Cloudflare tidak terhubung dan tidak ditampilkan sebagai angka perkiraan. Dashboard provider menjadi referensi pemakaian resmi. Fitur ini belum memberi push ketika aplikasi ditutup.
 
 Referensi log: [Cloudflare D1 bindings](https://developers.cloudflare.com/workers/configuration/multipart-upload-metadata/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/). Paket D1 Free membatasi pembacaan/penulisan harian; log dan polling juga memakai kuota tersebut.
+
+## Perlindungan App Check dan log kunjungan
+
+Integrasi SDK dan verifikasi JWT App Check tersedia, tetapi BELUM diberlakukan sampai provider reCAPTCHA v3 didaftarkan di Firebase dan site key publik diisi pada data-config.js. Setelah token browser berhasil diverifikasi, aktifkan enforcement Cloud Firestore di Console dan APP_CHECK_REQUIRED=true di environment deploy Worker. Jangan aktifkan sebelum pengujian token valid; ini akan memblokir pengguna. Verifikasi memeriksa signature RS256, issuer, audience, expiry, dan app ID. Tidak ada debug bypass produksi.
+
+Kunjungan anonim sementara tidak dicatat dan penulisan anonim ditolak oleh rules. Kunjungan pengguna masuk dibatasi satu per menit per UID lewat transaksi dan getAfter pada visitLimits; klien tidak dapat mengubah userId atau memalsukan waktu server. Hak superadmin membutuhkan kedua custom claims dan email terverifikasi.

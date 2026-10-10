@@ -102,6 +102,7 @@
   function resetPages() { pageIndex=0;cursors=[null];rows=[];hasNext=false; }
   function pageName() { if(document.body.classList.contains('signed-out'))return 'masuk';const hash=location.hash.slice(1);return routeNames[hash]&&(hash!=='superadmin'||authorized)?hash:'ringkasan'; }
   async function logVisit() {
+    if(!account?.id)return;
     const page=pageName();
     if(loggedPage===page)return;
     loggedPage=page;
@@ -112,7 +113,13 @@
     const browser=/Edg/i.test(agent)?'Edge':/Firefox|FxiOS/i.test(agent)?'Firefox':/Chrome|CriOS/i.test(agent)?'Chrome':/Safari/i.test(agent)?'Safari':'Lainnya';
     try {
       const {sdk,db}=await services();
-      await sdk.setDoc(sdk.doc(db,'visits',crypto.randomUUID()),{startedAt:sdk.serverTimestamp(),page,device,browser,source,userId});
+      const visitId=crypto.randomUUID(),limitRef=sdk.doc(db,'visitLimits',userId);
+      await sdk.runTransaction(db,async transaction=>{
+        const previous=await transaction.get(limitRef);
+        if(previous.exists()&&Date.now()-previous.data().at.toMillis()<60000)return;
+        transaction.set(limitRef,{at:sdk.serverTimestamp(),visitId});
+        transaction.set(sdk.doc(db,'visits',visitId),{startedAt:sdk.serverTimestamp(),page,device,browser,source,userId});
+      });
     } catch { if(loggedPage===page)loggedPage=''; }
   }
   async function syncAccount(user) {

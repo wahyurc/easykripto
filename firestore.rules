@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function superadmin() {
-      return request.auth != null && request.auth.token.get('superadmin', false) == true && request.auth.token.get('role', '') == 'superadmin';
+      return request.auth != null && request.auth.token.email_verified == true && request.auth.token.get('superadmin', false) == true && request.auth.token.get('role', '') == 'superadmin';
     }
     function owner(uid) {
       return request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true;
@@ -49,9 +49,23 @@ service cloud.firestore {
         allow delete: if owner(uid) && validWatchId(id);
       }
     }
+    match /visitLimits/{uid} {
+      allow get: if owner(uid);
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasOnly(['at','visitId'])
+        && request.resource.data.at == request.time
+        && request.resource.data.visitId is string
+        && request.resource.data.visitId.matches('^[a-zA-Z0-9_-]{20,64}$')
+        && (!exists(/databases/$(database)/documents/visitLimits/$(uid))
+          || request.time >= resource.data.at + duration.value(60, 's'));
+      allow list, delete: if false;
+    }
     match /visits/{visitId} {
       allow read: if superadmin();
-      allow create: if visitId.matches('^[a-zA-Z0-9_-]{20,64}$')
+      allow create: if request.auth != null && owner(request.auth.uid)
+        && visitId.matches('^[a-zA-Z0-9_-]{20,64}$')
+        && getAfter(/databases/$(database)/documents/visitLimits/$(request.auth.uid)).data.at == request.time
+        && getAfter(/databases/$(database)/documents/visitLimits/$(request.auth.uid)).data.visitId == visitId
         && request.resource.data.keys().hasAll(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
         && request.resource.data.keys().hasOnly(['startedAt', 'page', 'device', 'browser', 'source', 'userId'])
         && request.resource.data.startedAt == request.time
@@ -59,7 +73,7 @@ service cloud.firestore {
         && request.resource.data.device in ['Handphone', 'Tablet', 'Desktop']
         && request.resource.data.browser in ['Chrome', 'Edge', 'Firefox', 'Safari', 'Lainnya']
         && request.resource.data.source is string && request.resource.data.source.size() <= 253
-        && (request.resource.data.userId == '' || (request.auth != null && request.resource.data.userId == request.auth.uid));
+        && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
   }

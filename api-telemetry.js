@@ -18,7 +18,7 @@
     try{
       const token=await window.easykriptoIdToken();if(version!==generation)return;
       const origin=window.EASYKRIPTO_API_ORIGIN?new URL(window.EASYKRIPTO_API_ORIGIN).origin:location.origin;
-      const response=await fetch(`${origin}/api/monitor/events`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},credentials:'omit',body:JSON.stringify({events:batch}),signal:AbortSignal.any([activeController.signal,AbortSignal.timeout(12000)])});
+      const response=await fetch(`${origin}/api/monitor/events`,{method:'POST',headers:{...await window.EasyAppCheck.headers(),Authorization:`Bearer ${token}`,'Content-Type':'application/json'},credentials:'omit',body:JSON.stringify({events:batch}),signal:AbortSignal.any([activeController.signal,AbortSignal.timeout(12000)])});
       if(!response.ok){disabledUntil=Date.now()+60000;if(response.status>=500&&version===generation)pending.unshift(...batch);}
     }catch{if(version===generation){pending.unshift(...batch);disabledUntil=Date.now()+60000;}}
     finally{if(version===generation){pending=pending.slice(-50);sending=false;activeController=null;if(pending.length){clearTimeout(timer);timer=setTimeout(()=>{timer=null;void flush();},Math.max(5000,disabledUntil-Date.now()));}}}

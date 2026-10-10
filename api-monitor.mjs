@@ -1,4 +1,5 @@
 import {firebaseClaims} from './firebase-token.mjs';
+import {requireAppCheck} from './app-check.mjs';
 import {DataError} from './chain-data.mjs';
 
 const providers=['helius','alchemy','solana-rpc','dexscreener','gecko','goplus','worker'];
@@ -57,8 +58,9 @@ export async function handleAPIMonitor(req,res,pathname,env){
   const origin=req.headers.origin,allowed=new Set(['https://wahyurc.github.io','http://localhost:4173',...(env.API_ALLOWED_ORIGINS||'').split(',').map(v=>v.trim()).filter(Boolean)]);
   if(origin&&!allowed.has(origin)){send(res,403,{error:'Origin tidak diizinkan.'});return true;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
-  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type');res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.writeHead(204);res.end();return true;}
+  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type, X-Firebase-AppCheck');res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.writeHead(204);res.end();return true;}
   try{
+    await requireAppCheck(req,env);
     const claims=await firebaseClaims(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]);
     const telemetry=pathname==='/api/monitor/events';
     if(!telemetry&&(claims.role!=='superadmin'||claims.superadmin!==true))throw new DataError('Khusus superadmin.',403);

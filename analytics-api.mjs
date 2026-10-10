@@ -1,4 +1,5 @@
 import {firebaseIdentity} from './firebase-token.mjs';
+import {requireAppCheck} from './app-check.mjs';
 import {DataError,validAddress,solanaWallet,solanaHolders,evmWallet} from './chain-data.mjs';
 import {writeAPIEvents} from './api-monitor.mjs';
 
@@ -11,7 +12,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
   const allowed=new Set(['https://wahyurc.github.io','http://localhost:4173',...(env.API_ALLOWED_ORIGINS||'').split(',').map(value=>value.trim()).filter(Boolean)]);
   if(origin&&!allowed.has(origin)){send(res,403,{error:'Origin tidak diizinkan.'});return true;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
-  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type');res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');res.writeHead(204);res.end();return true;}
+  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type, X-Firebase-AppCheck');res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');res.writeHead(204);res.end();return true;}
   if(req.method!=='GET'){send(res,405,{error:'Metode tidak didukung.'});return true;}
   if(pathname==='/api/analysis/capabilities'){
     const networks=[
@@ -22,6 +23,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
   }
   const started=Date.now(),observed=[];let uid=null,requestChain='auto',requestKind='wallet',cached=false,responseStatus=200;
   try{
+    await requireAppCheck(req,env);
     uid=await firebaseIdentity(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]);
     const now=Date.now();for(const [key,value]of limits)if(value.until<now)limits.delete(key);
     const limit=limits.get(uid)||{used:0,until:now+60000};

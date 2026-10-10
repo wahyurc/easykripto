@@ -1,19 +1,20 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '1ec17190bb63f925';
+const RELEASE = '3d5bc5c431ce7767';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
-  "admin.js?v=20261010-superadmin",
+  "admin.js?v=20261010-security",
   "api-monitor-ui.css?v=20261010-api-monitor",
-  "api-monitor-ui.js?v=20261010-api-monitor",
-  "api-telemetry.js?v=20261010-api-monitor",
+  "api-monitor-ui.js?v=20261010-security",
+  "api-telemetry.js?v=20261010-security",
+  "app-check.js?v=20261010-security",
   "app.js?v=20261010-notifications",
-  "auth.js?v=20261010-pwa",
+  "auth.js?v=20261010-security",
   "black-theme.css?v=20261010-provider-logos",
   "dashboard-data.js?v=20261010-notifications",
-  "data-client.js?v=20261010-live-dashboard",
-  "data-config.js?v=20261010-cloudflare",
+  "data-client.js?v=20261010-security",
+  "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
   "icons/apple-touch-icon.png",
   "icons/icon-192.png",

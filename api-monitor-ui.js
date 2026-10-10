@@ -12,7 +12,7 @@
   async function request(path,{method='GET',body,signal}={}){
     const token=await window.easykriptoIdToken();if(signal?.aborted)throw new DOMException('Dibatalkan','AbortError');
     const origin=window.EASYKRIPTO_API_ORIGIN?new URL(window.EASYKRIPTO_API_ORIGIN).origin:location.origin;
-    const response=await fetch(`${origin}/api/monitor/${path}`,{method,headers:{Authorization:`Bearer ${token}`,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,credentials:'omit',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000)});
+    const response=await fetch(`${origin}/api/monitor/${path}`,{method,headers:{...await window.EasyAppCheck.headers(),Authorization:`Bearer ${token}`,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,credentials:'omit',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000)});
     const result=await response.json().catch(()=>null);if(!response.ok)throw new Error(result?.error||'Pemantauan belum tersedia.');return result;
   }
   function health(provider){

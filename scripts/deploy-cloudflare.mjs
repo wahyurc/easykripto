@@ -30,10 +30,11 @@ try{
   let subdomain=await api(`${root}/subdomain`,{allowMissing:true});
   if(!subdomain)subdomain=await api(`${root}/subdomain`,{method:'PUT',json:{subdomain:'easykripto-wahyurc'}});
   const bindings=[{type:'d1',name:'API_LOGS',id:database.uuid},{type:'plain_text',name:'API_ALLOWED_ORIGINS',text:'https://wahyurc.github.io,http://localhost:4173'},
+    {type:'plain_text',name:'APP_CHECK_REQUIRED',text:process.env.APP_CHECK_REQUIRED==='true'?'true':'false'},
     ...['HELIUS_API_KEY','ALCHEMY_API_KEY'].map(name=>({type:'secret_text',name,text:process.env[name].trim()}))];
   const form=new FormData();
   form.append('metadata',new Blob([JSON.stringify({main_module:'api-worker.mjs',compatibility_date:'2026-10-10',bindings})],{type:'application/json'}));
-  for(const file of ['api-worker.mjs','analytics-api.mjs','firebase-token.mjs','chain-data.mjs','api-monitor.mjs']){
+  for(const file of ['api-worker.mjs','analytics-api.mjs','firebase-token.mjs','chain-data.mjs','api-monitor.mjs','app-check.mjs']){
     form.append(file,new Blob([readFileSync(file)],{type:'application/javascript+module'}),file);
   }
   await api(`${root}/scripts/${workerName}`,{method:'PUT',body:form});

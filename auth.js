@@ -81,7 +81,9 @@
         import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js')
       ]);
       authSdk = sdk;
-      auth = sdk.getAuth(appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseConfig));
+      const firebaseApp = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseConfig);
+      await window.EasyAppCheck?.initialize(firebaseApp);
+      auth = sdk.getAuth(firebaseApp);
       auth.languageCode = 'id';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
       sdk.onIdTokenChanged(auth, async user => {

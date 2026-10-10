@@ -30,7 +30,7 @@
           const configured=window.EASYKRIPTO_API_ORIGIN;
           const origin=configured?new URL(configured).origin:location.origin;
           calls.push(Date.now());
-          const response=await fetch(`${origin}/api/analysis/${kind}?chain=${chain}&address=${encodeURIComponent(address)}`,{headers:{Authorization:`Bearer ${token}`},credentials:'omit',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(40000)])});
+          const response=await fetch(`${origin}/api/analysis/${kind}?chain=${chain}&address=${encodeURIComponent(address)}`,{headers:{...await window.EasyAppCheck.headers(),Authorization:`Bearer ${token}`},credentials:'omit',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(40000)])});
           const body=await response.json().catch(()=>null);
           if(!response.ok)throw new Error(body?.error||'Layanan analisis belum tersedia.');
           if(epoch!==generation)throw new DOMException('Sesi berubah','AbortError');
