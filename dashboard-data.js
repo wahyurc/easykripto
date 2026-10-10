@@ -192,6 +192,7 @@
   }
   async function session(event){
     const account=event.detail.user||null;if(user?.id===account?.id)return;
+    if($('#detail-dialog').open)closeDialog();
     user=account;epoch++;const version=epoch;ready=false;busy=new Set();snapshots.clear();markets.clear();errors.clear();events.splice(0);applyWatch({});clearTimeout(timer);syncQueue=Promise.resolve();syncedWatch={wallets:[],tokens:[]};
     syncMessage=user?'Memuat pantauan akun Google…':'Masuk untuk memuat pantauan.';renderAll();
     if(!user)return;
@@ -237,7 +238,8 @@
     if(d.removeToken&&allowed()){const index=tokens.findIndex(t=>t.id===d.removeToken);if(index>=0){tokens.splice(index,1);persist();closeDialog();toast('Token dihapus dari pantauan.');}}
     if(d.action==='sync-watch'&&allowed()){await syncQueue;persist();}
     if(d.action==='import-watch'&&allowed()){
-      const legacy=normalize(load('easykripto.wallets',[]).map(w=>({...w,chain:w.chain||'solana'})),'wallets');
+      const saved=load('easykripto.wallets',[]);
+      const legacy=normalize((Array.isArray(saved)?saved:[]).filter(w=>w&&typeof w==='object').map(w=>({...w,chain:w.chain||'solana'})),'wallets');
       for(const wallet of legacy)if(state.wallets.length<20&&!state.wallets.some(w=>key(w.chain,w.address)===key(wallet.chain,wallet.address)))state.wallets.push(wallet);
       persist();toast('Pantauan lama pada perangkat diimpor ke akun ini.');
     }
