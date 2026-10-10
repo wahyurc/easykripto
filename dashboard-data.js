@@ -15,7 +15,7 @@
   const empty=message=>`<div class="empty-state">${escapeHTML(message)}</div>`;
   let user=null,epoch=0,ready=false,cloud=null,syncQueue=Promise.resolve(),timer=null,pollIndex=0,busy=new Set(),nodeLookup=new Map();
   let syncMessage='Masuk untuk memuat pantauan.',refreshBusy=false,syncedWatch={wallets:[],tokens:[]};
-  let syncFailed=false,priceQueue=Promise.resolve();
+  let syncFailed=false,priceQueue=Promise.resolve(),bulkRefresh=null;
   const pendingPrices=new Map();
   function notice(value){window.EasyNotifications?.push(value);}
   function watchLimit(){return user?.role==='superadmin'?Infinity:20;}
@@ -217,12 +217,13 @@
     renderAll();
   }
   async function refreshWallet(id,quiet=false){
-    const wallet=state.wallets.find(w=>w.id===id);if(!wallet||busy.has(id)||!user)return;
+    const wallet=state.wallets.find(w=>w.id===id);if(!wallet||busy.has(id)||!user)return 'skipped';
     const version=epoch;busy.add(id);errors.delete(id);renderWallets();
     try{
       const data=await window.EasyData.analyze({chain:wallet.chain,address:wallet.address,onWait:message=>{if(version===epoch){errors.set(id,message);renderWallets();}}});
-      if(version===epoch&&state.wallets.some(w=>w.id===id)){errors.delete(id);receive(data);if(analysisFailures.delete(id))notice({category:'system',level:'success',title:`Data ${wallet.name} kembali tersedia`,message:'Analisis berhasil dimuat kembali. Pantauan dapat melanjutkan pemeriksaan sampel transaksi.',context:`${chainName(wallet.chain)} · ${data.source}`,key:`analysis-recovered:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});else if(!quiet)notice({category:'system',level:'success',title:'Analisis diperbarui',message:`Sampel ${wallet.name} sudah dimuat. ${data.scanned||0} catatan diperiksa; hasil bukan seluruh riwayat transaksi.`,context:`${chainName(wallet.chain)} · ${data.source}`,key:`analysis-success:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});}
-    }catch(error){if(version===epoch&&error.name!=='AbortError'){errors.set(id,error.message);analysisFailures.add(id);notice({category:'system',level:'warning',title:`Data ${wallet.name} belum dapat diperbarui`,message:error.message||'Layanan data belum tersedia. Coba perbarui wallet beberapa saat lagi.',context:chainName(wallet.chain),key:`analysis-failed:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});}}
+      if(version===epoch&&state.wallets.some(w=>w.id===id)){errors.delete(id);receive(data);if(analysisFailures.delete(id))notice({category:'system',level:'success',title:`Data ${wallet.name} kembali tersedia`,message:'Analisis berhasil dimuat kembali. Pantauan dapat melanjutkan pemeriksaan sampel transaksi.',context:`${chainName(wallet.chain)} · ${data.source}`,key:`analysis-recovered:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});else if(!quiet)notice({category:'system',level:'success',title:'Analisis diperbarui',message:`Sampel ${wallet.name} sudah dimuat. ${data.scanned||0} catatan diperiksa; hasil bukan seluruh riwayat transaksi.`,context:`${chainName(wallet.chain)} · ${data.source}`,key:`analysis-success:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});return 'success';}
+      return 'cancelled';
+    }catch(error){if(version===epoch&&error.name!=='AbortError'){errors.set(id,error.message);analysisFailures.add(id);notice({category:'system',level:'warning',title:`Data ${wallet.name} belum dapat diperbarui`,message:error.message||'Layanan data belum tersedia. Coba perbarui wallet beberapa saat lagi.',context:chainName(wallet.chain),key:`analysis-failed:${id}`,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});return 'failed';}return 'cancelled';}
     finally{if(version===epoch){busy.delete(id);renderWallets();}}
   }
   async function loadWatchedMap(){
@@ -237,6 +238,23 @@
         job.index++;if(job.version===epoch)renderMap();
       }
     }finally{if(mapLoad===job){mapLoad=null;renderMap();if(job.version===epoch&&job.index===job.total)toast('Pemuatan selesai. Cakupan dan kendala tersedia di bawah peta.');}}
+  }
+  async function refreshAllWallets(){
+    if(!allowed())return;
+    if(bulkRefresh){bulkRefresh.cancelled=true;window.EasyWatchlist?.refreshStatus(bulkRefresh);return;}
+    if(refreshBusy){toast('Pembaruan lain sedang berjalan. Tunggu sampai selesai.');return;}
+    const items=availableWallets();if(!items.length){toast('Belum ada wallet pada jaringan aktif.');return;}
+    const job={version:epoch,chain:selectedBlockchain,done:0,total:items.length,success:0,failed:0,skipped:0,cancelled:false};bulkRefresh=job;refreshBusy=true;window.EasyWatchlist?.refreshStatus(job);
+    try{
+      for(const wallet of items){
+        if(job.cancelled||job.version!==epoch||job.chain!==selectedBlockchain)break;
+        const result=await refreshWallet(wallet.id,true);if(job.version!==epoch)break;
+        if(result==='cancelled'){job.cancelled=true;break;}
+        job.done++;job[result]++;window.EasyWatchlist?.refreshStatus(job);
+      }
+    }finally{
+      if(bulkRefresh===job){bulkRefresh=null;refreshBusy=false;if(job.version===epoch)window.EasyWatchlist?.refreshStatus({...job,finished:true});}
+    }
   }
   async function refreshTokens(requestIds=null){
     const version=epoch,requested=requestIds?new Set(requestIds):null,tasks=[];
@@ -268,7 +286,7 @@
   async function session(event){
     const account=event.detail.user||null;if(user?.id===account?.id&&user?.role===account?.role)return;
     if($('#detail-dialog').open)closeDialog();
-    user=account;epoch++;const version=epoch;mapLoad=null;state.mapAsset='all';priceQueue=Promise.resolve();pendingPrices.clear();pictureRequest?.abort();pictureRequest=null;tokenPictures.clear();pictureCooldown=0;ready=false;busy=new Set();snapshots.clear();markets.clear();errors.clear();analysisFailures.clear();syncFailed=false;events.splice(0);applyWatch({});clearTimeout(timer);syncQueue=Promise.resolve();syncedWatch={wallets:[],tokens:[]};
+    user=account;epoch++;const version=epoch;mapLoad=null;bulkRefresh=null;refreshBusy=false;window.EasyWatchlist?.refreshStatus(null);state.mapAsset='all';priceQueue=Promise.resolve();pendingPrices.clear();pictureRequest?.abort();pictureRequest=null;tokenPictures.clear();pictureCooldown=0;ready=false;busy=new Set();snapshots.clear();markets.clear();errors.clear();analysisFailures.clear();syncFailed=false;events.splice(0);applyWatch({});clearTimeout(timer);syncQueue=Promise.resolve();syncedWatch={wallets:[],tokens:[]};
     syncMessage=user?'Memuat pantauan akun Google…':'Masuk untuk memuat pantauan.';renderAll();
     if(!user)return;
     const cached=load(localKey(),{});applyWatch(cached);renderAll();
@@ -298,7 +316,7 @@
     void refreshTokens();const first=availableWallets()[0];if(first)void refreshWallet(first.id,true);
   }
   window.EasyDashboard={row,summary,activities,wallets,map:mapView,showEvents,showNode,receive,persist,allowed,
-    async refreshAllWallets(){if(!allowed()||refreshBusy)return;refreshBusy=true;const version=epoch,chain=selectedBlockchain,items=availableWallets();window.EasyWatchlist?.refreshStatus({done:0,total:items.length});try{for(let i=0;i<items.length;i++){if(version!==epoch||chain!==selectedBlockchain)break;if(state.wallets.some(w=>w.id===items[i].id))await refreshWallet(items[i].id,true);if(version===epoch)window.EasyWatchlist?.refreshStatus({done:i+1,total:items.length});}}finally{refreshBusy=false;window.EasyWatchlist?.refreshStatus(null);}},
+    refreshAllWallets,
     addWallet(wallet){if(!allowed())return false;if(!blockchainNetworks.some(n=>n.id===wallet.chain)||!validChainAddress(wallet.address,wallet.chain)){toast('Alamat holder tidak sesuai jaringan.');return false;}if(state.wallets.some(w=>w.chain===wallet.chain&&equalChainAddress(w.address,wallet.address,wallet.chain))){toast('Alamat sudah berada di pantauan.');return false;}if(state.wallets.length>=watchLimit()){toast('Maksimal 20 wallet per akun untuk menjaga kuota gratis.');return false;}wallet={...wallet,category:walletCategory(wallet.category).id};state.wallets.push(wallet);persist();notice({category:'watch',level:'success',title:'Wallet ditambahkan ke pantauan',message:wallet.name,context:chainName(wallet.chain)+' · '+short(wallet.address),key:'watch-wallet:'+wallet.id,toast:false,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});void refreshWallet(wallet.id);return true;},
     setWalletCategory(id,value){if(!allowed()||!Object.hasOwn(walletCategories,value))return;const wallet=state.wallets.find(w=>w.id===id);if(!wallet||wallet.category===value)return;wallet.category=value;persist();toast(`Kategori wallet diubah menjadi ${walletCategory(value).label}.`);},
     updateWallet(id,{name,category}){if(!allowed())return false;const wallet=state.wallets.find(w=>w.id===id),label=typeof name==='string'?name.trim():'';if(!wallet||!label||label.length>80||!Object.hasOwn(walletCategories,category))return false;if(wallet.name!==label||wallet.category!==category){wallet.name=label;wallet.category=category;persist();}return true;},

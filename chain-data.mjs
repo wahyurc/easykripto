@@ -33,35 +33,62 @@ export function validAddress(address,chain){
 
 const usdc={solana:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',ethereum:'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',base:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'};
 const nativeTokens={solana:'So11111111111111111111111111111111111111112',ethereum:'0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',base:'0x4200000000000000000000000000000000000006',bsc:'0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'};
-const priceCache=new Map();
+const priceCache=new Map(),metadataCache=new Map();
 async function walletAssets(url,chain,address,nativeBalance,signal,observe){
-  const assets=[],contract=usdc[chain];let usdcBalance=null,partial=false;
+  const assets=[],contract=usdc[chain],warnings=new Set();let usdcBalance=null,partial=false;
+  const incomplete=message=>{partial=true;warnings.add(message);};
   try{
     if(chain==='solana'){
-      const accounts=new Map();
+      const accounts=new Map();let standardRead=false;
       for(const programId of ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA','TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']){
-        try{const result=await rpc(url,'getTokenAccountsByOwner',[address,{programId},{encoding:'jsonParsed',commitment:'confirmed'}],signal,observe);for(const row of result.value||[]){const info=row.account?.data?.parsed?.info,t=info?.tokenAmount;if(!info?.mint||!/^\d+$/.test(t?.amount||''))continue;const item=accounts.get(info.mint)||{raw:0n,decimals:t.decimals};item.raw+=BigInt(t.amount);accounts.set(info.mint,item);}}catch{partial=true;}
+        try{
+          const result=await rpc(url,'getTokenAccountsByOwner',[address,{programId},{encoding:'jsonParsed',commitment:'confirmed'}],signal,observe);
+          if(!Array.isArray(result?.value))throw new Error('Respons tidak lengkap');
+          if(programId==='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')standardRead=true;
+          for(const row of result.value){
+            const info=row.account?.data?.parsed?.info,t=info?.tokenAmount;
+            if(info?.owner!==address||!validAddress(info?.mint,'solana')||!/^\d+$/.test(t?.amount||'')||!Number.isInteger(t.decimals)||t.decimals<0||t.decimals>255){incomplete('Sebagian akun token tidak dapat dibaca.');continue;}
+            const item=accounts.get(info.mint)||{raw:0n,decimals:t.decimals};
+            if(item.decimals!==t.decimals){incomplete('Desimal token tidak konsisten.');continue;}
+            item.raw+=BigInt(t.amount);accounts.set(info.mint,item);
+          }
+        }catch{incomplete(programId==='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'?'Saldo SPL belum dapat dimuat.':'Saldo Token-2022 belum dapat dimuat.');}
       }
-      const stable=accounts.get(contract);if(!partial||stable)usdcBalance=stable?decimalUnits(stable.raw,stable.decimals):'0';
+      const stable=accounts.get(contract);if(standardRead)usdcBalance=stable?decimalUnits(stable.raw,stable.decimals):'0';
       for(const [address,item]of accounts)if(item.raw>0n)assets.push({address,amount:decimalUnits(item.raw,item.decimals)});
     }else{
-      if(contract)try{usdcBalance=decimalUnits(await rpc(url,'eth_call',[{to:contract,data:`0x70a08231${address.slice(2).padStart(64,'0')}`},'latest'],signal,observe),6);}catch{partial=true;}
-      const result=await rpc(url,'alchemy_getTokenBalances',[address,'erc20'],signal,observe),positive=(result.tokenBalances||[]).filter(t=>!t.error&&/^0x[0-9a-f]+$/i.test(t.tokenBalance||'')&&BigInt(t.tokenBalance)>0n);
-      if(result.pageKey||positive.length>20||(result.tokenBalances||[]).some(t=>t.error))partial=true;
-      for(let i=0;i<Math.min(positive.length,20);i+=4)await Promise.all(positive.slice(i,Math.min(i+4,20)).map(async token=>{try{const meta=await rpc(url,'alchemy_getTokenMetadata',[token.contractAddress],signal,observe);if(!Number.isInteger(meta.decimals)||meta.decimals<0||meta.decimals>255)throw new Error();assets.push({address:token.contractAddress.toLowerCase(),amount:decimalUnits(token.tokenBalance,meta.decimals)});}catch{partial=true;}}));
+      if(contract)try{const raw=await rpc(url,'eth_call',[{to:contract,data:`0x70a08231${address.slice(2).padStart(64,'0')}`},'latest'],signal,observe);if(!/^0x[0-9a-f]+$/i.test(raw))throw new Error('Saldo tidak tersedia');usdcBalance=decimalUnits(raw,6);}catch{incomplete('Pembacaan langsung USDC gagal; saldo dapat memakai daftar token jika tersedia.');}
+      const result=await rpc(url,'alchemy_getTokenBalances',[address,'erc20'],signal,observe);
+      if(!Array.isArray(result?.tokenBalances))throw new Error('Respons tidak lengkap');
+      const valid=result.tokenBalances.filter(t=>!t.error&&validAddress(t.contractAddress,chain)&&/^0x[0-9a-f]+$/i.test(t.tokenBalance||''));
+      const positive=valid.filter(t=>BigInt(t.tokenBalance)>0n),unique=[...new Map(positive.map(t=>[t.contractAddress.toLowerCase(),t])).values()];
+      if(result.pageKey)incomplete('Masih ada halaman saldo token yang belum dibaca.');
+      if(unique.length>20)incomplete('Metadata dibatasi pada 20 token ERC-20 pertama.');
+      if(valid.length!==result.tokenBalances.length)incomplete('Sebagian saldo ERC-20 belum dapat dibaca.');
+      for(let i=0;i<Math.min(unique.length,20);i+=4)await Promise.all(unique.slice(i,Math.min(i+4,20)).map(async token=>{
+        const ca=token.contractAddress.toLowerCase();
+        try{
+          if(ca===contract){if(usdcBalance===null)usdcBalance=decimalUnits(token.tokenBalance,6);return;}
+          const id=`${chain}:${ca}`,cached=metadataCache.get(id),meta=cached?.until>Date.now()?cached.meta:await rpc(url,'alchemy_getTokenMetadata',[ca],signal,observe);
+          if(!Number.isInteger(meta?.decimals)||meta.decimals<0||meta.decimals>255)throw new Error('Metadata tidak tersedia');
+          if(metadataCache.size>=300)metadataCache.delete(metadataCache.keys().next().value);metadataCache.set(id,{meta,until:Date.now()+1800000});
+          assets.push({address:ca,amount:decimalUnits(token.tokenBalance,meta.decimals)});
+        }catch{incomplete('Metadata sebagian token belum dapat dimuat.');}
+      }));
     }
-  }catch{partial=true;}
+  }catch{incomplete('Daftar aset belum dapat dimuat sepenuhnya.');}
   if(contract&&usdcBalance!==null){const index=assets.findIndex(a=>a.address===contract);if(index>=0)assets.splice(index,1);if(Number(usdcBalance)>0)assets.unshift({address:contract,amount:usdcBalance});}
-  const priceChain=chain==='robinhood'?'ethereum':chain,native=nativeTokens[priceChain],selected=assets.slice(0,29),prices=new Map();if(assets.length>29)partial=true;
+  const priceChain=chain,native=nativeTokens[chain],selected=assets.slice(0,29),prices=new Map();if(assets.length>29)incomplete('Harga dibatasi pada 29 token pertama.');
   const addresses=[...new Set([native,...selected.map(a=>a.address).filter(a=>a!==contract)].filter(Boolean))],cacheKey=`${priceChain}:${addresses.slice().sort().join(',')}`;
   try{
     let pairs=priceCache.get(cacheKey)?.until>Date.now()?priceCache.get(cacheKey).pairs:null;
-    if(!pairs){const started=Date.now();let response;try{response=await fetch(`https://api.dexscreener.com/tokens/v1/${priceChain}/${addresses.join(',')}`,{signal:AbortSignal.timeout(8000)});if(!response.ok)throw new Error();pairs=await response.json();if(!Array.isArray(pairs))throw new Error();}finally{observe?.({provider:'dexscreener',method:'wallet_asset_prices',status:response?.status||0,ok:response?.ok===true,duration:Date.now()-started});}if(priceCache.size>=100)priceCache.delete(priceCache.keys().next().value);priceCache.set(cacheKey,{pairs,until:Date.now()+120000});}
+    if(!pairs){const started=Date.now();let response,ok=false;try{if(!addresses.length){pairs=[];ok=true;}else{response=await fetch(`https://api.dexscreener.com/tokens/v1/${priceChain}/${addresses.join(',')}`,{signal:signal?AbortSignal.any([signal,AbortSignal.timeout(8000)]):AbortSignal.timeout(8000)});if(!response.ok)throw new Error();pairs=await response.json();if(!Array.isArray(pairs))throw new Error();ok=true;}}finally{if(addresses.length)observe?.({provider:'dexscreener',method:'wallet_asset_prices',status:response?.status||0,ok,duration:Date.now()-started});}if(priceCache.size>=100)priceCache.delete(priceCache.keys().next().value);priceCache.set(cacheKey,{pairs,until:Date.now()+120000});}
     for(const p of pairs){const ca=p.baseToken?.address;if(p.chainId!==priceChain||!ca||!Number.isFinite(Number(p.priceUsd))||Number(p.priceUsd)<=0)continue;const id=priceChain==='solana'?ca:ca.toLowerCase(),old=prices.get(id);if(!old||Number(p.liquidity?.usd||0)>old.liquidity)prices.set(id,{price:Number(p.priceUsd),liquidity:Number(p.liquidity?.usd||0)});}
-  }catch{partial=true;}
+  }catch{incomplete('Harga pasar belum dapat dimuat.');}
   let total=0,priced=0,missing=0;
   for(const a of [{address:native,amount:nativeBalance},...selected]){const amount=Number(a.amount),price=a.address===contract?1:prices.get(a.address)?.price;if(amount===0)continue;if(!Number.isFinite(amount)||amount<0||price===undefined||!Number.isFinite(amount*price)){missing++;continue;}total+=amount*price;priced++;}
-  return {usdcBalance,usdcSupported:!!contract,assetValue:{usd:priced||(!missing&&!partial)?total:null,partial:partial||missing>0,pricedAssets:priced,unpricedAssets:missing,at:Date.now(),basis:'Native + token terbaca dengan harga DexScreener; USDC acuan 1 USD. Maks. 20 ERC-20 dan 29 token dinilai. Tidak mencakup NFT, DeFi, staking atau rent akun token.'}};
+  if(missing)incomplete(`${missing} aset belum memiliki harga yang dapat digunakan.`);
+  return {usdcBalance,usdcSupported:!!contract,assetValue:{usd:priced||(!missing&&!partial)?total:null,partial,pricedAssets:priced,unpricedAssets:missing,warnings:[...warnings],at:Date.now(),basis:'Native + token terbaca dengan harga DexScreener; USDC acuan 1 USD. Maks. 20 ERC-20 dan 29 token dinilai. Tidak mencakup NFT, DeFi, staking atau rent akun token. Harga DEX adalah estimasi, bukan nilai yang pasti dapat dicairkan.'}};
 }
 
 export async function solanaWallet(url,address,signal,observe) {
@@ -132,8 +159,10 @@ export async function evmWallet(url,chain,address,signal,observe) {
   address=address.toLowerCase();
   const balance=await rpc(url,'eth_getBalance',[address,'latest'],signal,observe);
   const nativeBalance=decimalUnits(balance,18);
-  const results=[];
-  for(const direction of ['fromAddress','toAddress'])results.push(await rpc(url,'alchemy_getAssetTransfers',[{fromBlock:'0x0',toBlock:'latest',[direction]:address,category:['external','erc20'],excludeZeroValue:true,withMetadata:true,order:'desc',maxCount:'0x19'}],signal,observe));
+  const assets=await walletAssets(url,chain,address,nativeBalance,signal,observe),results=[];let transferUnavailable=0;
+  for(const direction of ['fromAddress','toAddress']){
+    try{const result=await rpc(url,'alchemy_getAssetTransfers',[{fromBlock:'0x0',toBlock:'latest',[direction]:address,category:['external','erc20'],excludeZeroValue:true,withMetadata:true,order:'desc',maxCount:'0x19'}],signal,observe);if(!Array.isArray(result?.transfers))throw new Error('Respons tidak lengkap');results.push(result);}catch{transferUnavailable++;}
+  }
   const unique=new Map();
   for(const result of results)for(const transfer of result.transfers||[]) {
     const id=transfer.uniqueId||`${transfer.hash}:${transfer.from}:${transfer.to}:${transfer.rawContract?.address||''}:${transfer.value}`;
@@ -142,5 +171,5 @@ export async function evmWallet(url,chain,address,signal,observe) {
     unique.set(id,{id,hash:transfer.hash,from:transfer.from?.toLowerCase(),to:transfer.to?.toLowerCase(),asset:transfer.asset||raw?.address||'Token',assetAddress:raw?.address||null,amount,timestamp:transfer.metadata?.blockTimestamp||null,endpointType:'wallet'});
   }
   const transfers=[...unique.values()].sort((a,b)=>(Date.parse(b.timestamp)||0)-(Date.parse(a.timestamp)||0));
-  return {chain,address,nativeBalance,nativeSymbol:chain==='bsc'?'BNB':'ETH',...await walletAssets(url,chain,address,nativeBalance,signal,observe),transfers,scanned:transfers.length,partial:true,moreAvailable:results.some(result=>result.pageKey),note:'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
+  return {chain,address,nativeBalance,nativeSymbol:chain==='bsc'?'BNB':'ETH',...assets,transfers,scanned:transfers.length,unavailable:transferUnavailable,transferUnavailable:transferUnavailable>0,partial:true,moreAvailable:results.some(result=>result.pageKey),note:(transferUnavailable?'Sebagian sumber riwayat transfer belum tersedia; saldo yang berhasil dibaca tetap ditampilkan. ':'')+'Maksimal 25 transfer masuk dan 25 keluar (native/ERC-20). Tidak mencakup semua internal transfer, NFT, atau seluruh riwayat. Transfer belum diklasifikasikan sebagai beli/jual.'};
 }
