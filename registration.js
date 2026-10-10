@@ -59,7 +59,7 @@
   async function watch(user,account,commit){
     const registrationName=signupName||user?.displayName||user?.email||'Pengguna';
     const version=++epoch;stop?.();stop=null;current=user;complete=commit;registration=null;
-    if(!user){renderGate();return;}
+    if(!user){commit(null);renderGate();return;}
     // Do not expose the dashboard while its authorization is being resolved.
     commit(null);el('auth-entry').hidden=true;renderGate(true);
     if(account.role==='superadmin'){current=null;renderGate();commit(account);return;}
