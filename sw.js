@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '68ef0584330f1a40';
+const RELEASE = 'd608cbad55132dcc';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-dashboard-route",
@@ -22,7 +22,7 @@ const SHELL = [
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
-  "live-data.css?v=20261011-holder-stay",
+  "live-data.css?v=20261011-token-desktop-modal",
   "manifest.webmanifest",
   "market-data.js?v=20261011-api-recovery",
   "market-feed.css?v=20261010-discovery",
