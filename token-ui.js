@@ -17,6 +17,26 @@
       button.disabled=saved||document.body.classList.contains('signed-out');button.textContent=saved?'Sudah dipantau':'Tambah ke pantauan';button.setAttribute('aria-label',`${saved?'Sudah dipantau':'Tambah ke pantauan'} ${button.dataset.trackHolder}`);
     }
   }
+  function addHolderWithoutLeaving(button,{address,chain,symbol}){
+    if(!window.EasyDashboard?.allowed())return;
+    const card=button.closest('.holder-card');if(!card)return;
+    const existing=card.querySelector('.holder-watch-form');if(existing){existing.querySelector('input').focus();return;}
+    const id=`holder-wallet-${crypto.randomUUID()}`,form=document.createElement('form');form.id=id;form.className='holder-watch-form';form.noValidate=true;
+    const name=`Holder ${symbol||'token'} ${short(address)}`.slice(0,80),network=blockchainNetworks.find(n=>n.id===chain);
+    form.innerHTML=`<div class="form-field"><label for="${id}-name">Nama wallet</label><input id="${id}-name" maxlength="80" required autocomplete="off" value="${escapeHTML(name)}" aria-describedby="${id}-error"></div>${walletCategoryPicker('other',`${id}-category`)}<p class="panel-footnote">Wallet disimpan pada ${escapeHTML(network.name)}. Detail token tetap terbuka.</p><p id="${id}-error" class="form-error" role="alert"></p><div class="holder-watch-actions"><button type="submit" class="primary-button">Simpan wallet</button><button type="button" class="secondary-button" data-cancel-holder>Batal</button></div>`;
+    const input=form.querySelector('input'),error=form.querySelector('.form-error');
+    const dismiss=()=>{form.remove();button.hidden=false;button.removeAttribute('aria-expanded');button.removeAttribute('aria-controls');updateButtons(card);};
+    form.querySelector('[data-cancel-holder]').addEventListener('click',()=>{dismiss();if(!button.disabled)button.focus({preventScroll:true});});
+    form.addEventListener('submit',event=>{
+      event.preventDefault();const label=input.value.trim();
+      if(!label){error.textContent='Isi nama wallet terlebih dahulu.';input.focus();return;}
+      const category=walletCategory(form.querySelector('input[type="radio"]:checked')?.value).id;
+      if(!window.EasyDashboard.addWallet({id:`local-${crypto.randomUUID()}`,name:label,address,chain,category,alert:false})){error.textContent='Wallet belum dapat disimpan. Alamat mungkin sudah dipantau atau batas pantauan tercapai.';return;}
+      dismiss();card.querySelector('.holder-watch-status')?.remove();
+      const status=node('p',`Wallet ${label} ditambahkan ke pantauan.`,'holder-watch-status');status.setAttribute('role','status');status.tabIndex=-1;card.append(status);status.focus({preventScroll:true});
+    });
+    button.hidden=true;button.setAttribute('aria-expanded','true');button.setAttribute('aria-controls',id);card.append(form);input.focus({preventScroll:true});
+  }
   function holderCard(holder,index,{chain,symbol='token'}){
     const row=document.createElement('article');row.className='holder-card';
     const main=node('div','','holder-card-main'),title=node('strong',`${index+1}. ${short(holder.address)}`),full=node('p',holder.address,'holder-address');main.append(title,full);
@@ -56,6 +76,7 @@
     const button=event.target.closest('[data-track-holder]');if(!button)return;const {trackHolder:address,chain,symbol}=button.dataset;
     if(!blockchainNetworks.some(n=>n.id===chain)||!validChainAddress(address,chain))return;
     const saved=state.wallets.some(w=>w.chain===chain&&equalChainAddress(w.address,address,chain));if(saved){updateButtons();return;}
+    if(button.closest('#token-live-holders')){addHolderWithoutLeaving(button,{address,chain,symbol});return;}
     addWallet({name:`Holder ${symbol||'token'} ${short(address)}`.slice(0,80),address,chain});
   });
   window.addEventListener('easykripto-watch-change',()=>updateButtons());
