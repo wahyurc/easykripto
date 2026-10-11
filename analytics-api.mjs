@@ -12,6 +12,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
   const allowed=new Set(['https://wahyurc.github.io','http://localhost:4173',...(env.API_ALLOWED_ORIGINS||'').split(',').map(value=>value.trim()).filter(Boolean)]);
   if(origin&&!allowed.has(origin)){send(res,403,{error:'Origin tidak diizinkan.'});return true;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
+  res.setHeader('Access-Control-Expose-Headers','Retry-After');
   if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type, X-Firebase-AppCheck');res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');res.writeHead(204);res.end();return true;}
   if(req.method!=='GET'){send(res,405,{error:'Metode tidak didukung.'});return true;}
   if(pathname==='/api/analysis/capabilities'){
@@ -21,17 +22,17 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
     ];
     send(res,200,{networks,scope:'Jaringan yang didukung implementasi aplikasi dan layanan yang dikonfigurasi; ketersediaan data bergantung penyedia.'});return true;
   }
-  const started=Date.now(),observed=[];let uid=null,requestChain='auto',requestKind='wallet',cached=false,responseStatus=200;
+  const started=Date.now(),observed=[];let uid=null,requestChain='auto',requestKind='wallet',cached=false,responseStatus=200,requestError=null;
   try{
     await requireAppCheck(req,env);
     uid=await firebaseIdentity(req.headers.authorization?.match(/^Bearer (.+)$/)?.[1],req.headers['x-firebase-appcheck']);
-    const now=Date.now();for(const [key,value]of limits)if(value.until<now)limits.delete(key);
-    const limit=limits.get(uid)||{used:0,until:now+60000};
-    if(limit.used>=4||limits.size>=10000)throw new DataError('Maksimal 4 analisis per menit. Tunggu sebentar.',429);
-    limit.used++;limits.set(uid,limit);
     const query=new URL(req.url,'http://localhost').searchParams,chain=query.get('chain'),address=query.get('address');
     const mode=pathname==='/api/analysis/holders'?'holders':pathname==='/api/analysis/wallet'?'wallet':null;
     requestChain=['solana','ethereum','base','bsc','robinhood'].includes(chain)?chain:'auto';requestKind=mode||'wallet';
+    const now=Date.now();for(const [id,value]of limits)if(value.until<=now)limits.delete(id);
+    const limit=limits.get(uid)||{used:0,until:now+60000};
+    if(limit.used>=4||limits.size>=10000)throw new DataError('Maksimal 4 analisis per menit. Pembaruan akan dilanjutkan setelah jeda.',429,{retryAfter:Math.max(1,Math.ceil((limit.until-now)/1000)),errorKind:'rate_limited'});
+    limit.used++;limits.set(uid,limit);
     if(!mode)throw new DataError('Analisis tidak tersedia.',404);
     if(!['solana','ethereum','base','bsc','robinhood'].includes(chain)||(mode==='holders'&&chain!=='solana'))throw new DataError('Analisis wallet tersedia di lima jaringan. Analisis holder tersedia untuk Solana.',400);
     if(!validAddress(address,chain))throw new DataError('Alamat tidak sesuai jaringan.',400);
@@ -40,7 +41,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
     const key=`${mode}:${chain}:${chain==='solana'?address:address.toLowerCase()}`;
     for(const [key,value]of cache)if(value.until<now)cache.delete(key);
     if(cache.has(key)){cached=true;send(res,200,{...cache.get(key).data,cached:true});return true;}
-    if(active>=2)throw new DataError('Analisis sedang penuh. Coba beberapa saat lagi.',429);
+    if(active>=2)throw new DataError('Analisis sedang penuh. Coba beberapa saat lagi.',429,{retryAfter:5,errorKind:'rate_limited'});
     active++;
     try{
       const hosts={ethereum:'eth-mainnet',base:'base-mainnet',bsc:'bnb-mainnet',robinhood:'robinhood-mainnet'};
@@ -52,7 +53,7 @@ export async function handleAnalytics(req,res,pathname,env=process.env){
       if(cache.size<300)cache.set(key,{data:result,until:Date.now()+120000});
       send(res,200,result);
     }finally{active--;}
-  }catch(error){responseStatus=error instanceof DataError?error.status:502;send(res,responseStatus,{error:error instanceof DataError?error.message:'Analisis belum dapat dimuat. Periksa koneksi dan coba lagi.'});}
-  finally{if(uid){observed.push({provider:'worker',method:requestKind,chain:requestChain,status:responseStatus,ok:responseStatus<400,duration:Date.now()-started,source:'server',cached});const write=writeAPIEvents(env,observed);if(req.waitUntil)req.waitUntil(write);else await write;}}
+  }catch(error){requestError=error;responseStatus=error instanceof DataError?error.status:502;if(error.retryAfter)res.setHeader('Retry-After',String(error.retryAfter));send(res,responseStatus,{error:error instanceof DataError?error.message:'Analisis belum dapat dimuat. Periksa koneksi dan coba lagi.',...(error.retryAfter?{retryAfter:error.retryAfter}:{})});}
+  finally{if(uid){observed.push({provider:'worker',method:requestKind,chain:requestChain,status:responseStatus,ok:responseStatus<400,rpcCode:requestError?.rpcCode,errorKind:requestError?.errorKind,retryAfter:requestError?.retryAfter,duration:Date.now()-started,source:'server',cached});const write=writeAPIEvents(env,observed);if(req.waitUntil)req.waitUntil(write);else await write;}}
   return true;
 }

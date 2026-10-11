@@ -6,6 +6,10 @@
   const number=new Intl.NumberFormat('id-ID'),clock=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
   let account=null,epoch=0,timer=null,controller=null,data=null,logRows=[],next=null,busy=false,logBusy=false,budgetBusy=false,lastHealth=new Map();
   const text=(tag,value,className)=>{const node=document.createElement(tag);node.textContent=value;if(className)node.className=className;return node;};
+  function diagnostic(row){
+    const labels={rpc_rejected:'RPC ditolak',rate_limited:'Pembatasan permintaan',timeout:'Waktu tunggu habis',network:'Gangguan koneksi',http_error:'Error HTTP provider',invalid_response:'Respons tidak lengkap'};
+    return [labels[row.error_kind],row.rpc_code!=null?`Kode RPC ${row.rpc_code}`:null,row.retry_after?`Jeda ${row.retry_after} detik`:null].filter(Boolean).join(' · ')||(row.ok?'—':'Detail belum tersedia pada log ini');
+  }
   const admin=()=>account?.role==='superadmin',shown=()=>admin()&&location.hash==='#superadmin'&&!document.hidden;
   const total=(list,field)=>list.reduce((sum,row)=>sum+(Number(row[field])||0),0);
   function amount(value){return number.format(Number(value)||0);}
@@ -22,7 +26,7 @@
     if(recent.limited>0){state='limited';label='Sedang dibatasi';description=provider==='worker'?'Worker menolak permintaan dengan HTTP 429. Bisa berasal dari batas 4 analisis/menit atau antrean penuh.':'HTTP 429 teramati dalam 5 menit terakhir. Periksa rate limit dan pemakaian pada dashboard provider.';}
     else if(percent>=100){state='limit';label='Batas pantauan tercapai';description='Penggunaan tercatat mencapai batas harian yang Anda tetapkan. Ini bukan konfirmasi kuota provider habis.';}
     else if(percent>=(budget.alert_percent||80)){state='warning';label='Mendekati batas pantauan';description=`Sudah memakai ${percent.toFixed(1)}% dari batas pemantauan harian aplikasi.`;}
-    else if(recent.errors>0){state='error';label='Respons perlu diperiksa';description=`${amount(recent.errors)} kegagalan teramati dalam 5 menit terakhir. Lihat status HTTP dan metode pada log.`;}
+    else if(recent.errors>0){state='error';label='Respons perlu diperiksa';description=`${amount(recent.errors)} kegagalan teramati dalam 5 menit terakhir. Lihat status HTTP, metode, dan diagnostik pada log.`;}
     else if(recent.requests>0){state='normal';label='Respons normal';description='Tidak ada kegagalan pada permintaan yang tercatat dalam 5 menit terakhir.';}
     else if(count>0){state='idle';label='Belum ada respons terbaru';description='Ada riwayat hari ini, tetapi tidak ada permintaan tercatat dalam 5 menit terakhir.';}
     return {provider,count,limit,percent,alert:budget.alert_percent||80,state,label,description,recent};
@@ -79,7 +83,7 @@
   }
   function renderLogs(){
     const body=el('api-log-table');body.replaceChildren();
-    for(const row of logRows){const tr=document.createElement('tr');tr.dataset.ok=String(!!row.ok);for(const value of [`${clock.format(row.at)} WITA`,names[row.provider]||row.provider,row.chain==='auto'?'—':row.chain,row.method,row.status===0?'Koneksi gagal':`${row.status}${row.status===429?' · dibatasi':[401,403].includes(row.status)?' · akses ditolak':row.status>=500?' · error provider':!row.ok&&row.status<400?' · ditolak':''}`,`${amount(row.duration)} ms`,row.cached?'Cache Worker':row.source==='server'?'Server':'Laporan browser'])tr.append(text('td',value));body.append(tr);}
+    for(const row of logRows){const tr=document.createElement('tr');tr.dataset.ok=String(!!row.ok);for(const value of [`${clock.format(row.at)} WITA`,names[row.provider]||row.provider,row.chain==='auto'?'—':row.chain,row.method,row.status===0?'Koneksi gagal':`${row.status}${row.status===429?' · dibatasi':[401,403].includes(row.status)?' · akses ditolak':row.status>=500?' · error provider':!row.ok&&row.status<400?' · ditolak':''}`,`${amount(row.duration)} ms`,row.cached?'Cache Worker':row.source==='server'?'Server':'Laporan browser',diagnostic(row)])tr.append(text('td',value));body.append(tr);}
     el('api-log-empty').hidden=logRows.length>0;el('api-log-more').hidden=!next;el('api-log-more').disabled=logBusy;el('api-log-count').textContent=`${amount(logRows.length)} log ditampilkan · riwayat maksimal 7 hari`;el('api-export').disabled=!logRows.length;
   }
   async function logs(more=false){
@@ -109,7 +113,7 @@
     catch(error){if(version===epoch)el('api-budget-status').textContent=error.message;}
     finally{if(version===epoch){budgetBusy=false;el('api-budget-save').disabled=false;}}
   });
-  el('api-export').addEventListener('click',()=>{if(!admin()||!logRows.length)return;const escape=value=>`"${String(value).replace(/"/g,'""')}"`,lines=[['Waktu WITA','Provider','Jaringan','Metode','HTTP','Berhasil','Durasi ms','Sumber','Cache'],...logRows.map(row=>[clock.format(row.at),names[row.provider],row.chain,row.method,row.status,row.ok?'Ya':'Tidak',row.duration,row.source,row.cached?'Ya':'Tidak'])];const url=URL.createObjectURL(new Blob(['\uFEFF'+lines.map(row=>row.map(escape).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='easykripto-log-api.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+  el('api-export').addEventListener('click',()=>{if(!admin()||!logRows.length)return;const escape=value=>`"${String(value).replace(/"/g,'""')}"`,lines=[['Waktu WITA','Provider','Jaringan','Metode','HTTP','Berhasil','Durasi ms','Sumber','Cache','Diagnostik'],...logRows.map(row=>[clock.format(row.at),names[row.provider],row.chain,row.method,row.status,row.ok?'Ya':'Tidak',row.duration,row.source,row.cached?'Ya':'Tidak',diagnostic(row)])];const url=URL.createObjectURL(new Blob(['\uFEFF'+lines.map(row=>row.map(escape).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='easykripto-log-api.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   window.addEventListener('easykripto-session',event=>{const nextAccount=event.detail.user||null;if(account?.id===nextAccount?.id&&account?.role===nextAccount?.role)return;epoch++;controller?.abort();account=nextAccount;data=null;logRows=[];lastHealth.clear();busy=false;logBusy=false;budgetBusy=false;root.hidden=!admin();el('api-budget-save').disabled=false;el('api-period').disabled=false;el('api-log-provider').disabled=false;el('api-log-errors').disabled=false;el('api-provider-cards').replaceChildren();el('api-usage-chart').replaceChildren();el('api-provider-chart').replaceChildren();el('api-chart-table').replaceChildren();el('api-budget-settings').open=false;el('api-budget-limit').value='';el('api-budget-status').textContent='';el('api-last-update').textContent='';for(const id of ['api-count-requests','api-count-success','api-count-limited','api-count-latency'])el(id).textContent='—';el('api-worker-cache').textContent='';next=null;renderLogs();if(admin())void refresh();schedule();});
   window.addEventListener('hashchange',()=>{if(shown())void refresh();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&admin())void refresh();});

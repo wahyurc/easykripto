@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="black-theme.css?v=20261011-watch-flow">
   <link rel="stylesheet" href="market-feed.css?v=20261010-discovery">
   <link rel="stylesheet" href="notifications.css?v=20261010-notifications">
-  <link rel="stylesheet" href="api-monitor-ui.css?v=20261010-api-monitor">
+  <link rel="stylesheet" href="api-monitor-ui.css?v=20261011-api-recovery">
   <link rel="stylesheet" href="pwa.css?v=20261010-pwa">
   <link rel="stylesheet" href="registration.css?v=20261011-registration">
   <link rel="stylesheet" href="watchlist.css?v=20261011-wallet-assets-refined">
@@ -29,17 +29,17 @@
   <script src="networks.js?v=20261010-token-holders" defer></script>
   <script src="app.js?v=20261011-watch-flow" defer></script>
   <script src="notifications.js?v=20261010-notifications" defer></script>
-  <script src="api-telemetry.js?v=20261010-security" defer></script>
-  <script src="data-client.js?v=20261011-registration" defer></script>
+  <script src="api-telemetry.js?v=20261011-api-recovery" defer></script>
+  <script src="data-client.js?v=20261011-api-recovery" defer></script>
   <script src="token-ui.js?v=20261011-wallet-categories" defer></script>
   <script src="dashboard-data.js?v=20261011-wallet-assets-refined" defer></script>
   <script src="watchlist.js?v=20261011-wallet-assets-refined" defer></script>
   <script src="search.js?v=20261011-trade-labels" defer></script>
-  <script src="market-data.js?v=20261010-api-monitor" defer></script>
+  <script src="market-data.js?v=20261011-api-recovery" defer></script>
   <script src="market-feed.js?v=20261010-discovery" defer></script>
   <script src="best-coins.js?v=20261011-recticker" defer></script>
   <script src="wallet-data.js?v=20261011-watch-flow" defer></script>
-  <script src="api-monitor-ui.js?v=20261010-security" defer></script>
+  <script src="api-monitor-ui.js?v=20261011-api-recovery" defer></script>
   <script src="admin.js?v=20261011-recticker" defer></script>
   <script src="registration.js?v=20261011-all-approval" defer></script>
   <script src="registration-admin.js?v=20261011-registration" defer></script>
@@ -211,7 +211,7 @@
           <h3 class="api-provider-title">Status provider &amp; batas pantauan</h3><div id="api-provider-cards" class="api-provider-cards"></div>
           <details id="api-budget-settings" class="api-budget-settings"><summary>Atur batas pemantauan harian</summary><p>Batas ini untuk peringatan pemakaian Easykripto, bukan kuota resmi paket provider. Hari dimulai pukul 00.00 WITA. Kosongkan jumlah untuk menonaktifkan batas; tidak ada pemblokiran otomatis.</p><form id="api-budget-form" class="api-budget-form"><label>Provider<select id="api-budget-provider"><option value="helius">Helius</option><option value="alchemy">Alchemy</option><option value="solana-rpc">RPC Solana</option><option value="dexscreener">DEX Screener</option><option value="gecko">GeckoTerminal</option><option value="goplus">GoPlus</option><option value="worker">Cloudflare Worker</option></select></label><label>Batas permintaan / hari<input id="api-budget-limit" type="number" inputmode="numeric" min="1" max="100000000" placeholder="Belum diatur"></label><label>Peringatan (%)<input id="api-budget-alert" type="number" min="50" max="99" value="80" required></label><button id="api-budget-save" class="primary-button" type="submit">Simpan batas</button></form><p id="api-budget-status" class="api-budget-status" role="status" aria-live="polite"></p></details>
           <div class="api-log-heading"><h3>Log permintaan terbaru</h3><button id="api-export" class="secondary-button" type="button" disabled>Unduh CSV</button></div><div class="api-log-filters"><label>Provider<select id="api-log-provider"><option value="">Semua provider</option><option value="helius">Helius</option><option value="alchemy">Alchemy</option><option value="solana-rpc">RPC Solana</option><option value="dexscreener">DEX Screener</option><option value="gecko">GeckoTerminal</option><option value="goplus">GoPlus</option><option value="worker">Cloudflare Worker</option></select></label><label><input id="api-log-errors" type="checkbox">Hanya gagal</label></div>
-          <div class="api-table-scroll"><table><caption>Log server dan laporan browser · tanpa API key atau alamat wallet</caption><thead><tr><th scope="col">Waktu</th><th scope="col">Provider</th><th scope="col">Jaringan</th><th scope="col">Metode</th><th scope="col">Status</th><th scope="col">Durasi</th><th scope="col">Sumber</th></tr></thead><tbody id="api-log-table"></tbody></table><p id="api-log-empty" class="api-log-empty">Belum ada log pada filter ini.</p></div><div class="api-log-footer"><span id="api-log-count"></span><button id="api-log-more" class="secondary-button" type="button" hidden>Muat log sebelumnya</button></div>
+          <div class="api-table-scroll"><table><caption>Log server dan laporan browser · tanpa API key atau alamat wallet</caption><thead><tr><th scope="col">Waktu</th><th scope="col">Provider</th><th scope="col">Jaringan</th><th scope="col">Metode</th><th scope="col">Status</th><th scope="col">Durasi</th><th scope="col">Sumber</th><th scope="col">Diagnostik</th></tr></thead><tbody id="api-log-table"></tbody></table><p id="api-log-empty" class="api-log-empty">Belum ada log pada filter ini.</p></div><div class="api-log-footer"><span id="api-log-count"></span><button id="api-log-more" class="secondary-button" type="button" hidden>Muat log sebelumnya</button></div>
           <p id="api-last-update" class="api-monitor-footnote"></p><p class="api-monitor-footnote">Panel diperbarui setiap 60 detik selama superadmin membuka aplikasi pada tab aktif. Log server mencatat panggilan RPC nyata; data API publik berasal dari laporan browser dan dapat tidak lengkap. HTTP 429 berarti pembatasan permintaan, bukan bukti kuota bulanan habis. Penggunaan di luar Easykripto, credit/CU provider, dan quota tagihan akun belum terhubung. Lihat pemakaian resmi di <a href="https://dashboard.helius.dev/" target="_blank" rel="noopener noreferrer">Helius</a>, <a href="https://dashboard.alchemy.com/" target="_blank" rel="noopener noreferrer">Alchemy</a>, atau <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a>.</p>
         </section>
         <section class="panel admin-records">

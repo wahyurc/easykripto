@@ -3,6 +3,7 @@
 (() => {
   let uid=null,generation=0,pending=[],timer=null,sending=false,activeController=null,disabledUntil=0;
   const providers={'api.dexscreener.com':'dexscreener','api.geckoterminal.com':'gecko','api.gopluslabs.io':'goplus'};
+  const cooldowns=new Map();
   function metadata(url){
     const parsed=new URL(url),provider=providers[parsed.hostname];if(!provider)return null;
     let chain='auto',method='search';
@@ -25,10 +26,13 @@
   }
   window.EasyAPILog={async fetch(url,options){
     const meta=metadata(url),started=performance.now(),version=generation;let status=0,ok=false,cancelled=false;
+    const until=meta?cooldowns.get(meta.provider)||0:0;
+    if(until>Date.now()){const error=new Error(`Sumber data membatasi permintaan. Coba lagi dalam ${Math.ceil((until-Date.now())/1000)} detik.`);error.name='RateLimitError';throw error;}
     try{const response=await fetch(url,options);status=response.status;ok=response.ok;
+      if(meta&&status===429){const header=response.headers.get('Retry-After'),delay=header&&/^\d+$/.test(header)?Number(header)*1000:header?Date.parse(header)-Date.now():60000;cooldowns.set(meta.provider,Date.now()+Math.max(1000,Math.min(300000,Number.isFinite(delay)?delay:60000)));}
       if(meta?.provider==='goplus'&&ok){try{ok=(await response.clone().json()).code===1;}catch{ok=false;}}
       return response;
-    }catch(error){cancelled=error.name==='AbortError';throw error;}
+    }catch(error){cancelled=options?.signal?.aborted?options.signal.reason?.name!=='TimeoutError':error.name==='AbortError';throw error;}
     finally{if(meta&&uid&&version===generation&&!cancelled){pending.push({id:crypto.randomUUID(),...meta,status,ok,duration:Math.min(120000,Math.round(performance.now()-started))});pending=pending.slice(-50);schedule();}}
   }};
   window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next===uid)return;uid=next;generation++;pending=[];clearTimeout(timer);timer=null;activeController?.abort();activeController=null;sending=false;disabledUntil=0;});

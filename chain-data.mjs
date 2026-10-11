@@ -1,5 +1,10 @@
 export class DataError extends Error {
-  constructor(message,status=502){super(message);this.status=status;}
+  constructor(message,status=502,details={}){super(message);this.status=status;Object.assign(this,details);}
+}
+
+function retrySeconds(value,fallback=60){
+  const seconds=/^\d+$/.test(value||'')?Number(value):(Date.parse(value)-Date.now())/1000;
+  return Number.isFinite(seconds)?Math.max(1,Math.min(300,Math.ceil(seconds))):fallback;
 }
 
 export function decimalUnits(raw,decimals){
@@ -10,15 +15,17 @@ export function decimalUnits(raw,decimals){
 }
 
 export async function rpc(url,method,params,signal,observe) {
-  const started=Date.now();let status=0,ok=false;
+  const started=Date.now();let status=0,ok=false,rpcCode=null,errorKind=null,retryAfter=null;
   try{
     const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:signal||AbortSignal.timeout(10000)});status=response.status;
-    if(response.status===429)throw new DataError('Kuota sumber blockchain sedang dibatasi. Coba beberapa saat lagi.',429);
-    if(!response.ok)throw new DataError('Sumber blockchain belum dapat dihubungi.');
+    if(response.status===429){retryAfter=retrySeconds(response.headers.get('Retry-After'));errorKind='rate_limited';throw new DataError('Sumber blockchain membatasi permintaan. Coba beberapa saat lagi.',429,{retryAfter});}
+    if(!response.ok){errorKind='http_error';throw new DataError('Sumber blockchain belum dapat dihubungi.');}
     const data=await response.json();
-    if(data.error)throw new DataError('Sumber blockchain menolak permintaan data. Periksa paket API dan coba lagi.');
+    if(data.error){rpcCode=Number.isSafeInteger(data.error.code)?data.error.code:null;errorKind='rpc_rejected';throw new DataError('Sumber blockchain menolak permintaan data. Periksa paket API dan coba lagi.',502,{rpcCode,errorKind});}
+    if(!Object.hasOwn(data,'result')){errorKind='invalid_response';throw new DataError('Respons blockchain tidak lengkap.');}
     ok=true;return data.result;
-  }finally{observe?.({method,status,ok,duration:Date.now()-started});}
+  }catch(error){errorKind??=signal?.aborted||['TimeoutError','AbortError'].includes(error.name)?'timeout':status?'invalid_response':'network';throw error;}
+  finally{observe?.({method,status,ok,rpcCode,errorKind,retryAfter,duration:Date.now()-started});}
 }
 
 export function validAddress(address,chain){
@@ -33,7 +40,53 @@ export function validAddress(address,chain){
 
 const usdc={solana:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',ethereum:'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',base:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'};
 const nativeTokens={solana:'So11111111111111111111111111111111111111112',ethereum:'0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',base:'0x4200000000000000000000000000000000000006',bsc:'0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'};
-const priceCache=new Map(),metadataCache=new Map();
+const priceCache=new Map(),pricePending=new Map(),metadataCache=new Map();
+let priceQueue=Promise.resolve(),priceNext=0,priceCooldown=0;
+const pause=(ms,signal)=>new Promise((resolve,reject)=>{
+  if(signal?.aborted){reject(signal.reason);return;}
+  const abort=()=>{clearTimeout(timer);reject(signal.reason);};
+  const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},ms);
+  signal?.addEventListener('abort',abort,{once:true});
+});
+async function walletPrices(chain,addresses,signal,observe){
+  const key=address=>`${chain}:${chain==='solana'?address:address.toLowerCase()}`,now=Date.now();
+  for(const [id,value]of priceCache)if(value.staleUntil<=now)priceCache.delete(id);
+  const missing=addresses.filter(address=>(priceCache.get(key(address))?.until||0)<=now).sort();
+  if(missing.length&&priceCooldown<=now){
+    const batchKey=`${chain}:${missing.join(',')}`;
+    if(!pricePending.has(batchKey)){
+      const task=priceQueue.catch(()=>{}).then(async()=>{
+        const requested=missing.filter(address=>(priceCache.get(key(address))?.until||0)<=Date.now());
+        if(!requested.length||priceCooldown>Date.now())return;
+        if(priceNext>Date.now())await pause(priceNext-Date.now(),signal);
+        if(priceCooldown>Date.now())return;
+        signal?.throwIfAborted();priceNext=Date.now()+1000;
+        const started=Date.now();let status=0,ok=false,errorKind=null,retryAfter=null;
+        try{
+          const response=await fetch(`https://api.dexscreener.com/tokens/v1/${chain}/${requested.join(',')}`,{signal:signal?AbortSignal.any([signal,AbortSignal.timeout(8000)]):AbortSignal.timeout(8000)});status=response.status;
+          if(status===429){retryAfter=retrySeconds(response.headers.get('Retry-After'));priceCooldown=Date.now()+retryAfter*1000;errorKind='rate_limited';return;}
+          if(!response.ok){errorKind='http_error';throw new Error('Harga belum tersedia');}
+          const pairs=await response.json();if(!Array.isArray(pairs)){errorKind='invalid_response';throw new Error('Harga tidak lengkap');}
+          const quotes=new Map(),wanted=new Set(requested.map(key));
+          for(const pair of pairs){
+            const address=pair.baseToken?.address,price=Number(pair.priceUsd),liquidity=Number(pair.liquidity?.usd)||0;
+            if(pair.chainId!==chain||!address||!wanted.has(key(address))||!Number.isFinite(price)||price<=0)continue;
+            const id=key(address),previous=quotes.get(id);if(!previous||liquidity>previous.liquidity)quotes.set(id,{price,liquidity});
+          }
+          const at=Date.now();
+          for(const address of requested){const id=key(address),quote=quotes.get(id)||null;if(priceCache.size>=600&&!priceCache.has(id))priceCache.delete(priceCache.keys().next().value);priceCache.set(id,{quote,at,until:at+(quote?120000:60000),staleUntil:at+(quote?900000:60000)});}
+          ok=true;
+        }catch(error){errorKind??=signal?.aborted||['TimeoutError','AbortError'].includes(error.name)?'timeout':status?'invalid_response':'network';}
+        finally{observe?.({provider:'dexscreener',method:'wallet_asset_prices',status,ok,errorKind,retryAfter,duration:Date.now()-started});}
+      });
+      priceQueue=task;const pending=task.finally(()=>pricePending.delete(batchKey));pricePending.set(batchKey,pending);
+    }
+    try{await pricePending.get(batchKey);}catch{/* A price failure must not discard readable balances. */}
+  }
+  const prices=new Map();let stale=false;
+  for(const address of addresses){const entry=priceCache.get(key(address));if(entry?.quote&&entry.staleUntil>Date.now()){prices.set(address,entry.quote);if(entry.until<=Date.now())stale=true;}}
+  return {prices,stale,limited:priceCooldown>Date.now()};
+}
 async function walletAssets(url,chain,address,nativeBalance,signal,observe){
   const assets=[],contract=usdc[chain],warnings=new Set();let usdcBalance=null,partial=false;
   const incomplete=message=>{partial=true;warnings.add(message);};
@@ -79,11 +132,11 @@ async function walletAssets(url,chain,address,nativeBalance,signal,observe){
   }catch{incomplete('Daftar aset belum dapat dimuat sepenuhnya.');}
   if(contract&&usdcBalance!==null){const index=assets.findIndex(a=>a.address===contract);if(index>=0)assets.splice(index,1);if(Number(usdcBalance)>0)assets.unshift({address:contract,amount:usdcBalance});}
   const priceChain=chain,native=nativeTokens[chain],selected=assets.slice(0,29),prices=new Map();if(assets.length>29)incomplete('Harga dibatasi pada 29 token pertama.');
-  const addresses=[...new Set([native,...selected.map(a=>a.address).filter(a=>a!==contract)].filter(Boolean))],cacheKey=`${priceChain}:${addresses.slice().sort().join(',')}`;
+  const addresses=[...new Set([native,...selected.map(a=>a.address).filter(a=>a!==contract)].filter(Boolean))];
   try{
-    let pairs=priceCache.get(cacheKey)?.until>Date.now()?priceCache.get(cacheKey).pairs:null;
-    if(!pairs){const started=Date.now();let response,ok=false;try{if(!addresses.length){pairs=[];ok=true;}else{response=await fetch(`https://api.dexscreener.com/tokens/v1/${priceChain}/${addresses.join(',')}`,{signal:signal?AbortSignal.any([signal,AbortSignal.timeout(8000)]):AbortSignal.timeout(8000)});if(!response.ok)throw new Error();pairs=await response.json();if(!Array.isArray(pairs))throw new Error();ok=true;}}finally{if(addresses.length)observe?.({provider:'dexscreener',method:'wallet_asset_prices',status:response?.status||0,ok,duration:Date.now()-started});}if(priceCache.size>=100)priceCache.delete(priceCache.keys().next().value);priceCache.set(cacheKey,{pairs,until:Date.now()+120000});}
-    for(const p of pairs){const ca=p.baseToken?.address;if(p.chainId!==priceChain||!ca||!Number.isFinite(Number(p.priceUsd))||Number(p.priceUsd)<=0)continue;const id=priceChain==='solana'?ca:ca.toLowerCase(),old=prices.get(id);if(!old||Number(p.liquidity?.usd||0)>old.liquidity)prices.set(id,{price:Number(p.priceUsd),liquidity:Number(p.liquidity?.usd||0)});}
+    const result=await walletPrices(priceChain,addresses,signal,observe);for(const [address,quote]of result.prices)prices.set(address,quote);
+    if(result.stale)incomplete('Sebagian harga memakai cache lama, maksimal 15 menit, karena sumber harga belum tersedia.');
+    if(result.limited)incomplete('Sumber harga sedang membatasi permintaan; pembacaan harga dijeda sementara.');
   }catch{incomplete('Harga pasar belum dapat dimuat.');}
   let total=0,priced=0,missing=0;
   for(const a of [{address:native,amount:nativeBalance},...selected]){const amount=Number(a.amount),price=a.address===contract?1:prices.get(a.address)?.price;if(amount===0)continue;if(!Number.isFinite(amount)||amount<0||price===undefined||!Number.isFinite(amount*price)){missing++;continue;}total+=amount*price;priced++;}
@@ -93,10 +146,13 @@ async function walletAssets(url,chain,address,nativeBalance,signal,observe){
 
 export async function solanaWallet(url,address,signal,observe) {
   const balance=await rpc(url,'getBalance',[address,{commitment:'confirmed'}],signal,observe);
-  const signatures=await rpc(url,'getSignaturesForAddress',[address,{limit:8,commitment:'confirmed'}],signal,observe);
-  const transfers=[];let scanned=0,unavailable=0;
-  for(const signature of signatures||[]) {
-    const tx=await rpc(url,'getTransaction',[signature.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0,commitment:'confirmed'}],signal,observe);
+  const nativeBalance=decimalUnits(balance.value,9),assets=await walletAssets(url,'solana',address,nativeBalance,signal,observe);
+  const transfers=[];let scanned=0,unavailable=0,signatures=[],historyFailed=false;
+  try{signatures=await rpc(url,'getSignaturesForAddress',[address,{limit:8,commitment:'confirmed'}],signal,observe);if(!Array.isArray(signatures))throw new Error('Riwayat tidak lengkap');}catch{historyFailed=true;signatures=[];}
+  for(const [index,signature]of signatures.entries()) {
+    let tx;
+    try{tx=await rpc(url,'getTransaction',[signature.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0,commitment:'confirmed'}],signal,observe);}
+    catch(error){if(signal?.aborted||error.status===429){unavailable+=signatures.length-index;break;}unavailable++;continue;}
     if(!tx){unavailable++;continue;}scanned++;
     if(tx.meta?.err)continue;
     const keys=tx.transaction?.message?.accountKeys||[];
@@ -123,7 +179,7 @@ export async function solanaWallet(url,address,signal,observe) {
       }
     });
   }
-  return {chain:'solana',address,nativeBalance:decimalUnits(balance.value,9),nativeSymbol:'SOL',...await walletAssets(url,'solana',address,decimalUnits(balance.value,9),signal,observe),transfers,scanned,unavailable,partial:true,note:'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
+  return {chain:'solana',address,nativeBalance,nativeSymbol:'SOL',...assets,transfers,scanned,unavailable,transferUnavailable:historyFailed||unavailable>0,partial:true,note:(historyFailed?'Riwayat transaksi belum dapat dimuat; saldo yang berhasil dibaca tetap ditampilkan. ':unavailable?`${unavailable} transaksi tidak dapat dibaca; saldo dan transaksi lain yang berhasil tetap ditampilkan. `:'')+'Sampel maksimal 8 transaksi yang menyebut alamat wallet. Transfer SPL yang hanya menyebut akun token dapat tidak tercakup. Instruksi transfer belum diklasifikasikan sebagai beli atau jual.'};
 }
 
 export async function solanaHolders(url,mint,signal,observe) {

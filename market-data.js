@@ -5,20 +5,25 @@
   const networks={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc',robinhood:'robinhood'};
   const chainIds={ethereum:'1',base:'8453',bsc:'56',robinhood:'4663'};
   const money=value=>value==null||!Number.isFinite(Number(value))?'Tidak tersedia':new Intl.NumberFormat('id-ID',{style:'currency',currency:'USD',maximumSignificantDigits:5}).format(Number(value));
+  const pause=(ms,signal)=>new Promise((resolve,reject)=>{
+    if(signal?.aborted){reject(signal.reason);return;}
+    const abort=()=>{clearTimeout(timer);reject(signal.reason);};
+    const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},ms);signal?.addEventListener('abort',abort,{once:true});
+  });
   async function json(url,signal,provider){
     if(signal?.aborted)throw new DOMException('Dibatalkan','AbortError');
     const saved=cache.get(url);if(saved&&saved.until>Date.now())return saved.data;
-    const slot=Math.max(Date.now(),nextRequest[provider]||0);nextRequest[provider]=slot+2200;
-    if(slot>Date.now())await new Promise((resolve,reject)=>{
-      if(signal?.aborted){reject(new DOMException('Dibatalkan','AbortError'));return;}
-      const abort=()=>{clearTimeout(timer);reject(new DOMException('Dibatalkan','AbortError'));};
-      const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},slot-Date.now());signal?.addEventListener('abort',abort,{once:true});
-    });
-    const timeout=AbortSignal.timeout(12000);
-    const response=await window.EasyAPILog.fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
-    if(response.status===429)throw new Error('Kuota penyedia sedang dibatasi. Coba lagi beberapa saat lagi.');
-    if(!response.ok)throw new Error('Sumber data belum tersedia untuk token ini.');
-    const data=await response.json();if(cache.size>150)cache.clear();cache.set(url,{data,fetchedAt:Date.now(),until:Date.now()+120000});return data;
+    for(let attempt=0;attempt<2;attempt++){
+      const slot=Math.max(Date.now(),nextRequest[provider]||0);nextRequest[provider]=slot+2200;
+      if(slot>Date.now())await pause(slot-Date.now(),signal);
+      try{
+        const timeout=AbortSignal.timeout(12000);
+        const response=await window.EasyAPILog.fetch(url,{signal:signal?AbortSignal.any([signal,timeout]):timeout,credentials:'omit',headers:{Accept:'application/json'}});
+        if(response.status===429)throw new Error('Penyedia membatasi permintaan. Pembacaan dijeda sementara; coba lagi nanti.');
+        if(!response.ok){const error=new Error('Sumber data belum tersedia untuk token ini.');error.retryable=response.status>=500;throw error;}
+        const data=await response.json();if(cache.size>150)cache.clear();cache.set(url,{data,fetchedAt:Date.now(),until:Date.now()+120000});return data;
+      }catch(error){if(signal?.aborted)throw signal.reason;if(attempt||!(error.retryable||['TypeError','TimeoutError'].includes(error.name)))throw error;await pause(700,signal);}
+    }
   }
   window.EasyMarket={
     async pools(chain,kind,signal){

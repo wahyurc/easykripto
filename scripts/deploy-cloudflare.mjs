@@ -27,6 +27,11 @@ try{
   const databases=await api(`${dbRoot}?per_page=100`);
   const database=databases.find(db=>db.name===dbName)||await api(dbRoot,{method:'POST',json:{name:dbName}});
   await api(`${dbRoot}/${database.uuid}/query`,{method:'POST',json:{sql:readFileSync('api-monitor-schema.sql','utf8')}});
+  const columns=await api(`${dbRoot}/${database.uuid}/query`,{method:'POST',json:{sql:'PRAGMA table_info(api_events)'}});
+  const existingColumns=new Set(columns[0].results.map(column=>column.name));
+  for(const [name,type]of [['rpc_code','INTEGER'],['error_kind','TEXT'],['retry_after','INTEGER']]){
+    if(!existingColumns.has(name))await api(`${dbRoot}/${database.uuid}/query`,{method:'POST',json:{sql:`ALTER TABLE api_events ADD COLUMN ${name} ${type}`}});
+  }
   let subdomain=await api(`${root}/subdomain`,{allowMissing:true});
   if(!subdomain)subdomain=await api(`${root}/subdomain`,{method:'PUT',json:{subdomain:'easykripto-wahyurc'}});
   const bindings=[{type:'d1',name:'API_LOGS',id:database.uuid},{type:'plain_text',name:'API_ALLOWED_ORIGINS',text:'https://wahyurc.github.io,http://localhost:4173'},

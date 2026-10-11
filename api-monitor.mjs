@@ -5,6 +5,7 @@ import {DataError} from './chain-data.mjs';
 const providers=['helius','alchemy','solana-rpc','dexscreener','gecko','goplus','worker'];
 const publicMethods={dexscreener:['search','token-pairs'],gecko:['pools','trending_pools','new_pools','ohlcv'],goplus:['token_security']};
 const chains=['solana','ethereum','base','bsc','robinhood','auto'];
+const errorKinds=['rpc_rejected','rate_limited','timeout','network','http_error','invalid_response'];
 const gates=new Map(),summaryCache=new Map();
 let loggingFailures=0;
 function send(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));}
@@ -16,8 +17,9 @@ export async function writeAPIEvents(env,events){
     for(const event of events.slice(0,30)){
       const id=event.id||crypto.randomUUID(),at=event.at||Date.now(),duration=Math.max(0,Math.min(120000,Math.round(event.duration)||0)),status=Number.isInteger(event.status)?event.status:0;
       if(!providers.includes(event.provider)||!chains.includes(event.chain)||!['server','browser'].includes(event.source))continue;
-      const values=[id,at,event.provider,String(event.method).slice(0,60),event.chain,status,event.ok?1:0,duration,event.source,event.cached?1:0];
-      statements.push(env.API_LOGS.prepare('INSERT OR IGNORE INTO api_events (id,at,provider,method,chain,status,ok,duration,source,cached) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(...values));
+      const trusted=event.source==='server',rpcCode=trusted&&Number.isSafeInteger(event.rpcCode)?event.rpcCode:null,errorKind=trusted&&errorKinds.includes(event.errorKind)?event.errorKind:null,retryAfter=trusted&&Number.isInteger(event.retryAfter)?Math.max(1,Math.min(300,event.retryAfter)):null;
+      const values=[id,at,event.provider,String(event.method).slice(0,60),event.chain,status,event.ok?1:0,duration,event.source,event.cached?1:0,rpcCode,errorKind,retryAfter];
+      statements.push(env.API_LOGS.prepare('INSERT OR IGNORE INTO api_events (id,at,provider,method,chain,status,ok,duration,source,cached,rpc_code,error_kind,retry_after) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(...values));
       // A retried browser batch must not increment its counters twice.
       statements.push(env.API_LOGS.prepare('INSERT INTO api_hourly (hour,provider,source,requests,errors,limited,duration,cached) SELECT ?,?,?,1,?,?,?,? WHERE changes()=1 ON CONFLICT(hour,provider,source) DO UPDATE SET requests=requests+1,errors=errors+excluded.errors,limited=limited+excluded.limited,duration=duration+excluded.duration,cached=cached+excluded.cached').bind(Math.floor(at/3600000)*3600000,event.provider,event.source,event.ok?0:1,status===429?1:0,duration,event.cached?1:0));
     }

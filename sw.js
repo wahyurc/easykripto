@@ -1,13 +1,13 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '7c9dcf07a6afe7af';
+const RELEASE = '3b9aab23ebb23adb';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-recticker",
-  "api-monitor-ui.css?v=20261010-api-monitor",
-  "api-monitor-ui.js?v=20261010-security",
-  "api-telemetry.js?v=20261010-security",
+  "api-monitor-ui.css?v=20261011-api-recovery",
+  "api-monitor-ui.js?v=20261011-api-recovery",
+  "api-telemetry.js?v=20261011-api-recovery",
   "app-check.js?v=20261010-security",
   "app.js?v=20261011-watch-flow",
   "auth.js?v=20261011-registration",
@@ -15,7 +15,7 @@ const SHELL = [
   "best-coins.js?v=20261011-recticker",
   "black-theme.css?v=20261011-watch-flow",
   "dashboard-data.js?v=20261011-wallet-assets-refined",
-  "data-client.js?v=20261011-registration",
+  "data-client.js?v=20261011-api-recovery",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
   "icons/apple-touch-icon.png",
@@ -24,7 +24,7 @@ const SHELL = [
   "icons/icon-maskable-512.png",
   "live-data.css?v=20261010-token-holders",
   "manifest.webmanifest",
-  "market-data.js?v=20261010-api-monitor",
+  "market-data.js?v=20261011-api-recovery",
   "market-feed.css?v=20261010-discovery",
   "market-feed.js?v=20261010-discovery",
   "mastrtrade-logo.png",
