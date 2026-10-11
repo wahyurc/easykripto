@@ -102,7 +102,7 @@
   }
   window.EasyWatchlist={render,refreshStatus(progress){
     const button=el('watch-refresh-all'),running=!!progress&&!progress.finished;
-    button.disabled=running&&progress.cancelled;button.textContent=running?(progress.cancelled?'Menghentikan…':'Hentikan pembaruan'):'Update All';
+    button.disabled=running&&progress.cancelled;button.textContent=running?(progress.cancelled?'Menghentikan…':'Hentikan Update'):'Update All';
     button.setAttribute('aria-busy',String(running));
     el('watch-refresh-status').textContent=progress?`${progress.finished?(progress.cancelled||progress.done<progress.total?'Pembaruan dihentikan. ':'Pembaruan selesai. '):''}${progress.done}/${progress.total} wallet ${name(progress.chain)} · ${progress.success} berhasil dimuat · ${progress.failed} gagal · ${progress.skipped} dilewati.${running?' Antrean mengikuti batas API. Penghentian menunggu permintaan berjalan selesai.':' Nilai parsial dan kendala tersedia pada setiap baris.'}`:'';
   }};
