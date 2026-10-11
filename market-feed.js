@@ -15,7 +15,7 @@
   const usd=value=>value==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumSignificantDigits:6}).format(value);
   const compact=value=>new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2}).format(value);
   const count=value=>new Intl.NumberFormat('id-ID').format(value);
-  const visible=()=>signedIn&&!document.hidden&&['','#ringkasan'].includes(location.hash)&&!get('detail-dialog').open;
+  const visible=()=>signedIn&&!document.hidden&&['','#dashboard'].includes(location.hash)&&!get('detail-dialog').open;
   function stop(){controller?.abort();controller=null;busy=false;root.setAttribute('aria-busy','false');}
   function textNode(tag,text,className){const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;}
   function normalize(response,chain,kind){
@@ -78,7 +78,7 @@
   }
   function usdCompact(value){return `$${compact(value)}`;}
   async function load(){
-    stop();if(!visible()){root.hidden=!signedIn||!['','#ringkasan'].includes(location.hash);return;}
+    stop();if(!visible()){root.hidden=!signedIn||!['','#dashboard'].includes(location.hash);return;}
     root.hidden=false;describe();controller=new AbortController();const signal=controller.signal,chain=selectedBlockchain,category=tab;
     busy=true;rows=[];snapshotTime=0;scanned=0;total=0;missing=0;partial=false;
     get('feed-status').textContent=category==='holders'?'Menyiapkan kandidat dari trending dan pool baru…':'Memuat token…';render();

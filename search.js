@@ -81,7 +81,7 @@
       if(visible())indicate(ca);
     }catch{indicate(null);}finally{reading=false;}
   }
-  function route(){const hash=location.hash.slice(1);section.hidden=!!hash&&hash!=='ringkasan';if(!section.hidden)inspectClipboard();else indicate(null);}
+  function route(){const hash=location.hash.slice(1);section.hidden=!!hash&&hash!=='dashboard';if(!section.hidden)inspectClipboard();else indicate(null);}
   button.addEventListener('click',async()=>{
     if(!navigator.clipboard?.readText){status.textContent='Browser belum mendukung akses clipboard. Tekan lama kolom pencarian lalu pilih Tempel.';input.focus();return;}
     button.disabled=true;
@@ -159,7 +159,7 @@
     }catch(error){if(request!==current)return;status.textContent=error.name==='AbortError'?'Pencarian terlalu lama. Periksa koneksi dan coba lagi.':error.message==='Failed to fetch'?'Tidak dapat terhubung ke sumber data. Periksa koneksi dan coba lagi.':error.message;}
     finally{clearTimeout(timeout);if(request===current){request=null;submit.disabled=false;}}
   });
-  window.EasyTokenSearch={open({chain,address}){if(!validChainAddress(address,chain))return;closeDialog();navigate('ringkasan');input.value=address;chosenChain=chain;chosenPairs=null;form.requestSubmit();}};
+  window.EasyTokenSearch={open({chain,address}){if(!validChainAddress(address,chain))return;closeDialog();navigate('dashboard');input.value=address;chosenChain=chain;chosenPairs=null;form.requestSubmit();}};
   window.addEventListener('focus',inspectClipboard);
   document.addEventListener('visibilitychange',inspectClipboard);
   window.addEventListener('hashchange',route);

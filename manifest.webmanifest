@@ -5,7 +5,7 @@
   "description": "Jelajahi token, pahami peta wallet, dan kelola pantauan dalam Bahasa Indonesia.",
   "lang": "id-ID",
   "dir": "ltr",
-  "start_url": "./?source=pwa#ringkasan",
+  "start_url": "./?source=pwa#dashboard",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
@@ -18,7 +18,7 @@
     {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {"name": "Ringkasan", "description": "Cari token dan lihat pergerakan", "url": "./#ringkasan", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Dashboard", "description": "Cari token dan lihat pergerakan", "url": "./#dashboard", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "Daftar pantauan", "description": "Buka wallet dan token pantauan", "url": "./#pantauan", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "Peta wallet", "description": "Jelajahi hubungan transfer wallet", "url": "./#peta", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
   ]

@@ -83,13 +83,13 @@
   function assetLabel(e){if(isUSDC(e))return 'USDC';const token=tokens.find(t=>t.chain===e.chain&&e.assetAddress&&equalChainAddress(t.address,e.assetAddress,e.chain));return token?.symbol||(e.assetAddress?tokenPictures.get(key(e.chain,e.assetAddress))?.symbol:null)||(e.asset?.length>16?short(e.asset):e.asset)||'Token';}
   function mapPicture(node){return window.EasyTokenUI.imageURL(markets.get(key(node.chain,node.address||''))?.pair?.info?.imageUrl)||window.EasyTokenUI.imageURL(tokenPictures.get(key(node.chain,node.address||''))?.imageUrl);}
   async function loadMapPictures(nodes){
-    if(pictureRequest||!user||document.body.classList.contains('signed-out')||document.hidden||!navigator.onLine||state.mode!=='token'||!['ringkasan','peta'].includes(state.route)||Date.now()<pictureCooldown)return;
+    if(pictureRequest||!user||document.body.classList.contains('signed-out')||document.hidden||!navigator.onLine||state.mode!=='token'||!['dashboard','peta'].includes(state.route)||Date.now()<pictureCooldown)return;
     const needed=nodes.filter(node=>node.kind==='token'&&validChainAddress(node.address||'',node.chain)&&!mapPicture(node)&&!(tokenPictures.get(key(node.chain,node.address))?.at>Date.now()-600000));
     if(!needed.length)return;
     const controller=new AbortController(),version=epoch,chain=selectedBlockchain;pictureRequest=controller;
     try{
       for(const node of needed){
-        if(controller.signal.aborted||version!==epoch||chain!==selectedBlockchain||state.mode!=='token'||!['ringkasan','peta'].includes(state.route)||document.hidden||!navigator.onLine)break;
+        if(controller.signal.aborted||version!==epoch||chain!==selectedBlockchain||state.mode!=='token'||!['dashboard','peta'].includes(state.route)||document.hidden||!navigator.onLine)break;
         let imageUrl=null,symbol=null;
         try{
           const response=await window.EasyAPILog.fetch(`https://api.dexscreener.com/token-pairs/v1/${node.chain}/${encodeURIComponent(node.address)}`,{credentials:'omit',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(12000)])});
@@ -233,7 +233,7 @@
     const job={version:epoch,chain:selectedBlockchain,index:0,total:wallets.length,cancelled:false};mapLoad=job;renderMap();
     try{
       for(const wallet of wallets){
-        if(job.cancelled||job.version!==epoch||job.chain!==selectedBlockchain||!['ringkasan','peta'].includes(state.route))break;
+        if(job.cancelled||job.version!==epoch||job.chain!==selectedBlockchain||!['dashboard','peta'].includes(state.route))break;
         if(state.wallets.some(w=>w.id===wallet.id))await refreshWallet(wallet.id,true);
         job.index++;if(job.version===epoch)renderMap();
       }

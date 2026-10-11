@@ -14,7 +14,7 @@
       url.searchParams.set('pwa-reconnect', Date.now());
       const response = await fetch(url, {cache:'no-store', signal:AbortSignal.timeout(10000)});
       if (!response.ok) throw new Error('Unavailable');
-      root.hash = location.hash || 'ringkasan';
+      root.hash = location.hash || 'dashboard';
       location.replace(root.href);
     } catch {
       status.textContent = 'Aplikasi belum dapat dijangkau. Periksa koneksi, lalu coba lagi. Pantauan tersimpan tidak dihapus.';

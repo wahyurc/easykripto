@@ -18,7 +18,7 @@
   function renderInstall() {
     const hidden = !supported || standalone() || installed;
     document.querySelectorAll('[data-pwa-install]').forEach(button => {button.hidden = hidden;});
-    el('pwa-install-card').hidden = hidden || snoozed() || (!installPrompt && !ios) || (location.hash && location.hash !== '#ringkasan');
+    el('pwa-install-card').hidden = hidden || snoozed() || (!installPrompt && !ios) || (location.hash && location.hash !== '#dashboard');
     const confirm = el('pwa-confirm-install');
     if (confirm) {confirm.hidden = !installPrompt || hidden;confirm.disabled = installing;confirm.textContent = installing ? 'Membuka pemasangan…' : 'Pasang Easykripto';}
   }

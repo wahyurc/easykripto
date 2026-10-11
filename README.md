@@ -2,7 +2,7 @@
 
 ## Rekomendasi Ticker
 
-Halaman utama bernama **Dashboard**; hash `#ringkasan` tetap digunakan agar tautan sebelumnya berfungsi. Detail token menyediakan tombol **Trade di MastrTrade** tepat setelah tombol GMGN. Solana memakai `?t=CA#/trade/CA`; EVM memakai `#/multichain/jaringan/CA/pool` jika alamat pool tersedia, atau halaman jaringan jika belum tersedia. Tautan membuka tab baru dan tidak mengeksekusi transaksi.
+Halaman utama bernama **Dashboard** dengan hash `#dashboard`. Tautan lama `#ringkasan` otomatis dialihkan ke `#dashboard`; navigasi, pencarian, login, PWA, notifikasi, dan log kunjungan memakai route baru. Detail token menyediakan tombol **Trade di MastrTrade** tepat setelah tombol GMGN. Solana memakai `?t=CA#/trade/CA`; EVM memakai `#/multichain/jaringan/CA/pool` jika alamat pool tersedia, atau halaman jaringan jika belum tersedia. Tautan membuka tab baru dan tidak mengeksekusi transaksi.
 
 Menu **Rekomendasi Ticker** (`#recticker`) menampilkan maksimal 40 kandidat unik dari halaman pertama pool trending dan baru GeckoTerminal pada jaringan terpilih. Tautan lama `#bestcoin` otomatis diarahkan ke `#recticker`; log kunjungan lama tetap dapat dibaca. Untuk token yang muncul di beberapa pool, pool dengan likuiditas tertinggi di dalam sampel digunakan; angka bukan agregasi semua pool. Sumber parsial, tidak ada data, dan snapshot lama setelah gagal memperbarui ditandai. Snapshot pasar disimpan dalam memori selama lima menit; scheduler hanya bekerja saat halaman aktif. Tidak ada provider berbayar baru atau API key pada frontend.
 

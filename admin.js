@@ -4,7 +4,7 @@
   const el = id => document.getElementById(id);
   const status = el('admin-status');
   const list = el('admin-record-list');
-  const routeNames = {masuk:'Halaman login',ringkasan:'Dashboard',recticker:'Rekomendasi Ticker',bestcoin:'Rekomendasi Ticker',peta:'Peta',pantauan:'Pantauan',aktivitas:'Aktivitas',superadmin:'Superadmin'};
+  const routeNames = {masuk:'Halaman login',dashboard:'Dashboard',ringkasan:'Dashboard',recticker:'Rekomendasi Ticker',bestcoin:'Rekomendasi Ticker',peta:'Peta',pantauan:'Pantauan',aktivitas:'Aktivitas',superadmin:'Superadmin'};
   const dateFormat = new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Makassar'});
   const numberFormat = new Intl.NumberFormat('id-ID');
   let servicePromise, account = null, authorized = false, authEpoch = 0, listRevision = 0;
@@ -100,7 +100,7 @@
     }
   }
   function resetPages() { pageIndex=0;cursors=[null];rows=[];hasNext=false; }
-  function pageName() { if(document.body.classList.contains('signed-out'))return 'masuk';const hash=location.hash.slice(1);return routeNames[hash]&&(hash!=='superadmin'||authorized)?hash:'ringkasan'; }
+  function pageName() { if(document.body.classList.contains('signed-out'))return 'masuk';const hash=location.hash==='#ringkasan'?'dashboard':location.hash.slice(1);return routeNames[hash]&&(hash!=='superadmin'||authorized)?hash:'dashboard'; }
   async function logVisit() {
     if(!account?.id)return;
     const page=pageName();

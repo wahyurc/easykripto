@@ -134,7 +134,7 @@
       const provider = new authSdk.GoogleAuthProvider();
       provider.setCustomParameters({prompt:'select_account'});
       await authSdk.signInWithPopup(auth, provider);
-      location.hash = 'ringkasan';
+      location.hash = 'dashboard';
     } catch (error) {
       status.textContent = loginError(error);
     } finally {
@@ -154,7 +154,7 @@
     const logout = event.target.closest('[data-logout]');
     if (logout) {
       logout.disabled=true;
-      try { await authSdk.signOut(auth);location.hash='ringkasan'; }
+      try { await authSdk.signOut(auth);location.hash='dashboard'; }
       catch { logout.disabled=false;logout.textContent='Gagal keluar. Coba lagi.'; }
       return;
     }

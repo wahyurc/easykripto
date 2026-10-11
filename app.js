@@ -25,7 +25,7 @@ function save(key,value){ try { localStorage.setItem(key,JSON.stringify(value));
 
 const tokens = [];
 const events = [];
-const state = {route:'ringkasan',mode:'token',mapAsset:'all',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
+const state = {route:'dashboard',mode:'token',mapAsset:'all',period:24,type:'all',zoom:1,x:0,y:0,reduced:load('easykripto.motion',false) === true,wallets:[],alerts:{}};
 const walletCategories={
  whale:{id:'whale',label:'Whale',color:'#f5be62',fill:'#382b13'},
  smartmoney:{id:'smartmoney',label:'SmartMoney',color:'#7fa7ff',fill:'#172b4a'},
@@ -40,7 +40,7 @@ function walletCategoryPicker(value='other',name='wallet-category',walletId=''){
 }
 function walletCategoryLegend(){return `<div class="wallet-category-legend" aria-label="Warna kategori wallet"><span>Wallet:</span>${Object.values(walletCategories).map(category=>walletCategoryBadge(category.id)).join('')}<small>Label manual · alamat lain masuk Other.</small></div>`;}
 const routes = [
- {id:'ringkasan',label:'Dashboard',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
+ {id:'dashboard',label:'Dashboard',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
  {id:'recticker',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
@@ -57,9 +57,10 @@ const map = document.createElement('section');map.id='interactive-map';map.class
 $('#overview-map-slot').className='';$('#overview-map-slot').append(map);
 function navigate(id){ if(location.hash===`#${id}`)renderRoute();else location.hash=id; }
 function renderRoute(){
+ if(location.hash==='#ringkasan')history.replaceState(history.state,'',`${location.pathname}${location.search}#dashboard`);
  if(location.hash==='#bestcoin')history.replaceState(history.state,'',`${location.pathname}${location.search}#recticker`);
  const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
- state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'ringkasan';
+ state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'dashboard';
  document.body.classList.toggle('superadmin-view',state.route==='superadmin');
  const r=routes.find(r=>r.id===state.route);
  $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.id}`);
