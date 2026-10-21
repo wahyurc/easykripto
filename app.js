@@ -73,7 +73,10 @@ function renderRoute(){
  $('#page-title').innerHTML=r.title;$('#page-description').textContent=r.desc;$('#breadcrumb').textContent=r.label;document.title=`${r.label} — Easykripto`;
  const navButton=v=>{const active=v.id===(r.parent||r.id);return `<button type="button" class="nav-button ${active?'active':''}" data-route="${v.id==='pantauan'?'pantauan-wallet':v.id}" ${v.id==='pantauan'?'aria-label="Pantauan, buka Wallet Pantauan"':active?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`;};
  const primary=availableRoutes.filter(v=>!v.parent);
- $('.desktop-nav').innerHTML=primary.map(v=>v.id==='pantauan'?`<div class="watch-nav-group">${navButton(v)}<div class="watch-nav-submenu" role="group" aria-label="Submenu Pantauan">${availableRoutes.filter(child=>child.parent===v.id).map(child=>`<button type="button" class="nav-button watch-nav-child ${child.id===r.id?'active':''}" data-route="${child.id}" ${child.id===r.id?'aria-current="page"':''}>${icon(child.icon)}<span>${child.label}</span></button>`).join('')}</div></div>`:navButton(v)).join('');
+ $('.desktop-nav').innerHTML=primary.map(v=>v.id==='pantauan'?`<div class="watch-nav-group">${navButton(v)}<div id="watch-nav-submenu" class="watch-nav-submenu" role="group" aria-label="Submenu Pantauan" ${r.parent==='pantauan'?'':'hidden'}>${availableRoutes.filter(child=>child.parent===v.id).map(child=>`<button type="button" class="nav-button watch-nav-child ${child.id===r.id?'active':''}" data-route="${child.id}" ${child.id===r.id?'aria-current="page"':''}>${icon(child.icon)}<span>${child.label}</span></button>`).join('')}</div></div>`:navButton(v)).join('');
+ const watchParent=$('.watch-nav-group>.nav-button');
+ watchParent.setAttribute('aria-expanded',String(r.parent==='pantauan'));watchParent.setAttribute('aria-controls','watch-nav-submenu');
+ watchParent.insertAdjacentHTML('beforeend','<svg class="icon watch-nav-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>');
  $('.bottom-nav').innerHTML=primary.map(navButton).join('');
  $(r.id==='peta'?'#full-map-slot':'#overview-map-slot').append(map);map.classList.toggle('full-map',r.id==='peta');transform();
  renderMap();
