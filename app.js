@@ -44,6 +44,8 @@ const routes = [
  {id:'recticker',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
+ {id:'pantauan-wallet',parent:'pantauan',view:'pantauan',label:'Wallet Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Kelola wallet, kategori, saldo, dan notifikasi pada jaringan aktif.'},
+ {id:'pantauan-token',parent:'pantauan',view:'pantauan',label:'Token Pantauan',icon:'spark',title:'Token pilihan, <span>dalam pantauan.</span>',desc:'Kelola token favorit dan ikuti harga di berbagai jaringan.'},
  {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Lihat transfer masuk, keluar, dan hubungan antarwallet.'},
  {id:'superadmin',label:'Superadmin',icon:'shield',title:'Kenali pengguna. <span>Pahami kunjungannya.</span>',desc:'Pantau kunjungan dan akun terdaftar dalam satu ruang.',adminOnly:true}
 ];
@@ -59,14 +61,20 @@ function navigate(id){ if(location.hash===`#${id}`)renderRoute();else location.h
 function renderRoute(){
  if(location.hash==='#ringkasan')history.replaceState(history.state,'',`${location.pathname}${location.search}#dashboard`);
  if(location.hash==='#bestcoin')history.replaceState(history.state,'',`${location.pathname}${location.search}#recticker`);
+ if(location.hash==='#pantauan')history.replaceState(history.state,'',`${location.pathname}${location.search}#pantauan-wallet`);
  const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
  state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'dashboard';
  document.body.classList.toggle('superadmin-view',state.route==='superadmin');
  const r=routes.find(r=>r.id===state.route);
- $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.id}`);
+ $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.view||r.id}`);
+ $('#watch-wallet-page').hidden=r.id!=='pantauan-wallet';$('#watch-token-page').hidden=r.id!=='pantauan-token';
+ $('#watch-add-wallet').hidden=r.id!=='pantauan-wallet';$('#watch-add-token').hidden=r.id!=='pantauan-token';
+ for(const button of $$('[data-watch-page-route]')){const active=button.dataset.route===r.id;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}
  $('#page-title').innerHTML=r.title;$('#page-description').textContent=r.desc;$('#breadcrumb').textContent=r.label;document.title=`${r.label} — Easykripto`;
- const nav=availableRoutes.map(v=>`<button class="nav-button ${v.id===r.id?'active':''}" data-route="${v.id}" ${v.id===r.id?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`).join('');
- $('.desktop-nav').innerHTML=nav;$('.bottom-nav').innerHTML=nav;
+ const navButton=v=>{const active=v.id===(r.parent||r.id);return `<button type="button" class="nav-button ${active?'active':''}" data-route="${v.id==='pantauan'?'pantauan-wallet':v.id}" ${v.id==='pantauan'?'aria-label="Pantauan, buka Wallet Pantauan"':active?'aria-current="page"':''}>${icon(v.icon)}<span>${v.label}</span></button>`;};
+ const primary=availableRoutes.filter(v=>!v.parent);
+ $('.desktop-nav').innerHTML=primary.map(v=>v.id==='pantauan'?`<div class="watch-nav-group">${navButton(v)}<div class="watch-nav-submenu" role="group" aria-label="Submenu Pantauan">${availableRoutes.filter(child=>child.parent===v.id).map(child=>`<button type="button" class="nav-button watch-nav-child ${child.id===r.id?'active':''}" data-route="${child.id}" ${child.id===r.id?'aria-current="page"':''}>${icon(child.icon)}<span>${child.label}</span></button>`).join('')}</div></div>`:navButton(v)).join('');
+ $('.bottom-nav').innerHTML=primary.map(navButton).join('');
  $(r.id==='peta'?'#full-map-slot':'#overview-map-slot').append(map);map.classList.toggle('full-map',r.id==='peta');transform();
  renderMap();
  window.scrollTo(0,0);

@@ -15,7 +15,7 @@
     if(['wallet','token'].includes(value.type)&&blockchainNetworks.some(n=>n.id===value.chain)&&validChainAddress(value.address,value.chain))return {type:value.type,chain:value.chain,address:value.address};
     if(value.type==='sync')return {type:'sync'};
     const route=value.route==='ringkasan'?'dashboard':value.route;
-    if(value.type==='route'&&['pantauan','aktivitas','dashboard','peta','superadmin'].includes(route))return route==='superadmin'&&account?.role!=='superadmin'?null:{type:'route',route};
+    if(value.type==='route'&&['pantauan','pantauan-wallet','pantauan-token','aktivitas','dashboard','peta','superadmin'].includes(route))return route==='superadmin'&&account?.role!=='superadmin'?null:{type:'route',route};
     return null;
   }
   function clean(values){

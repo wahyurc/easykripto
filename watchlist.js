@@ -82,7 +82,7 @@
       return `<tr><td>${identity(item,true)}</td><td>${chain(item)}</td><td class="watch-number">${market?.error?'—':money(market?.pair?.priceUsd)}</td><td class="watch-number ${hasChange?(change<0?'negative':change>0?'positive':''):''}">${hasChange?`${change>0?'+':''}${change.toLocaleString('id-ID',{maximumFractionDigits:2})}%`:'—'}</td><td><div class="watch-row-status${market?.error?' error':''}">${escapeHTML(market?.error||time(market?.at))}</div></td><td><div class="watch-row-actions"><button type="button" class="text-button" data-token="${id}">Detail</button><button type="button" class="icon-button watch-remove" data-watch-remove-token="${id}" aria-label="Hapus token ${escapeHTML(item.symbol)}">${icon('close')}</button></div></td></tr>`;
     }).join('')||`<tr><td colspan="6" class="watch-empty">${tokenQuery||network!=='all'?'Tidak ada token yang sesuai filter atau pencarian.':'Belum ada token pantauan. Ketuk Tambah Token atau pantau dari detail token.'}</td></tr>`;
     for(const item of visibleTokens){const picture=[...root.querySelectorAll('[data-watch-token-picture]')].find(node=>node.dataset.watchTokenPicture===item.id);picture?.append(window.EasyTokenUI.iconNode(data.market(item)?.pair?.info?.imageUrl,item.symbol));}
-    if(state.route==='pantauan'&&!document.hidden)data.refreshPrices?.(visibleTokens.filter(item=>refreshPrices||!data.market(item)).map(item=>item.id));
+    if(state.route==='pantauan-token'&&!document.hidden)data.refreshPrices?.(visibleTokens.filter(item=>refreshPrices||!data.market(item)).map(item=>item.id));
   }
   function editWallet(id){
     if(!window.EasyDashboard.allowed())return;
@@ -131,7 +131,7 @@
           closeDialog();
           if(selectedBlockchain!==chain){const picker=el('network-select');picker.value=chain;picker.dispatchEvent(new Event('change'));}
           else if(!pair)void window.EasyDashboard.refreshTokenPrices();
-          navigate('pantauan');toast('Token ditambahkan ke pantauan.');
+          navigate('pantauan-token');toast('Token ditambahkan ke pantauan.');
         }
       }catch(error){if(!controller.signal.aborted&&account===uid&&form.isConnected)message.textContent=error.name==='TimeoutError'?'Pencarian terlalu lama. Coba lagi.':error.message==='Failed to fetch'?'Koneksi ke penyedia terputus. Periksa internet lalu coba lagi.':error.message;}
       finally{if(form.isConnected&&formController===controller){formController=null;submit.disabled=false;form.removeAttribute('aria-busy');}}
@@ -167,7 +167,7 @@
   el('detail-dialog').addEventListener('close',()=>{formController?.abort();formController=null;});
   window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next!==account){account=next;selectedWallets.clear();pages.wallet=pages.token=1;el('wallet-search').value='';el('watch-token-search').value='';el('watch-wallet-category').value='all';el('watch-token-network-filter').value='all';formController?.abort();renderWallets();}});
   window.addEventListener('easykripto-network',()=>{selectedWallets.clear();pages.wallet=1;renderWallets();});
-  window.addEventListener('hashchange',()=>{if(state.route==='pantauan')render(null,true);});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.route==='pantauan')render(null,true);});
+  window.addEventListener('hashchange',()=>{if(state.route==='pantauan-token')render(null,true);});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.route==='pantauan-token')render(null,true);});
   renderWallets();
 })();

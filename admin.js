@@ -100,7 +100,7 @@
     }
   }
   function resetPages() { pageIndex=0;cursors=[null];rows=[];hasNext=false; }
-  function pageName() { if(document.body.classList.contains('signed-out'))return 'masuk';const hash=location.hash==='#ringkasan'?'dashboard':location.hash.slice(1);return routeNames[hash]&&(hash!=='superadmin'||authorized)?hash:'dashboard'; }
+  function pageName() { if(document.body.classList.contains('signed-out'))return 'masuk';const raw=location.hash.slice(1),hash=['pantauan-wallet','pantauan-token'].includes(raw)?'pantauan':raw==='ringkasan'?'dashboard':raw;return routeNames[hash]&&(hash!=='superadmin'||authorized)?hash:'dashboard'; }
   async function logVisit() {
     if(!account?.id)return;
     const page=pageName();

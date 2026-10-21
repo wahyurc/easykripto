@@ -19,7 +19,8 @@
   ],
   "shortcuts": [
     {"name": "Dashboard", "description": "Cari token dan lihat pergerakan", "url": "./#dashboard", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
-    {"name": "Daftar pantauan", "description": "Buka wallet dan token pantauan", "url": "./#pantauan", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Wallet Pantauan", "description": "Buka daftar wallet pantauan", "url": "./#pantauan-wallet", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Token Pantauan", "description": "Buka daftar token pantauan", "url": "./#pantauan-token", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "Peta wallet", "description": "Jelajahi hubungan transfer wallet", "url": "./#peta", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
   ]
 }

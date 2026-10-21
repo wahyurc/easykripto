@@ -1,15 +1,15 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '1964988d2290862b';
+const RELEASE = '1e0ece51e89116c4';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
-  "admin.js?v=20261011-dashboard-route",
+  "admin.js?v=20261021-watch-submenu",
   "api-monitor-ui.css?v=20261011-api-recovery",
   "api-monitor-ui.js?v=20261011-api-recovery",
   "api-telemetry.js?v=20261011-api-recovery",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261011-dashboard-route",
+  "app.js?v=20261021-watch-submenu",
   "auth.js?v=20261011-dashboard-route",
   "best-coins.css?v=20261011-compact-filters",
   "best-coins.js?v=20261011-recticker",
@@ -30,7 +30,7 @@ const SHELL = [
   "mastrtrade-logo.png",
   "networks.js?v=20261010-token-holders",
   "notifications.css?v=20261010-notifications",
-  "notifications.js?v=20261011-dashboard-route",
+  "notifications.js?v=20261021-watch-submenu",
   "offline.css",
   "offline.html",
   "offline.js",
@@ -44,8 +44,8 @@ const SHELL = [
   "token-ui.js?v=20261011-holder-stay",
   "wallet-categories.css?v=20261011-categories",
   "wallet-data.js?v=20261011-watch-flow",
-  "watchlist.css?v=20261021-wallet-bulk",
-  "watchlist.js?v=20261021-wallet-bulk"
+  "watchlist.css?v=20261021-watch-submenu",
+  "watchlist.js?v=20261021-watch-submenu"
 ];
 // END GENERATED PWA RELEASE
 
