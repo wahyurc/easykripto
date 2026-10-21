@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '55d1bbc3fab32431';
+const RELEASE = 'dd53293e869f7bdd';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261021-watch-submenu",
