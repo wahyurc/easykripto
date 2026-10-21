@@ -6,3 +6,5 @@
 
 .watch-number small{display:block;font-size:10px;line-height:1.6;color:#999;margin-top:5px}.watch-section-controls{flex-wrap:wrap}.watch-section-controls>button{min-height:46px}
 .watch-value-details{font-size:10px;min-height:36px;padding:6px 0}.watch-value-warnings{padding-left:20px;margin:14px 0;color:#d6b481;font-size:12px;line-height:1.8}.watch-table:has(#wallet-list){min-width:1060px}
+
+.watch-wallet-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-width:44px;min-height:44px;padding:10px;border:1px solid #303030;border-radius:10px;background:#111;color:#bbb}.watch-wallet-action svg{width:18px;height:18px}.watch-wallet-actions .watch-wallet-action{min-height:44px;min-width:44px;padding:10px}.watch-wallet-action:hover:not(:disabled){color:var(--accent);background:#08291f;border-color:#28735b}.watch-wallet-action.watch-remove:hover:not(:disabled){color:#ffafb7;background:#301016;border-color:#a55362}.watch-wallet-action:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.watch-wallet-action:disabled{opacity:.45;cursor:wait}.watch-number>.watch-wallet-action{margin-top:6px}
