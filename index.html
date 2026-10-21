@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="registration.css?v=20261011-registration">
   <link rel="stylesheet" href="watchlist.css?v=20261021-watch-collapse">
   <link rel="stylesheet" href="wallet-categories.css?v=20261011-categories">
-  <link rel="stylesheet" href="best-coins.css?v=20261011-compact-filters">
+  <link rel="stylesheet" href="best-coins.css?v=20261021-ranking-table">
   <script src="data-config.js?v=20261010-security" defer></script>
   <script src="app-check.js?v=20261010-security" defer></script>
   <script src="networks.js?v=20261010-token-holders" defer></script>
@@ -38,7 +38,7 @@
   <script src="search.js?v=20261011-dashboard-route" defer></script>
   <script src="market-data.js?v=20261011-api-recovery" defer></script>
   <script src="market-feed.js?v=20261011-dashboard-route" defer></script>
-  <script src="best-coins.js?v=20261011-recticker" defer></script>
+  <script src="best-coins.js?v=20261021-ranking-table" defer></script>
   <script src="wallet-data.js?v=20261011-watch-flow" defer></script>
   <script src="api-monitor-ui.js?v=20261011-api-recovery" defer></script>
   <script src="admin.js?v=20261021-watch-submenu" defer></script>
@@ -172,7 +172,8 @@
         <div class="bc-summary" aria-label="Ringkasan penyaringan"><article><span>Kandidat</span><strong id="bc-universe">—</strong></article><article><span>Lolos filter</span><strong id="bc-passing">—</strong></article><article><span>Risiko diperiksa</span><strong id="bc-checked">—</strong></article></div>
         <div class="bc-ranking-heading"><div><h2>Peringkat pilihanmu</h2><p id="bc-freshness">Belum ada snapshot pasar.</p></div><button id="bc-check-risk" class="secondary-button" type="button" disabled>Periksa risiko 10 teratas</button></div>
         <p id="bc-status" class="bc-status" role="status" aria-live="polite"></p>
-        <ol id="bc-list" class="bc-list" aria-label="Peringkat Rekomendasi Ticker"></ol>
+        <p id="bc-table-hint" class="bc-table-hint">Geser tabel ke samping untuk melihat seluruh kolom. Perubahan harga dan rasio beli mengikuti rentang waktu pilihan; volume memakai 24 jam.</p>
+        <div class="bc-table-scroll" role="region" aria-label="Tabel peringkat Rekomendasi Ticker" aria-describedby="bc-table-hint" tabindex="0"><table class="bc-ranking-table"><caption class="sr-only">Peringkat pilihan, diurutkan dari skor tertinggi sesuai filter</caption><thead><tr><th scope="col">#</th><th scope="col">Token</th><th scope="col">Skor / 100</th><th scope="col">Harga USD <small>Δ <span id="bc-change-window">24 jam</span></small></th><th scope="col">Valuasi</th><th scope="col">Vol / valuasi <small>24 jam</small></th><th scope="col">Likuiditas</th><th scope="col">Rasio beli <small>Transaksi beli / jual</small></th><th scope="col">Fase</th><th scope="col">Risiko / holder</th><th scope="col">Aksi</th></tr></thead><tbody id="bc-list"></tbody></table></div>
         <button id="bc-more" class="feed-more" type="button" hidden>Tampilkan lebih banyak</button>
         <p class="bc-source">Sampel maksimal 40 token dari pool trending dan baru pada jaringan terpilih. Peringkat bukan seluruh pasar. MC = kapitalisasi pasar; FDV = valuasi seluruh supply. Skor relatif terhadap token yang lolos filter dan bukan sinyal beli. Risiko yang belum diperiksa tetap ditandai.</p>
       </section>

@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'ab6c2c43488d3060';
+const RELEASE = 'b3a7d239681baaae';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261021-watch-submenu",
@@ -11,8 +11,8 @@ const SHELL = [
   "app-check.js?v=20261010-security",
   "app.js?v=20261021-watch-collapse",
   "auth.js?v=20261011-dashboard-route",
-  "best-coins.css?v=20261011-compact-filters",
-  "best-coins.js?v=20261011-recticker",
+  "best-coins.css?v=20261021-ranking-table",
+  "best-coins.js?v=20261021-ranking-table",
   "black-theme.css?v=20261011-watch-flow",
   "dashboard-data.js?v=20261021-wallet-snapshots",
   "data-client.js?v=20261011-api-recovery",

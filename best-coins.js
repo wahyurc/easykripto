@@ -66,8 +66,9 @@
     ranked=criteria.length?filtered.sort((a,b)=>(b.score??-1)-(a.score??-1)||(b.liquidity??0)-(a.liquidity??0)||a.address.localeCompare(b.address)):[];
     return criteria.length;
   }
-  const node=(tag,text,className)=>{const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n;};
-  function metric(dl,label,value,className){const wrap=document.createElement('div');wrap.append(node('dt',label),node('dd',value,className));dl.append(wrap);}
+  const node=(tag,text='',className)=>{const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n;};
+  const price=value=>value==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumSignificantDigits:6}).format(value);
+  function cell(row,value,className){const td=node('td',value,className);row.append(td);return td;}
   function breakdown(token){
     const m=token.metrics,windowLabel={h1:'1 jam',h6:'6 jam',h24:'24 jam'}[windowKey];
     dialog(`Skor ${escapeHTML(token.symbol)}`,`<div class="bc-detail"><p>Skor ${token.score==null?'tidak tersedia':Math.round(token.score)} dari 100, dibandingkan dengan ${ranked.length} kandidat yang lolos filter. Nilai komponen berikut adalah persentil, bukan peluang keuntungan.</p><dl>${token.components.map(item=>`<dt>${escapeHTML(labels[item.key])}</dt><dd>${item.value==null?'Data tidak tersedia':Math.round(item.value)+' / 100'}</dd>`).join('')}</dl><p>Transaksi pool ${escapeHTML(windowLabel)}: ${count(m.buys)} beli · ${count(m.sells)} jual. Minimal 10 transaksi untuk indikasi fase; rasio beli ≥60% berarti beli dominan, ≤40% berarti jual dominan.</p><p>${m.valuationKind==='FDV'?'Menggunakan FDV karena MC belum tersedia. FDV bukan kapitalisasi supply yang beredar.':'Valuasi memakai MC yang dilaporkan penyedia.'} Volume dan likuiditas berasal dari satu pool dengan likuiditas tertinggi di dalam sampel, bukan agregasi semua pool token.</p><p>${token.risk?`GoPlus diperiksa ${new Date(token.risk.at).toLocaleTimeString('id-ID')}. ${token.risk.flags.length?'Temuan: '+escapeHTML(token.risk.flags.join(', ')):token.risk.known?'Tidak ada flag pada field yang dilaporkan; ini bukan jaminan aman.':'Penyedia tidak melaporkan field risiko yang dapat dinilai.'}`:'Risiko belum diperiksa. Ketuk Periksa risiko 10 teratas untuk memeriksa kandidat.'}</p><p>Riwayat pertumbuhan holder $1.000/$10.000 belum tersedia. Skor ini mengukur aktivitas pasar dan tidak menilai hubungan kepemilikan wallet.</p></div>`,'TRANSPARANSI SKOR');
@@ -78,23 +79,31 @@
     const badge=el('bc-network');badge.innerHTML=networkLogo(selectedBlockchain);badge.append(document.createTextNode(currentNetwork().name));
     el('bc-freshness').textContent=snapshotAt?`GeckoTerminal · ${new Date(snapshotAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} · cache 5 menit${partial?' · sumber parsial':''}`:'Belum ada snapshot pasar.';
     const list=el('bc-list');list.replaceChildren();
-    if(!ranked.length){const empty=node('li','','bc-empty');empty.append(node('strong',busy?'Menyiapkan peringkat…':!hasCriteria?'Pilih komponen skor.':'Belum ada token yang lolos.'),node('span',busy?'Mengambil pool trending dan baru pada jaringan pilihanmu.':rows.length?'Longgarkan filter fase, valuasi, atau kelengkapan data.':'Perbarui daftar atau pilih jaringan lain. Sumber bisa belum memiliki kandidat.'));list.append(empty);}
+    el('bc-change-window').textContent={h1:'1 jam',h6:'6 jam',h24:'24 jam'}[windowKey];
+    if(!ranked.length){
+      const row=node('tr'),empty=cell(row,'','bc-table-empty');empty.colSpan=11;
+      empty.append(node('strong',busy?'Menyiapkan peringkat…':!hasCriteria?'Pilih komponen skor.':'Belum ada token yang lolos.'),node('span',busy?'Mengambil pool trending dan baru pada jaringan pilihanmu.':rows.length?'Longgarkan filter fase, valuasi, atau kelengkapan data.':'Perbarui daftar atau pilih jaringan lain. Sumber bisa belum memiliki kandidat.'));list.append(row);
+    }
     for(const [index,token]of ranked.slice(0,shown).entries()){
-      const card=node('li','','bc-card'),top=node('div','','bc-card-top'),picture=node('span','','bc-picture');
+      const row=node('tr'),m=token.metrics,risk=token.risk;cell(row,`#${index+1}`,'bc-table-rank');
+      const tokenCell=node('th','','bc-table-token');tokenCell.scope='row';row.append(tokenCell);
+      const tokenInfo=node('div','','bc-token-info'),picture=node('span','','bc-picture');
       picture.append(window.EasyTokenUI.iconNode(token.imageUrl,token.symbol));const logo=document.createElement('span');logo.innerHTML=networkLogo(token.chain);picture.append(logo.firstElementChild);
-      const identity=node('div','','bc-identity');identity.append(node('strong',token.symbol),node('small',`${token.address.slice(0,5)}…${token.address.slice(-4)}`));identity.title=token.name;
-      const score=node('span',token.score==null?'—':String(Math.round(token.score))+(token.incomplete?'*':''),'bc-score');score.append(node('small','SKOR / 100'));top.append(node('span',`#${index+1}`,'bc-rank'),picture,identity,score);card.append(top);
-      const tags=node('div','','bc-card-tags');tags.append(node('span',phases[token.metrics.phase],`bc-tag ${token.metrics.phase}`));
-      const risk=token.risk;tags.append(node('span',!risk?'Risiko belum diperiksa':risk.flags.length?'Risiko ditandai':risk.known?'Flag tidak terdeteksi':'Data risiko minim',`bc-tag ${risk?.flags.length?'flagged':risk?.known?'clear':''}`));
-      if(risk?.holders!=null)tags.append(node('span',`${count(risk.holders)} holder`,'bc-tag'));card.append(tags);
-      const dl=node('dl','','bc-metrics'),m=token.metrics;metric(dl,`Valuasi (${m.valuationKind})`,usd(m.valuation));metric(dl,`Harga · ${windowKey==='h1'?'1 jam':windowKey==='h6'?'6 jam':'24 jam'}`,percent(m.momentum),m.momentum>0?'positive':m.momentum<0?'negative':'');
-      metric(dl,'Volume / valuasi · 24 jam',ratio(m.volume));metric(dl,'Likuiditas pool',usd(token.liquidity));metric(dl,'Rasio beli · jumlah transaksi',m.pressure==null?'—':`${(m.pressure*100).toLocaleString('id-ID',{maximumFractionDigits:1})}%`);metric(dl,'Transaksi beli / jual',`${count(m.buys)} / ${count(m.sells)}`);card.append(dl);
-      const actions=node('div','','bc-actions'),detail=node('button','Detail token','primary-button'),watch=node('button','+ Pantau','secondary-button'),explain=node('button','ⓘ','bc-breakdown');
-      for(const button of [detail,watch,explain])button.type='button';explain.setAttribute('aria-label',`Lihat perhitungan skor ${token.symbol}`);
+      const identity=node('div','','bc-identity');identity.append(node('strong',token.symbol),node('small',`${token.address.slice(0,5)}…${token.address.slice(-4)}`));identity.title=token.name;tokenInfo.append(picture,identity);tokenCell.append(tokenInfo);
+      const score=node('span',token.score==null?'—':String(Math.round(token.score))+(token.incomplete?'*':''),'bc-table-score');score.title=token.incomplete?'Skor memakai komponen yang tersedia; data belum lengkap.':'Skor relatif dari 100';cell(row,'').append(score);
+      const currentPrice=cell(row,price(token.price),'bc-table-number');currentPrice.append(node('small',percent(m.momentum),m.momentum>0?'positive':m.momentum<0?'negative':''));
+      const valuation=cell(row,usd(m.valuation),'bc-table-number');valuation.append(node('small',m.valuationKind));
+      cell(row,ratio(m.volume),'bc-table-number');cell(row,usd(token.liquidity),'bc-table-number');
+      const pressure=cell(row,m.pressure==null?'—':`${(m.pressure*100).toLocaleString('id-ID',{maximumFractionDigits:1})}%`,'bc-table-number');pressure.append(node('small',`${count(m.buys)} beli / ${count(m.sells)} jual`));
+      cell(row,'').append(node('span',phases[m.phase],`bc-tag ${m.phase}`));
+      const riskCell=cell(row,'','bc-table-risk');riskCell.append(node('span',!risk?'Belum diperiksa':risk.flags.length?'Risiko ditandai':risk.known?'Flag tidak terdeteksi':'Data risiko minim',`bc-tag ${risk?.flags.length?'flagged':risk?.known?'clear':''}`));
+      if(risk?.holders!=null)riskCell.append(node('small',`${count(risk.holders)} holder`));
+      const actions=node('div','','bc-actions'),detail=node('button','Detail','primary-button'),watch=node('button','+ Pantau','secondary-button'),explain=node('button','ⓘ','bc-breakdown');
+      for(const button of [detail,watch,explain])button.type='button';detail.setAttribute('aria-label',`Detail token ${token.symbol}`);watch.setAttribute('aria-label',`Pantau token ${token.symbol}`);explain.setAttribute('aria-label',`Lihat perhitungan skor ${token.symbol}`);explain.title='Rincian skor';
       detail.addEventListener('click',()=>window.EasyTokenSearch.open({chain:token.chain,address:token.address}));
       const tracked=()=>tokens.some(saved=>saved.chain===token.chain&&equalChainAddress(saved.address,token.address,token.chain));
-      if(tracked()){watch.textContent='Terpantau';watch.disabled=true;}
-      watch.addEventListener('click',()=>{window.EasyDashboard.trackToken(token);if(tracked()){watch.textContent='Terpantau';watch.disabled=true;}});explain.addEventListener('click',()=>breakdown(token));actions.append(detail,watch,explain);card.append(actions);list.append(card);
+      if(tracked()){watch.textContent='Terpantau';watch.disabled=true;watch.setAttribute('aria-label',`${token.symbol} sudah dipantau`);}
+      watch.addEventListener('click',()=>{window.EasyDashboard.trackToken(token);if(tracked()){watch.textContent='Terpantau';watch.disabled=true;watch.setAttribute('aria-label',`${token.symbol} sudah dipantau`);}});explain.addEventListener('click',()=>breakdown(token));actions.append(detail,watch,explain);cell(row,'').append(actions);list.append(row);
     }
     el('bc-more').hidden=ranked.length<=shown;controls();
   }
