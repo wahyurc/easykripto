@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '633c65dfbeb5d406';
+const RELEASE = '0a68ee5cc2d74c54';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261011-dashboard-route",
@@ -44,8 +44,8 @@ const SHELL = [
   "token-ui.js?v=20261011-holder-stay",
   "wallet-categories.css?v=20261011-categories",
   "wallet-data.js?v=20261011-watch-flow",
-  "watchlist.css?v=20261021-wallet-icon-actions",
-  "watchlist.js?v=20261021-wallet-icon-actions"
+  "watchlist.css?v=20261021-wallet-responsive",
+  "watchlist.js?v=20261021-wallet-responsive"
 ];
 // END GENERATED PWA RELEASE
 
