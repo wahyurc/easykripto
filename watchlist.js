@@ -3,6 +3,7 @@
 (() => {
   const el=id=>document.getElementById(id),root=el('view-pantauan');
   const pageSizes=[10,20,50,100],pages={wallet:1,token:1};
+  const selectedWallets=new Set();let filteredWallets=[],pageWallets=[],updating=false;
   let size=Number(load('easykripto.watch.pageSize',10)),data=null,account=null,formController=null,networkSignature='';
   if(!pageSizes.includes(size))size=10;el('watch-page-size').value=String(size);
   const short=value=>`${value.slice(0,6)}…${value.slice(-4)}`;
@@ -12,7 +13,37 @@
   const name=chain=>blockchainNetworks.find(n=>n.id===chain)?.name||chain;
   const actionPaths={edit:'<path d="m16 3 5 5M4 20l4-1L21 6l-4-4L4 15l-1 6Z"/>',refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2"/>',trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>'};
   const actionIcon=name=>actionPaths[name]?`<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${actionPaths[name]}</svg>`:icon(name);
+  actionPaths.belloff='<path d="m3 3 18 18M6 6a6 6 0 0 0 0 2c0 7-3 7-3 9h14M10 21h4M10 2a6 6 0 0 1 8 6c0 2 .2 3.5 .6 4.7"/>';
   const walletAction=(item,attribute,label,glyph,{disabled=false,pressed=null,danger=false}={})=>`<button type="button" class="icon-button watch-wallet-action${danger?' watch-remove':''}" ${attribute}="${escapeHTML(item.id)}" aria-label="${escapeHTML(`${label}: ${item.name}`)}" title="${escapeHTML(label)}"${disabled?' disabled':''}${pressed===null?'':` aria-pressed="${pressed}"`}>${actionIcon(glyph)}</button>`;
+  function renderSelection(){
+    const count=selectedWallets.size,all=el('watch-select-page'),onPage=pageWallets.filter(wallet=>selectedWallets.has(wallet.id)).length;
+    all.checked=pageWallets.length>0&&onPage===pageWallets.length;all.indeterminate=onPage>0&&onPage<pageWallets.length;all.disabled=!pageWallets.length;
+    el('watch-selected-count').textContent=`${count} wallet dipilih`;
+    el('watch-select-filtered').disabled=!filteredWallets.length||count===filteredWallets.length;
+    el('watch-select-filtered').textContent=`Pilih semua hasil (${filteredWallets.length})`;
+    el('watch-clear-selection').disabled=!count;
+    for(const button of root.querySelectorAll('[data-watch-bulk]'))button.disabled=!count||(button.dataset.watchBulk==='update'&&updating);
+    for(const input of root.querySelectorAll('[data-watch-select]')){input.checked=selectedWallets.has(input.dataset.watchSelect);input.closest('tr').classList.toggle('watch-selected',input.checked);}
+  }
+  function runBulk(action){
+    if(!selectedWallets.size||!window.EasyDashboard.allowed())return;
+    const ids=[...selectedWallets],uid=account,network=selectedBlockchain;
+    if(action==='update'){void window.EasyDashboard.refreshAllWallets(ids);return;}
+    const valid=()=>uid===account&&network===selectedBlockchain;
+    const apply=(kind,value)=>{
+      if(!valid())return;
+      const count=window.EasyDashboard.bulkWallets(ids,kind,value);
+      if(count){selectedWallets.clear();renderSelection();closeDialog();toast(`${count} wallet: ${kind==='remove'?'dihapus dari pantauan':kind==='category'?'kategori diperbarui':value?'notifikasi diaktifkan':'notifikasi dinonaktifkan'}.`);}
+    };
+    if(action==='category'){
+      dialog('Ubah kategori wallet',`<form id="watch-bulk-category-form"><p class="dialog-body-copy">Kategori baru akan diterapkan ke ${ids.length} wallet yang dipilih.</p>${walletCategoryPicker('other','watch-bulk-category')}<button type="submit" class="primary-button full-width">Terapkan kategori</button><button type="button" class="secondary-button full-width" data-action="close-dialog">Batal</button></form>`,'AKSI MASSAL');
+      el('watch-bulk-category-form').addEventListener('submit',event=>{event.preventDefault();apply('category',event.currentTarget.querySelector('input[name="watch-bulk-category"]:checked')?.value);});
+    }else if(action==='remove'){
+      const wallets=state.wallets.filter(wallet=>ids.includes(wallet.id)&&wallet.chain===network);
+      dialog('Hapus wallet terpilih?',`<p class="dialog-body-copy">${wallets.length} wallet berikut akan dihapus dari pantauan akun ini, termasuk pengaturan notifikasinya.</p><ul class="watch-bulk-preview">${wallets.slice(0,10).map(wallet=>`<li>${escapeHTML(wallet.name)} <small>${escapeHTML(short(wallet.address))}</small></li>`).join('')}</ul>${wallets.length>10?`<p class="detail-note">Dan ${wallets.length-10} wallet lainnya.</p>`:''}<button type="button" id="watch-bulk-confirm-remove" class="danger-button">Hapus ${wallets.length} wallet</button><button type="button" class="secondary-button full-width" data-action="close-dialog">Batal</button>`,'KONFIRMASI AKSI MASSAL');
+      el('watch-bulk-confirm-remove').addEventListener('click',()=>apply('remove'));
+    }else if(action==='alerts-on'||action==='alerts-off')apply('alerts',action==='alerts-on');
+  }
   const identity=(item,token=false)=>`<div class="watch-identity${token?'':` category-${walletCategory(item.category).id}`}">${token?`<span data-watch-token-picture="${escapeHTML(item.id)}"></span>`:`<span class="wallet-avatar">${escapeHTML(item.name.slice(0,2).toUpperCase())}</span>`}<div><div class="watch-wallet-name"><strong title="${escapeHTML(item.name)}">${escapeHTML(token?item.symbol:item.name)}</strong>${token?'':walletCategoryBadge(item.category)}</div><div class="watch-address"><span title="${escapeHTML(item.address)}">${escapeHTML(short(item.address))}</span><button class="watch-copy" type="button" data-copy="${escapeHTML(item.address)}" aria-label="Salin alamat ${escapeHTML(item.name)}">${icon('copy')}</button></div></div></div>`;
   const chain=item=>`<span class="watch-chain">${networkLogo(item.chain)}${escapeHTML(name(item.chain))}</span>`;
   function networkOptions(){
@@ -36,12 +67,15 @@
     const wallets=data.wallets.filter(item=>(category==='all'||walletCategory(item.category).id===category)&&`${item.name} ${item.address} ${walletCategory(item.category).label}`.toLocaleLowerCase('id-ID').includes(walletQuery));
     const tracked=data.tokens.filter(item=>(network==='all'||item.chain===network)&&`${item.name} ${item.symbol} ${item.address}`.toLocaleLowerCase('id-ID').includes(tokenQuery));
     el('watch-wallet-count').textContent=wallets.length;el('watch-token-count').textContent=tracked.length;
-    el('wallet-list').innerHTML=paginate('wallet',wallets).map(item=>{
+    filteredWallets=wallets;const selectable=new Set(wallets.map(wallet=>wallet.id));for(const id of selectedWallets)if(!selectable.has(id))selectedWallets.delete(id);
+    pageWallets=paginate('wallet',wallets);
+    el('wallet-list').innerHTML=pageWallets.map(item=>{
       const snapshot=data.snapshot(item),waiting=data.waiting(item),error=data.error(item),id=escapeHTML(item.id);
       const status=waiting?'Memuat saldo & sampel…':error?error:snapshot?time(snapshot.fetchedAt)+(snapshot.transferUnavailable?' · Riwayat transfer belum lengkap':''):'Belum dianalisis';
       const value=snapshot?.assetValue,stable=snapshot?.usdcBalance;
-      return `<tr role="row"><td role="cell" data-label="Wallet">${identity(item)}</td><td role="cell" data-label="Jaringan">${chain(item)}</td><td role="cell" data-label="Saldo native" class="watch-number">${snapshot?escapeHTML(`${number(snapshot.nativeBalance)} ${snapshot.nativeSymbol}`):'—'}</td><td role="cell" data-label="Saldo USDC" class="watch-number">${stable!=null?escapeHTML(number(stable))+' USDC':'—'}<small>${snapshot?.usdcSupported===false?'Belum didukung':stable==null?'Belum tersedia':''}</small></td><td role="cell" data-label="Estimasi aset USD" class="watch-number" title="${escapeHTML(value?.basis||'Perbarui wallet untuk menghitung aset')}">${money(value?.usd)}<small>${value?.usd!=null?(value.partial?'Parsial · ':'')+value.pricedAssets+' aset dinilai':'Belum tersedia'}</small></td><td role="cell" data-label="Status & pembaruan"><div class="watch-row-status${error?' error':''}">${escapeHTML(status)}</div></td><td role="cell" data-label="Aksi"><div class="watch-row-actions watch-wallet-actions">${value?walletAction(item,'data-watch-value','Rincian estimasi aset','info'):''}${walletAction(item,'data-wallet','Detail wallet','wallet')}${walletAction(item,'data-watch-edit-wallet','Edit wallet','edit')}${walletAction(item,'data-refresh-wallet',waiting?'Sedang update':'Update wallet','refresh',{disabled:waiting})}${walletAction(item,'data-alert',state.alerts[item.id]?'Nonaktifkan notifikasi transaksi':'Aktifkan notifikasi transaksi','bell',{pressed:!!state.alerts[item.id]})}${walletAction(item,'data-remove','Hapus wallet','trash',{danger:true})}</div></td></tr>`;
+      return `<tr role="row"><td role="cell" data-label="Wallet"><div class="watch-select-identity"><label class="watch-selection-hit"><input type="checkbox" data-watch-select="${id}" aria-label="Pilih wallet ${escapeHTML(item.name)}" ${selectedWallets.has(item.id)?'checked':''}></label>${identity(item)}</div></td><td role="cell" data-label="Jaringan">${chain(item)}</td><td role="cell" data-label="Saldo native" class="watch-number">${snapshot?escapeHTML(`${number(snapshot.nativeBalance)} ${snapshot.nativeSymbol}`):'—'}</td><td role="cell" data-label="Saldo USDC" class="watch-number">${stable!=null?escapeHTML(number(stable))+' USDC':'—'}<small>${snapshot?.usdcSupported===false?'Belum didukung':stable==null?'Belum tersedia':''}</small></td><td role="cell" data-label="Estimasi aset USD" class="watch-number" title="${escapeHTML(value?.basis||'Perbarui wallet untuk menghitung aset')}">${money(value?.usd)}<small>${value?.usd!=null?(value.partial?'Parsial · ':'')+value.pricedAssets+' aset dinilai':'Belum tersedia'}</small></td><td role="cell" data-label="Status & pembaruan"><div class="watch-row-status${error?' error':''}">${escapeHTML(status)}</div></td><td role="cell" data-label="Aksi"><div class="watch-row-actions watch-wallet-actions">${value?walletAction(item,'data-watch-value','Rincian estimasi aset','info'):''}${walletAction(item,'data-wallet','Detail wallet','wallet')}${walletAction(item,'data-watch-edit-wallet','Edit wallet','edit')}${walletAction(item,'data-refresh-wallet',waiting?'Sedang update':'Update wallet','refresh',{disabled:waiting})}${walletAction(item,'data-alert',state.alerts[item.id]?'Nonaktifkan notifikasi transaksi':'Aktifkan notifikasi transaksi','bell',{pressed:!!state.alerts[item.id]})}${walletAction(item,'data-remove','Hapus wallet','trash',{danger:true})}</div></td></tr>`;
     }).join('')||`<tr role="row"><td role="cell" colspan="7" class="watch-empty">${walletQuery||category!=='all'?'Tidak ada wallet yang sesuai filter atau pencarian.':'Belum ada wallet di jaringan ini. Ketuk Tambah Wallet untuk mulai.'}</td></tr>`;
+    renderSelection();
     const visibleTokens=paginate('token',tracked);
     el('watch-token-list').innerHTML=visibleTokens.map(item=>{
       const market=data.market(item),change=Number(market?.pair?.priceChange?.h24),hasChange=market?.pair?.priceChange?.h24!=null&&Number.isFinite(change),id=escapeHTML(item.id);
@@ -105,11 +139,17 @@
   }
   window.EasyWatchlist={render,refreshStatus(progress){
     const button=el('watch-refresh-all'),running=!!progress&&!progress.finished;
+    updating=running;renderSelection();
     button.disabled=running&&progress.cancelled;button.textContent=running?(progress.cancelled?'Menghentikan…':'Hentikan Update'):'Update All';
     button.setAttribute('aria-busy',String(running));
     el('watch-refresh-status').textContent=progress?`${progress.finished?(progress.cancelled||progress.done<progress.total?'Pembaruan dihentikan. ':'Pembaruan selesai. '):''}${progress.done}/${progress.total} wallet ${name(progress.chain)} · ${progress.success} berhasil dimuat · ${progress.failed} gagal · ${progress.skipped} dilewati.${running?' Antrean mengikuti batas API. Penghentian menunggu permintaan berjalan selesai.':' Nilai parsial dan kendala tersedia pada setiap baris.'}`:'';
   }};
   el('watch-refresh-all').addEventListener('click',()=>void window.EasyDashboard.refreshAllWallets());
+  el('watch-select-page').addEventListener('change',event=>{for(const wallet of pageWallets){if(event.target.checked)selectedWallets.add(wallet.id);else selectedWallets.delete(wallet.id);}renderSelection();});
+  el('watch-select-filtered').addEventListener('click',()=>{for(const wallet of filteredWallets)selectedWallets.add(wallet.id);renderSelection();});
+  el('watch-clear-selection').addEventListener('click',()=>{selectedWallets.clear();renderSelection();});
+  root.addEventListener('change',event=>{const id=event.target.dataset.watchSelect;if(!id||!filteredWallets.some(wallet=>wallet.id===id))return;if(event.target.checked)selectedWallets.add(id);else selectedWallets.delete(id);renderSelection();});
+  for(const button of root.querySelectorAll('[data-watch-bulk]')){button.innerHTML=actionIcon(button.dataset.watchGlyph);button.addEventListener('click',()=>runBulk(button.dataset.watchBulk));}
   el('watch-add-token').addEventListener('click',addToken);
   el('watch-page-size').addEventListener('change',event=>{const next=Number(event.target.value);if(!pageSizes.includes(next))return;size=next;save('easykripto.watch.pageSize',size);pages.wallet=pages.token=1;render(null,true);});
   for(const [id,kind]of [['wallet-search','wallet'],['watch-token-search','token']])el(id).addEventListener('input',()=>{pages[kind]=1;render(null,kind==='token');});
@@ -125,8 +165,8 @@
     const id=button.dataset.watchRemoveToken;if(id&&window.EasyDashboard.allowed()){const token=tokens.find(item=>item.id===id);if(token)dialog('Hapus token dari pantauan?',`<p class="dialog-body-copy">${escapeHTML(token.symbol)} akan dihapus dari pantauan akun ini.</p><button class="danger-button" data-remove-token="${escapeHTML(token.id)}">Hapus token</button><button class="secondary-button full-width" data-action="close-dialog">Batal</button>`,'TOKEN PANTAUAN');}
   });
   el('detail-dialog').addEventListener('close',()=>{formController?.abort();formController=null;});
-  window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next!==account){account=next;pages.wallet=pages.token=1;el('wallet-search').value='';el('watch-token-search').value='';el('watch-wallet-category').value='all';el('watch-token-network-filter').value='all';formController?.abort();renderWallets();}});
-  window.addEventListener('easykripto-network',()=>{pages.wallet=1;renderWallets();});
+  window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next!==account){account=next;selectedWallets.clear();pages.wallet=pages.token=1;el('wallet-search').value='';el('watch-token-search').value='';el('watch-wallet-category').value='all';el('watch-token-network-filter').value='all';formController?.abort();renderWallets();}});
+  window.addEventListener('easykripto-network',()=>{selectedWallets.clear();pages.wallet=1;renderWallets();});
   window.addEventListener('hashchange',()=>{if(state.route==='pantauan')render(null,true);});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.route==='pantauan')render(null,true);});
   renderWallets();

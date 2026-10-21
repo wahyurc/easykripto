@@ -239,11 +239,12 @@
       }
     }finally{if(mapLoad===job){mapLoad=null;renderMap();if(job.version===epoch&&job.index===job.total)toast('Pemuatan selesai. Cakupan dan kendala tersedia di bawah peta.');}}
   }
-  async function refreshAllWallets(){
+  async function refreshAllWallets(requestIds=null){
     if(!allowed())return;
-    if(bulkRefresh){bulkRefresh.cancelled=true;window.EasyWatchlist?.refreshStatus(bulkRefresh);return;}
+    if(bulkRefresh){if(requestIds!==null){toast('Pembaruan massal masih berjalan. Tunggu atau gunakan Hentikan Update.');return;}bulkRefresh.cancelled=true;window.EasyWatchlist?.refreshStatus(bulkRefresh);return;}
     if(refreshBusy){toast('Pembaruan lain sedang berjalan. Tunggu sampai selesai.');return;}
-    const items=availableWallets();if(!items.length){toast('Belum ada wallet pada jaringan aktif.');return;}
+    const requested=requestIds===null?null:new Set(requestIds);
+    const items=availableWallets().filter(wallet=>!requested||requested.has(wallet.id));if(!items.length){toast('Belum ada wallet yang dapat diperbarui pada jaringan aktif.');return;}
     const job={version:epoch,chain:selectedBlockchain,done:0,total:items.length,success:0,failed:0,skipped:0,cancelled:false};bulkRefresh=job;refreshBusy=true;window.EasyWatchlist?.refreshStatus(job);
     try{
       for(const wallet of items){
@@ -317,6 +318,18 @@
   }
   window.EasyDashboard={row,summary,activities,wallets,map:mapView,showEvents,showNode,receive,persist,allowed,
     refreshAllWallets,
+    bulkWallets(ids,action,value){
+      if(!allowed()||!Array.isArray(ids)||!['category','alerts','remove'].includes(action))return 0;
+      if(action==='category'&&!Object.hasOwn(walletCategories,value))return 0;
+      if(action==='alerts'&&typeof value!=='boolean')return 0;
+      const requested=new Set(ids),items=availableWallets().filter(wallet=>requested.has(wallet.id));if(!items.length)return 0;
+      const targets=new Set(items.map(wallet=>wallet.id));
+      if(action==='remove'){
+        for(const wallet of items){snapshots.delete(key(wallet.chain,wallet.address));delete state.alerts[wallet.id];errors.delete(wallet.id);analysisFailures.delete(wallet.id);}
+        state.wallets=state.wallets.filter(wallet=>!targets.has(wallet.id));
+      }else for(const wallet of items){if(action==='category')wallet.category=value;else state.alerts[wallet.id]=value;}
+      persist();if(action==='alerts'||action==='remove')schedule();return items.length;
+    },
     addWallet(wallet){if(!allowed())return false;if(!blockchainNetworks.some(n=>n.id===wallet.chain)||!validChainAddress(wallet.address,wallet.chain)){toast('Alamat holder tidak sesuai jaringan.');return false;}if(state.wallets.some(w=>w.chain===wallet.chain&&equalChainAddress(w.address,wallet.address,wallet.chain))){toast('Alamat sudah berada di pantauan.');return false;}if(state.wallets.length>=watchLimit()){toast('Maksimal 20 wallet per akun untuk menjaga kuota gratis.');return false;}wallet={...wallet,category:walletCategory(wallet.category).id};state.wallets.push(wallet);persist();notice({category:'watch',level:'success',title:'Wallet ditambahkan ke pantauan',message:wallet.name,context:chainName(wallet.chain)+' · '+short(wallet.address),key:'watch-wallet:'+wallet.id,toast:false,action:{type:'wallet',chain:wallet.chain,address:wallet.address}});void refreshWallet(wallet.id);return true;},
     setWalletCategory(id,value){if(!allowed()||!Object.hasOwn(walletCategories,value))return;const wallet=state.wallets.find(w=>w.id===id);if(!wallet||wallet.category===value)return;wallet.category=value;persist();toast(`Kategori wallet diubah menjadi ${walletCategory(value).label}.`);},
     updateWallet(id,{name,category}){if(!allowed())return false;const wallet=state.wallets.find(w=>w.id===id),label=typeof name==='string'?name.trim():'';if(!wallet||!label||label.length>80||!Object.hasOwn(walletCategories,category))return false;if(wallet.name!==label||wallet.category!==category){wallet.name=label;wallet.category=category;persist();}return true;},
