@@ -153,7 +153,16 @@
     $$('.activity-filters button').forEach(b=>{const active=b.dataset.type===state.type;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active);});
   }
   function wallets(){
-    window.EasyWatchlist?.render({wallets:availableWallets(),tokens,snapshot:w=>walletSnapshots.get(key(w.chain,w.address)),market:t=>markets.get(key(t.chain,t.address)),waiting:w=>busy.has(w.id),error:w=>errors.get(w.id),refreshPrices:ids=>{if(user&&ready)void refreshTokens(ids);}});
+    window.EasyWatchlist?.render({wallets:availableWallets(),tokens,snapshot:w=>walletSnapshots.get(key(w.chain,w.address)),market:t=>markets.get(key(t.chain,t.address)),holdings:watchedTokenHolders,tokenWaiting:t=>pendingPrices.has(`${epoch}:${key(t.chain,t.address)}`),waiting:w=>busy.has(w.id),error:w=>errors.get(w.id),refreshPrices:ids=>{if(user&&ready)void refreshTokens(ids,{details:true});}});
+  }
+  function watchedTokenHolders(token){
+    const wallets=state.wallets.filter(wallet=>wallet.chain===token.chain);let count=0,checked=0,complete=0;
+    for(const wallet of wallets){
+      const snapshot=walletSnapshots.get(key(wallet.chain,wallet.address));if(!Array.isArray(snapshot?.tokenHoldings))continue;
+      checked++;if(snapshot.tokenHoldingsComplete===true)complete++;
+      if(snapshot.tokenHoldings.some(asset=>typeof asset.address==='string'&&equalChainAddress(asset.address,token.address,token.chain)&&/^\d+(?:\.\d+)?$/.test(String(asset.amount))&&/[1-9]/.test(String(asset.amount))))count++;
+    }
+    return {count,checked,total:wallets.length,partial:complete<wallets.length};
   }
   function mapView(){
     const watched=availableWallets(),watchedKeys=new Set(watched.map(w=>key(w.chain,w.address)));
@@ -278,22 +287,33 @@
       if(bulkRefresh===job){bulkRefresh=null;refreshBusy=false;if(job.version===epoch)window.EasyWatchlist?.refreshStatus({...job,finished:true});}
     }
   }
-  async function refreshTokens(requestIds=null){
+  async function refreshTokens(requestIds=null,{force=false,details=false}={}){
     const version=epoch,requested=requestIds?new Set(requestIds):null,tasks=[];
     for(const token of tokens.filter(t=>requested?requested.has(t.id):t.chain===selectedBlockchain)){
       const id=key(token.chain,token.address),jobId=`${version}:${id}`,previous=markets.get(id);
-      if(previous?.at>Date.now()-120000)continue;
+      if(!force&&(previous?.checkedAt||previous?.at)>Date.now()-120000&&(!details||previous?.holdersCheckedAt>Date.now()-120000))continue;
       if(pendingPrices.has(jobId)){tasks.push(pendingPrices.get(jobId));continue;}
       const task=priceQueue.then(async()=>{
         if(version!==epoch||!tokens.some(t=>t.id===token.id))return;
+        const value={...markets.get(id)},signal=AbortSignal.timeout(20000);
         try{
-          const response=await window.EasyAPILog.fetch(`https://api.dexscreener.com/token-pairs/v1/${token.chain}/${encodeURIComponent(token.address)}`,{credentials:'omit',signal:AbortSignal.timeout(12000)});
+          const response=await window.EasyAPILog.fetch(`https://api.dexscreener.com/token-pairs/v1/${token.chain}/${encodeURIComponent(token.address)}`,{credentials:'omit',signal});
           if(!response.ok)throw new Error(response.status===429?'Kuota pasar dibatasi':'Harga belum tersedia');
           const body=await response.json();const pairs=(Array.isArray(body)?body:[]).filter(p=>p.chainId===token.chain&&typeof p.baseToken?.address==='string'&&equalChainAddress(p.baseToken.address,token.address,token.chain)).sort((a,b)=>Number(b.liquidity?.usd||0)-Number(a.liquidity?.usd||0));
-          if(version===epoch&&tokens.some(t=>t.id===token.id))markets.set(id,{pair:pairs[0],at:Date.now(),error:pairs.length?null:'Pasangan belum ditemukan'});
-        }catch(error){if(version===epoch&&tokens.some(t=>t.id===token.id))markets.set(id,{error:'Harga belum dapat dimuat',at:Date.now()});}
-        if(version===epoch){renderSummary();renderWallets();renderMap();}
-      }).finally(()=>pendingPrices.delete(jobId));
+          if(!pairs.length)throw new Error('Pasangan belum ditemukan');
+          value.pair=pairs[0];value.at=Date.now();value.error=null;
+        }catch{value.error=value.pair?'Update pasar gagal; memakai data terakhir':'Harga belum dapat dimuat';}
+        value.checkedAt=Date.now();
+        if(details&&version===epoch&&tokens.some(t=>t.id===token.id)){
+          try{
+            const result=await window.EasyMarket.security(token.chain,token.address,AbortSignal.timeout(15000)),raw=result.data.holder_count,n=raw==null||raw===''?NaN:Number(raw);
+            if(!Number.isSafeInteger(n)||n<0)throw new Error('Jumlah holder tidak tersedia');
+            value.holdersTotal=n;value.holdersAt=result.fetchedAt;value.holdersError=null;
+          }catch{value.holdersError=value.holdersTotal!=null?'Update gagal; data holder terakhir':'Belum tersedia dari penyedia';}
+          value.holdersCheckedAt=Date.now();
+        }
+        if(version===epoch&&tokens.some(t=>t.id===token.id)){markets.set(id,value);renderSummary();renderWallets();renderMap();}
+      }).finally(()=>{pendingPrices.delete(jobId);if(version===epoch)renderWallets();});
       pendingPrices.set(jobId,task);priceQueue=task.catch(()=>{});tasks.push(task);
     }
     await Promise.allSettled(tasks);
@@ -359,6 +379,7 @@
     trackToken({chain,address,name,symbol,pair}){if(!allowed())return;if(tokens.some(t=>key(t.chain,t.address)===key(chain,address))){toast('Token sudah ada dalam pantauan.');return;}if(tokens.length>=watchLimit()){toast('Maksimal 20 token per akun.');return;}tokens.push({id:crypto.randomUUID(),chain,address,name:String(name||'Token').slice(0,80),symbol:String(symbol||'Token').slice(0,32)});if(pair)markets.set(key(chain,address),{pair,at:Date.now()});persist();notice({category:'watch',level:'success',title:'Token ditambahkan ke pantauan',message:String(symbol||name||'Token'),context:chainName(chain)+' · '+short(address),key:'watch-token:'+key(chain,address),action:{type:'token',chain,address}});},
     openToken(id){const token=tokens.find(t=>t.id===id);if(token)window.EasyTokenSearch.open({chain:token.chain,address:token.address});},
     snapshot(wallet){return walletSnapshots.get(key(wallet.chain,wallet.address))||snapshots.get(key(wallet.chain,wallet.address));},
+    async updateWatchedTokens(ids){if(allowed()&&Array.isArray(ids))await refreshTokens(ids,{force:true,details:true});},
     async refreshTokenPrices(){if(allowed())await refreshTokens();}
   };
   document.addEventListener('click',async event=>{

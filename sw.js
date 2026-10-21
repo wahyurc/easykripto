@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'b3a7d239681baaae';
+const RELEASE = '55d1bbc3fab32431';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261021-watch-submenu",
@@ -14,7 +14,7 @@ const SHELL = [
   "best-coins.css?v=20261021-ranking-table",
   "best-coins.js?v=20261021-ranking-table",
   "black-theme.css?v=20261011-watch-flow",
-  "dashboard-data.js?v=20261021-wallet-snapshots",
+  "dashboard-data.js?v=20261021-token-holder-metrics",
   "data-client.js?v=20261011-api-recovery",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
@@ -45,8 +45,8 @@ const SHELL = [
   "wallet-categories.css?v=20261011-categories",
   "wallet-data.js?v=20261011-watch-flow",
   "wallet-snapshot-store.js?v=20261021-wallet-snapshots",
-  "watchlist.css?v=20261021-watch-collapse",
-  "watchlist.js?v=20261021-watch-submenu"
+  "watchlist.css?v=20261021-token-holder-metrics",
+  "watchlist.js?v=20261021-token-holder-metrics"
 ];
 // END GENERATED PWA RELEASE
 

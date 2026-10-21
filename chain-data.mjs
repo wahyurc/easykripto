@@ -131,6 +131,7 @@ async function walletAssets(url,chain,address,nativeBalance,signal,observe){
     }
   }catch{incomplete('Daftar aset belum dapat dimuat sepenuhnya.');}
   if(contract&&usdcBalance!==null){const index=assets.findIndex(a=>a.address===contract);if(index>=0)assets.splice(index,1);if(Number(usdcBalance)>0)assets.unshift({address:contract,amount:usdcBalance});}
+  const tokenHoldings=assets.slice(0,1000),tokenHoldingsComplete=!partial&&assets.length<=1000;
   const priceChain=chain,native=nativeTokens[chain],selected=assets.slice(0,29),prices=new Map();if(assets.length>29)incomplete('Harga dibatasi pada 29 token pertama.');
   const addresses=[...new Set([native,...selected.map(a=>a.address).filter(a=>a!==contract)].filter(Boolean))];
   try{
@@ -141,7 +142,7 @@ async function walletAssets(url,chain,address,nativeBalance,signal,observe){
   let total=0,priced=0,missing=0;
   for(const a of [{address:native,amount:nativeBalance},...selected]){const amount=Number(a.amount),price=a.address===contract?1:prices.get(a.address)?.price;if(amount===0)continue;if(!Number.isFinite(amount)||amount<0||price===undefined||!Number.isFinite(amount*price)){missing++;continue;}total+=amount*price;priced++;}
   if(missing)incomplete(`${missing} aset belum memiliki harga yang dapat digunakan.`);
-  return {usdcBalance,usdcSupported:!!contract,assetValue:{usd:priced||(!missing&&!partial)?total:null,partial,pricedAssets:priced,unpricedAssets:missing,warnings:[...warnings],at:Date.now(),basis:'Native + token terbaca dengan harga DexScreener; USDC acuan 1 USD. Maks. 20 ERC-20 dan 29 token dinilai. Tidak mencakup NFT, DeFi, staking atau rent akun token. Harga DEX adalah estimasi, bukan nilai yang pasti dapat dicairkan.'}};
+  return {usdcBalance,usdcSupported:!!contract,tokenHoldings,tokenHoldingsComplete,assetValue:{usd:priced||(!missing&&!partial)?total:null,partial,pricedAssets:priced,unpricedAssets:missing,warnings:[...warnings],at:Date.now(),basis:'Native + token terbaca dengan harga DexScreener; USDC acuan 1 USD. Maks. 20 ERC-20 dan 29 token dinilai. Tidak mencakup NFT, DeFi, staking atau rent akun token. Harga DEX adalah estimasi, bukan nilai yang pasti dapat dicairkan.'}};
 }
 
 export async function solanaWallet(url,address,signal,observe) {

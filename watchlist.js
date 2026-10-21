@@ -4,6 +4,7 @@
   const el=id=>document.getElementById(id),root=el('view-pantauan');
   const pageSizes=[10,20,50,100],pages={wallet:1,token:1};
   const selectedWallets=new Set();let filteredWallets=[],pageWallets=[],updating=false;
+  let filteredTokens=[],tokenUpdating=false;
   let size=Number(load('easykripto.watch.pageSize',10)),data=null,account=null,formController=null,networkSignature='';
   if(!pageSizes.includes(size))size=10;el('watch-page-size').value=String(size);
   const short=value=>`${value.slice(0,6)}…${value.slice(-4)}`;
@@ -46,6 +47,12 @@
   }
   const identity=(item,token=false)=>`<div class="watch-identity${token?'':` category-${walletCategory(item.category).id}`}">${token?`<span data-watch-token-picture="${escapeHTML(item.id)}"></span>`:`<span class="wallet-avatar">${escapeHTML(item.name.slice(0,2).toUpperCase())}</span>`}<div><div class="watch-wallet-name"><strong title="${escapeHTML(item.name)}">${escapeHTML(token?item.symbol:item.name)}</strong>${token?'':walletCategoryBadge(item.category)}</div><div class="watch-address"><span title="${escapeHTML(item.address)}">${escapeHTML(short(item.address))}</span><button class="watch-copy" type="button" data-copy="${escapeHTML(item.address)}" aria-label="Salin alamat ${escapeHTML(item.name)}">${icon('copy')}</button></div></div></div>`;
   const chain=item=>`<span class="watch-chain">${networkLogo(item.chain)}${escapeHTML(name(item.chain))}</span>`;
+  async function updateTokenInformation(ids){
+    if(tokenUpdating||!ids.length||!window.EasyDashboard.allowed())return;
+    const uid=account;tokenUpdating=true;el('watch-token-update-status').textContent=`Mengupdate ${ids.length} token secara bergiliran…`;
+    const request=window.EasyDashboard.updateWatchedTokens(ids);render();
+    try{await request;}finally{if(uid===account){tokenUpdating=false;el('watch-token-update-status').textContent='Proses Update selesai. Status tiap token menjelaskan data yang tersedia atau kendala penyedia.';render();}}
+  }
   function networkOptions(){
     const select=el('watch-token-network-filter'),ids=[...new Set([...supportedNetworks().map(n=>n.id),...data.tokens.map(t=>t.chain)])];
     const signature=JSON.stringify(ids.map(id=>[id,name(id)]));if(signature===networkSignature)return;
@@ -66,6 +73,7 @@
     const category=el('watch-wallet-category').value,network=el('watch-token-network-filter').value;
     const wallets=data.wallets.filter(item=>(category==='all'||walletCategory(item.category).id===category)&&`${item.name} ${item.address} ${walletCategory(item.category).label}`.toLocaleLowerCase('id-ID').includes(walletQuery));
     const tracked=data.tokens.filter(item=>(network==='all'||item.chain===network)&&`${item.name} ${item.symbol} ${item.address}`.toLocaleLowerCase('id-ID').includes(tokenQuery));
+    filteredTokens=tracked;el('watch-update-tokens').disabled=tokenUpdating||!tracked.length;el('watch-update-tokens').textContent=tokenUpdating?'Mengupdate…':'Update';el('watch-update-tokens').setAttribute('aria-busy',String(tokenUpdating));
     el('watch-wallet-count').textContent=wallets.length;el('watch-token-count').textContent=tracked.length;
     filteredWallets=wallets;const selectable=new Set(wallets.map(wallet=>wallet.id));for(const id of selectedWallets)if(!selectable.has(id))selectedWallets.delete(id);
     pageWallets=paginate('wallet',wallets);
@@ -79,8 +87,10 @@
     const visibleTokens=paginate('token',tracked);
     el('watch-token-list').innerHTML=visibleTokens.map(item=>{
       const market=data.market(item),change=Number(market?.pair?.priceChange?.h24),hasChange=market?.pair?.priceChange?.h24!=null&&Number.isFinite(change),id=escapeHTML(item.id);
-      return `<tr><td>${identity(item,true)}</td><td>${chain(item)}</td><td class="watch-number">${market?.error?'—':money(market?.pair?.priceUsd)}</td><td class="watch-number ${hasChange?(change<0?'negative':change>0?'positive':''):''}">${hasChange?`${change>0?'+':''}${change.toLocaleString('id-ID',{maximumFractionDigits:2})}%`:'—'}</td><td><div class="watch-row-status${market?.error?' error':''}">${escapeHTML(market?.error||time(market?.at))}</div></td><td><div class="watch-row-actions"><button type="button" class="text-button" data-token="${id}">Detail</button><button type="button" class="icon-button watch-remove" data-watch-remove-token="${id}" aria-label="Hapus token ${escapeHTML(item.symbol)}">${icon('close')}</button></div></td></tr>`;
-    }).join('')||`<tr><td colspan="6" class="watch-empty">${tokenQuery||network!=='all'?'Tidak ada token yang sesuai filter atau pencarian.':'Belum ada token pantauan. Ketuk Tambah Token atau pantau dari detail token.'}</td></tr>`;
+      const cap=market?.pair?.marketCap,holders=data.holdings(item),count=holders.count>0?`${holders.partial?'≥ ':''}${holders.count}`:holders.partial?'—':'0',waiting=data.tokenWaiting(item);
+      const holderNote=holders.total?`${holders.checked}/${holders.total} wallet punya data saldo${holders.partial?' · cakupan parsial':''}`:'Belum ada wallet pantauan pada jaringan ini';
+      return `<tr><td>${identity(item,true)}</td><td>${chain(item)}</td><td class="watch-number">${money(market?.pair?.priceUsd)}</td><td class="watch-number ${hasChange?(change<0?'negative':change>0?'positive':''):''}">${hasChange?`${change>0?'+':''}${change.toLocaleString('id-ID',{maximumFractionDigits:2})}%`:'—'}</td><td class="watch-number">${money(cap)}<small>${cap==null?'MC belum tersedia':'MC · DEX Screener'}</small></td><td class="watch-number">${market?.holdersTotal!=null?market.holdersTotal.toLocaleString('id-ID'):'—'}<small>${escapeHTML(market?.holdersError|| (market?.holdersAt?`GoPlus · ${time(market.holdersAt)}`:'Belum diperiksa'))}</small></td><td class="watch-number">${escapeHTML(count)}<small>${escapeHTML(holderNote)}</small></td><td><div class="watch-row-status${market?.error?' error':''}">${escapeHTML(waiting?'Mengupdate informasi…':market?.error||time(market?.at))}</div></td><td><div class="watch-row-actions"><button type="button" class="text-button" data-token="${id}">Detail</button>${walletAction(item,'data-watch-refresh-token','Update informasi token','refresh',{disabled:tokenUpdating||waiting})}<button type="button" class="icon-button watch-remove" data-watch-remove-token="${id}" aria-label="Hapus token ${escapeHTML(item.symbol)}">${icon('close')}</button></div></td></tr>`;
+    }).join('')||`<tr><td colspan="9" class="watch-empty">${tokenQuery||network!=='all'?'Tidak ada token yang sesuai filter atau pencarian.':'Belum ada token pantauan. Ketuk Tambah Token atau pantau dari detail token.'}</td></tr>`;
     for(const item of visibleTokens){const picture=[...root.querySelectorAll('[data-watch-token-picture]')].find(node=>node.dataset.watchTokenPicture===item.id);picture?.append(window.EasyTokenUI.iconNode(data.market(item)?.pair?.info?.imageUrl,item.symbol));}
     if(state.route==='pantauan-token'&&!document.hidden)data.refreshPrices?.(visibleTokens.filter(item=>refreshPrices||!data.market(item)).map(item=>item.id));
   }
@@ -151,6 +161,7 @@
   root.addEventListener('change',event=>{const id=event.target.dataset.watchSelect;if(!id||!filteredWallets.some(wallet=>wallet.id===id))return;if(event.target.checked)selectedWallets.add(id);else selectedWallets.delete(id);renderSelection();});
   for(const button of root.querySelectorAll('[data-watch-bulk]')){button.innerHTML=actionIcon(button.dataset.watchGlyph);button.addEventListener('click',()=>runBulk(button.dataset.watchBulk));}
   el('watch-add-token').addEventListener('click',addToken);
+  el('watch-update-tokens').addEventListener('click',()=>void updateTokenInformation(filteredTokens.map(token=>token.id)));
   el('watch-page-size').addEventListener('change',event=>{const next=Number(event.target.value);if(!pageSizes.includes(next))return;size=next;save('easykripto.watch.pageSize',size);pages.wallet=pages.token=1;render(null,true);});
   for(const [id,kind]of [['wallet-search','wallet'],['watch-token-search','token']])el(id).addEventListener('input',()=>{pages[kind]=1;render(null,kind==='token');});
   for(const [id,kind]of [['watch-wallet-category','wallet'],['watch-token-network-filter','token']])el(id).addEventListener('change',()=>{pages[kind]=1;render(null,kind==='token');});
@@ -158,6 +169,7 @@
     const button=event.target.closest('button');if(!button)return;
     const kind=button.dataset.watchPage;if(['wallet','token'].includes(kind)){pages[kind]+=Number(button.dataset.watchStep);render(null,kind==='token');}
     if(button.dataset.watchEditWallet)editWallet(button.dataset.watchEditWallet);
+    if(button.dataset.watchRefreshToken)void updateTokenInformation([button.dataset.watchRefreshToken]);
     if(button.dataset.watchValue&&window.EasyDashboard.allowed()){
       const wallet=state.wallets.find(item=>item.id===button.dataset.watchValue),snapshot=wallet&&data.snapshot(wallet),value=snapshot?.assetValue;
       if(value)dialog('Rincian estimasi aset',`<p class="dialog-body-copy">${escapeHTML(wallet.name)} · ${escapeHTML(name(wallet.chain))}</p><p class="live-metric">${money(value.usd)}</p><p class="detail-note">${value.usd==null?'Nilai belum tersedia.':value.partial?'Subtotal parsial dari aset yang berhasil dinilai.':'Estimasi aset spot yang berhasil dibaca.'} ${value.pricedAssets} aset dinilai; ${value.unpricedAssets||0} aset terbaca belum memiliki harga.</p>${value.warnings?.length?`<ul class="watch-value-warnings">${value.warnings.map(message=>`<li>${escapeHTML(message)}</li>`).join('')}</ul>`:''}<p class="detail-note">${escapeHTML(value.basis)}</p><p class="detail-note">Snapshot saldo: ${escapeHTML(time(snapshot.fetchedAt))}. Harga memakai cache sampai dua menit.</p><button class="secondary-button full-width" data-action="close-dialog">Tutup</button>`,'ESTIMASI USD');
@@ -165,7 +177,7 @@
     const id=button.dataset.watchRemoveToken;if(id&&window.EasyDashboard.allowed()){const token=tokens.find(item=>item.id===id);if(token)dialog('Hapus token dari pantauan?',`<p class="dialog-body-copy">${escapeHTML(token.symbol)} akan dihapus dari pantauan akun ini.</p><button class="danger-button" data-remove-token="${escapeHTML(token.id)}">Hapus token</button><button class="secondary-button full-width" data-action="close-dialog">Batal</button>`,'TOKEN PANTAUAN');}
   });
   el('detail-dialog').addEventListener('close',()=>{formController?.abort();formController=null;});
-  window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next!==account){account=next;selectedWallets.clear();pages.wallet=pages.token=1;el('wallet-search').value='';el('watch-token-search').value='';el('watch-wallet-category').value='all';el('watch-token-network-filter').value='all';formController?.abort();renderWallets();}});
+  window.addEventListener('easykripto-session',event=>{const next=event.detail.user?.id||null;if(next!==account){account=next;tokenUpdating=false;el('watch-token-update-status').textContent='';selectedWallets.clear();pages.wallet=pages.token=1;el('wallet-search').value='';el('watch-token-search').value='';el('watch-wallet-category').value='all';el('watch-token-network-filter').value='all';formController?.abort();renderWallets();}});
   window.addEventListener('easykripto-network',()=>{selectedWallets.clear();pages.wallet=1;renderWallets();});
   window.addEventListener('hashchange',()=>{if(state.route==='pantauan-token')render(null,true);});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.route==='pantauan-token')render(null,true);});
