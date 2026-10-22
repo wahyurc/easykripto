@@ -1,15 +1,17 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'e543723a54de7c6d';
+const RELEASE = '230076901750934a';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
-  "admin.js?v=20261021-watch-submenu",
+  "admin.js?v=20261022-alpha-report",
+  "alpha-report.css?v=20261022-alpha-report",
+  "alpha-report.js?v=20261022-alpha-report",
   "api-monitor-ui.css?v=20261011-api-recovery",
   "api-monitor-ui.js?v=20261011-api-recovery",
   "api-telemetry.js?v=20261011-api-recovery",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261021-watch-collapse",
+  "app.js?v=20261022-alpha-report",
   "auth.js?v=20261011-dashboard-route",
   "best-coins.css?v=20261021-floating-ranking",
   "best-coins.js?v=20261021-floating-ranking",

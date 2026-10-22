@@ -46,6 +46,7 @@ const routes = [
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
  {id:'pantauan-wallet',parent:'pantauan',view:'pantauan',label:'Wallet Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Kelola wallet, kategori, saldo, dan notifikasi pada jaringan aktif.'},
  {id:'pantauan-token',parent:'pantauan',view:'pantauan',label:'Token Pantauan',icon:'spark',title:'Token pilihan, <span>dalam pantauan.</span>',desc:'Kelola token favorit dan ikuti harga di berbagai jaringan.'},
+ {id:'alpha-report',label:'Alpha Report',icon:'list',title:'Alpha <span>Report.</span>',desc:'Catatan, riset, dan sudut pandang dari tim EasyKripto.'},
  {id:'aktivitas',label:'Aktivitas',icon:'activity',title:'Ikuti jejak <span>aktivitasnya.</span>',desc:'Lihat transfer masuk, keluar, dan hubungan antarwallet.'},
  {id:'superadmin',label:'Superadmin',icon:'shield',title:'Kenali pengguna. <span>Pahami kunjungannya.</span>',desc:'Pantau kunjungan dan akun terdaftar dalam satu ruang.',adminOnly:true}
 ];
