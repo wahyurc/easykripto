@@ -60,7 +60,7 @@
     const [app,sdk]=await Promise.all([import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js')]);
     cloud={sdk,db:sdk.getFirestore(app.getApp())};return cloud;
   }
-  function renderAll(){rebuildEvents();renderSummary();renderWallets();renderActivities();renderMap();const label=$('#watch-sync-status');if(label)label.textContent=syncMessage;window.dispatchEvent(new Event('easykripto-watch-change'));}
+  function renderAll(){rebuildEvents();renderWallets();renderActivities();renderMap();const label=$('#watch-sync-status');if(label)label.textContent=syncMessage;window.dispatchEvent(new Event('easykripto-watch-change'));}
   function persist(){
     if(!user)return;
     const value=watch(),uid=user.id,version=epoch;save(localKey(),{...value,pending:true,baseline:syncedWatch});
@@ -103,13 +103,13 @@
   function assetLabel(e){if(isUSDC(e))return 'USDC';const token=tokens.find(t=>t.chain===e.chain&&e.assetAddress&&equalChainAddress(t.address,e.assetAddress,e.chain));return token?.symbol||(e.assetAddress?tokenPictures.get(key(e.chain,e.assetAddress))?.symbol:null)||(e.asset?.length>16?short(e.asset):e.asset)||'Token';}
   function mapPicture(node){return window.EasyTokenUI.imageURL(markets.get(key(node.chain,node.address||''))?.pair?.info?.imageUrl)||window.EasyTokenUI.imageURL(tokenPictures.get(key(node.chain,node.address||''))?.imageUrl);}
   async function loadMapPictures(nodes){
-    if(pictureRequest||!user||document.body.classList.contains('signed-out')||document.hidden||!navigator.onLine||state.mode!=='token'||!['dashboard','peta'].includes(state.route)||Date.now()<pictureCooldown)return;
+    if(pictureRequest||!user||document.body.classList.contains('signed-out')||document.hidden||!navigator.onLine||state.mode!=='token'||state.route!=='peta'||Date.now()<pictureCooldown)return;
     const needed=nodes.filter(node=>node.kind==='token'&&validChainAddress(node.address||'',node.chain)&&!mapPicture(node)&&!(tokenPictures.get(key(node.chain,node.address))?.at>Date.now()-600000));
     if(!needed.length)return;
     const controller=new AbortController(),version=epoch,chain=selectedBlockchain;pictureRequest=controller;
     try{
       for(const node of needed){
-        if(controller.signal.aborted||version!==epoch||chain!==selectedBlockchain||state.mode!=='token'||!['dashboard','peta'].includes(state.route)||document.hidden||!navigator.onLine)break;
+        if(controller.signal.aborted||version!==epoch||chain!==selectedBlockchain||state.mode!=='token'||state.route!=='peta'||document.hidden||!navigator.onLine)break;
         let imageUrl=null,symbol=null;
         try{
           const response=await window.EasyAPILog.fetch(`https://api.dexscreener.com/token-pairs/v1/${node.chain}/${encodeURIComponent(node.address)}`,{credentials:'omit',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(12000)])});
@@ -132,21 +132,6 @@
   function row(e){
     const type={incoming:'Masuk',outgoing:'Keluar',transfer:'Antar pantauan'}[e.type];
     return `<button class="activity-row" data-event="${escapeHTML(e.id)}"><span class="activity-icon ${e.type==='incoming'?'buy':e.type==='outgoing'?'sell':'transfer'}">${icon(e.type==='incoming'?'down':e.type==='outgoing'?'up':'transfer')}</span><span class="activity-main"><strong>${escapeHTML(walletLabel(e.from,e.chain))} → ${escapeHTML(walletLabel(e.to,e.chain))}</strong><small>${type} · ${escapeHTML(chainName(e.chain))}</small></span><span class="activity-number">${escapeHTML(format(e.amount))} ${escapeHTML(assetLabel(e))}<small>${Number.isFinite(e.minutes)?`${age(e.minutes)} lalu`:'Waktu tidak tersedia'}</small></span></button>`;
-  }
-  function summary(){
-    const list=feed().filter(e=>e.minutes<=1440),wallets=availableWallets(),currentTokens=tokens.filter(t=>t.chain===selectedBlockchain);
-    const examined=[...snapshots.values()].filter(s=>s.chain===selectedBlockchain),newest=examined.map(s=>s.fetchedAt).sort().at(-1);
-    const stats=[['Wallet pantauan',wallets.length,'wallet',`${examined.length} alamat dianalisis`],['Transfer masuk / keluar',`${list.filter(e=>e.type==='incoming').length} / ${list.filter(e=>e.type==='outgoing').length}`,'transfer','Jumlah catatan dalam sampel · 24 jam'],['Token pantauan',currentTokens.length,'map','Harga pasangan DEX Screener'],['Aktivitas teramati',list.length,'activity',newest?`Pembaruan ${new Date(newest).toLocaleTimeString('id-ID')}`:'Analisis wallet untuk mulai']];
-    $('#stats').innerHTML=stats.map(([label,value,i,note])=>`<article class="stat-card"><div class="stat-label">${label}${icon(i)}</div><div class="stat-value">${value}</div><div class="stat-note">${escapeHTML(note)}</div></article>`).join('');
-    $('#recent-activity').innerHTML=list.slice(0,4).map(row).join('')||empty('Belum ada aktivitas 24 jam pada sampel yang dimuat.');
-    $('#token-cards').innerHTML=currentTokens.map(t=>{
-      const market=markets.get(key(t.chain,t.address));
-      return `<button class="token-card" data-token="${escapeHTML(t.id)}"><div class="token-card-head"><span class="token-logo token-picture" data-token-picture data-image="${escapeHTML(window.EasyTokenUI.imageURL(market?.pair?.info?.imageUrl)||'')}" data-label="${escapeHTML(t.symbol)}"></span><span class="token-name"><strong>${escapeHTML(t.symbol)}</strong><small>${escapeHTML(short(t.address))}</small></span></div><div class="token-card-value">${market?.error?'—':money(market?.pair?.priceUsd)}</div><div class="token-card-caption">${market?.error?escapeHTML(market.error):market?.at?`Harga · ${new Date(market.at).toLocaleTimeString('id-ID')}`:'Harga belum dimuat'}</div><div class="token-card-bottom"><span>Buka grafik & risiko</span>${icon('arrow')}</div></button>`;
-    }).join('')||empty('Cari CA lalu ketuk Pantau token untuk menambahkan token.');
-    window.EasyTokenUI.updateCardIcons();
-    const counterparties=new Map();list.forEach(e=>{const addr=e.type==='incoming'?e.from:e.to;if(addr)counterparties.set(addr,(counterparties.get(addr)||0)+1);});
-    const top=[...counterparties].sort((a,b)=>b[1]-a[1])[0];
-    $('.insight-card').innerHTML=`<div class="insight-label">${icon('spark')} CATATAN SAMPEL</div><h2>${top?'Alamat paling sering muncul.':'Mulai dari satu wallet.'}</h2><p>${top?`${escapeHTML(walletLabel(top[0],selectedBlockchain))} muncul pada ${top[1]} dari ${list.length} catatan transfer 24 jam yang dimuat. Frekuensi bukan bukti pemilik yang sama.`:'Tambahkan wallet, lalu analisis untuk melihat hubungan dan aktivitas dari catatan blockchain.'}</p><button class="text-button" data-route="peta">Telusuri peta ${icon('arrow')}</button>`;
   }
   function activities(){
     $('#all-activity').innerHTML=feed().filter(e=>state.type==='all'||e.type===state.type).slice(0,500).map(row).join('')||empty('Belum ada catatan untuk filter ini. Muat data melalui Peta atau Pantauan.');
@@ -263,7 +248,7 @@
     const job={version:epoch,chain:selectedBlockchain,index:0,total:wallets.length,cancelled:false};mapLoad=job;renderMap();
     try{
       for(const wallet of wallets){
-        if(job.cancelled||job.version!==epoch||job.chain!==selectedBlockchain||!['dashboard','peta'].includes(state.route))break;
+        if(job.cancelled||job.version!==epoch||job.chain!==selectedBlockchain||state.route!=='peta')break;
         if(state.wallets.some(w=>w.id===wallet.id))await refreshWallet(wallet.id,true);
         job.index++;if(job.version===epoch)renderMap();
       }
@@ -312,7 +297,7 @@
           }catch{value.holdersError=value.holdersTotal!=null?'Update gagal; data holder terakhir':'Belum tersedia dari penyedia';}
           value.holdersCheckedAt=Date.now();
         }
-        if(version===epoch&&tokens.some(t=>t.id===token.id)){markets.set(id,value);renderSummary();renderWallets();renderMap();}
+        if(version===epoch&&tokens.some(t=>t.id===token.id)){markets.set(id,value);renderWallets();renderMap();}
       }).finally(()=>{pendingPrices.delete(jobId);if(version===epoch)renderWallets();});
       pendingPrices.set(jobId,task);priceQueue=task.catch(()=>{});tasks.push(task);
     }
@@ -357,7 +342,7 @@
     if(version!==epoch)return;await restoreWalletSnapshots(version);if(version!==epoch)return;ready=true;renderAll();schedule();
     void refreshTokens();
   }
-  window.EasyDashboard={row,summary,activities,wallets,map:mapView,showEvents,showNode,receive,persist,allowed,
+  window.EasyDashboard={row,activities,wallets,map:mapView,showEvents,showNode,receive,persist,allowed,
     refreshAllWallets,
     bulkWallets(ids,action,value){
       if(!allowed()||!Array.isArray(ids)||!['category','alerts','remove'].includes(action))return 0;
@@ -401,11 +386,7 @@
       if(!('Notification' in window)){toast('Browser ini belum mendukung notifikasi. Pemberitahuan dalam aplikasi tetap tersedia.');return;}
       try{const permission=await Notification.requestPermission();toast(permission==='granted'?'Notifikasi browser diizinkan selama aplikasi terbuka.':'Pemberitahuan tetap muncul di dalam aplikasi.');}catch{toast('Pemberitahuan tetap tersedia di dalam aplikasi.');}
     }
-    if(d.action==='refresh-dashboard'&&!refreshBusy&&allowed()){
-      const version=epoch;refreshBusy=true;b.disabled=true;
-      try{await refreshTokens();for(const wallet of availableWallets()){if(version!==epoch)break;await refreshWallet(wallet.id,true);}if(version===epoch)toast('Pembaruan selesai. Status setiap wallet tersedia di Pantauan.');}
-      finally{refreshBusy=false;b.disabled=false;}
-    }
+
   });
   window.addEventListener('easykripto-session',session);
   document.addEventListener('change',event=>{if(event.target.matches('.map-asset-filter')&&['all','usdc'].includes(event.target.value)){state.mapAsset=event.target.value;state.zoom=1;state.x=state.y=0;renderMap();}});

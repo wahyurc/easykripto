@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '230076901750934a';
+const RELEASE = '0e2bbe1d8222333c';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261022-alpha-report",
@@ -11,12 +11,12 @@ const SHELL = [
   "api-monitor-ui.js?v=20261011-api-recovery",
   "api-telemetry.js?v=20261011-api-recovery",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261022-alpha-report",
+  "app.js?v=20261109-dashboard-clean",
   "auth.js?v=20261011-dashboard-route",
   "best-coins.css?v=20261021-floating-ranking",
   "best-coins.js?v=20261021-floating-ranking",
   "black-theme.css?v=20261011-watch-flow",
-  "dashboard-data.js?v=20261021-token-holder-metrics",
+  "dashboard-data.js?v=20261109-dashboard-clean",
   "data-client.js?v=20261011-api-recovery",
   "data-config.js?v=20261010-security",
   "icons/app-icon.svg",
@@ -27,10 +27,10 @@ const SHELL = [
   "live-data.css?v=20261011-token-desktop-modal",
   "manifest.webmanifest",
   "market-data.js?v=20261011-api-recovery",
-  "market-feed.css?v=20261010-discovery",
+  "market-feed.css?v=20261109-dashboard-clean",
   "market-feed.js?v=20261011-dashboard-route",
   "mastrtrade-logo.png",
-  "networks.js?v=20261010-token-holders",
+  "networks.js?v=20261109-dashboard-clean",
   "notifications.css?v=20261010-notifications",
   "notifications.js?v=20261021-watch-submenu",
   "offline.css",

@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="admin.css?v=20261010-superadmin">
   <link rel="stylesheet" href="live-data.css?v=20261011-token-desktop-modal">
   <link rel="stylesheet" href="black-theme.css?v=20261011-watch-flow">
-  <link rel="stylesheet" href="market-feed.css?v=20261010-discovery">
+  <link rel="stylesheet" href="market-feed.css?v=20261109-dashboard-clean">
   <link rel="stylesheet" href="notifications.css?v=20261010-notifications">
   <link rel="stylesheet" href="api-monitor-ui.css?v=20261011-api-recovery">
   <link rel="stylesheet" href="pwa.css?v=20261010-pwa">
@@ -28,14 +28,14 @@
   <script src="alpha-report.js?v=20261022-alpha-report" defer></script>
   <script src="data-config.js?v=20261010-security" defer></script>
   <script src="app-check.js?v=20261010-security" defer></script>
-  <script src="networks.js?v=20261010-token-holders" defer></script>
-  <script src="app.js?v=20261022-alpha-report" defer></script>
+  <script src="networks.js?v=20261109-dashboard-clean" defer></script>
+  <script src="app.js?v=20261109-dashboard-clean" defer></script>
   <script src="notifications.js?v=20261021-watch-submenu" defer></script>
   <script src="api-telemetry.js?v=20261011-api-recovery" defer></script>
   <script src="data-client.js?v=20261011-api-recovery" defer></script>
   <script src="token-ui.js?v=20261011-holder-stay" defer></script>
   <script src="wallet-snapshot-store.js?v=20261021-wallet-snapshots" defer></script>
-  <script src="dashboard-data.js?v=20261021-token-holder-metrics" defer></script>
+  <script src="dashboard-data.js?v=20261109-dashboard-clean" defer></script>
   <script src="watchlist.js?v=20261021-token-holder-metrics" defer></script>
   <script src="search.js?v=20261021-floating-ranking" defer></script>
   <script src="market-data.js?v=20261011-api-recovery" defer></script>
@@ -126,6 +126,7 @@
         <button class="pwa-install-action" type="button" data-pwa-install>Pasang</button>
         <button class="pwa-dismiss" type="button" data-pwa-dismiss aria-label="Tunda saran pemasangan selama tujuh hari">×</button>
       </section>
+      <section id="view-dashboard" class="view" aria-label="Dashboard">
       <section id="market-feed" class="market-feed" aria-label="Jelajahi token" hidden>
         <div class="market-feed-toolbar">
           <div class="market-feed-tabs" role="tablist" aria-label="Kategori token">
@@ -144,23 +145,9 @@
           <p id="feed-source" class="feed-source"></p>
         </div>
       </section>
+      </section>
       <div class="page-heading"><div><div class="eyebrow"><span class="chain-dot"></span> SOLANA EXPLORER</div><h1 id="page-title">Pahami setiap <span>pergerakan.</span></h1><p id="page-description">Lihat aktivitas wallet. Temukan hubungan di baliknya.</p></div><button class="secondary-button heading-action" data-action="add-wallet"><span data-icon="plus"></span> Tambah wallet</button></div>
       <div class="demo-notice"><span data-icon="flask"></span><span><strong>Data nyata, cakupan terbatas.</strong> Analisis wallet untuk mengisi peta dan aktivitas. Lonceng memantau sampel transaksi baru selama aplikasi terbuka.</span><button data-action="about-data" aria-label="Informasi sumber data"><span data-icon="arrow"></span></button></div>
-
-      <section id="view-dashboard" class="view" aria-label="Dashboard">
-        <div class="dashboard-toolbar"><button class="secondary-button" data-action="refresh-dashboard">Perbarui data</button><span>Sampel terbatas · cache 2 menit</span></div><div class="stats-grid" id="stats"></div>
-        <div class="content-layout">
-          <div class="main-column">
-            <section class="panel map-panel" id="overview-map-slot"></section>
-            <section class="panel token-section"><div class="section-heading"><div><span class="eyebrow">DALAM RADAR</span><h2>Token yang diperhatikan</h2></div><span class="subtle-tag">Harga pasangan DEX</span></div><div id="token-cards" class="token-cards"></div><p class="panel-footnote">Pantauan token akun kamu. Harga mengikuti pasangan dengan likuiditas terbesar yang ditemukan.</p></section>
-          </div>
-          <aside class="right-column">
-            <section class="insight-card"><div class="insight-label">CATATAN SAMPEL</div><h2>Mulai dari satu wallet.</h2><p>Analisis wallet untuk mengisi catatan hubungan.</p><button class="text-button" data-route="peta">Telusuri peta</button></section>
-            <section class="panel activity-preview"><div class="section-heading"><h2>Jejak terbaru</h2><span class="status-dot"></span></div><div id="recent-activity"></div><button class="wide-text-button" data-route="aktivitas">Lihat semua aktivitas <span data-icon="arrow"></span></button></section>
-            <div class="quiet-note"><span data-icon="shield"></span><p>Data membantu memahami pola.<br>Pergerakan wallet bukan jaminan hasil.</p></div>
-          </aside>
-        </div>
-      </section>
 
       <section id="view-recticker" class="view best-coins" hidden aria-label="Rekomendasi Ticker">
         <div class="bc-toolbar"><span id="bc-network" class="subtle-tag"></span><div><button id="bc-method" class="text-button" type="button"><span data-icon="info"></span> Cara membaca</button><button id="bc-refresh" class="secondary-button" type="button">Perbarui</button></div></div>

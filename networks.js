@@ -72,8 +72,7 @@ function renderNetwork(){
  const eyebrow=document.querySelector('.page-heading .eyebrow');eyebrow.textContent=`${network.name.toUpperCase()} EXPLORER`;
  document.querySelector('.sidebar-bottom').innerHTML=`${networkLogo(network.id)} ${network.name} <span class="muted">/ jaringan</span>`;
  updateNetworkPicker();
- document.querySelector('.token-section').hidden=false;document.querySelector('.right-column').hidden=false;
- renderSummary();renderActivities();renderWallets();renderMap();
+ renderActivities();renderWallets();renderMap();
  window.dispatchEvent(new CustomEvent('easykripto-network',{detail:{chain:network.id}}));
 }
 document.getElementById('network-select').addEventListener('change',event=>{

@@ -57,7 +57,7 @@ let toastTimer;
 function toast(text){if(window.EasyNotifications){window.EasyNotifications.toast(text);return;} $('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4000); }
 
 const map = document.createElement('section');map.id='interactive-map';map.className='panel';map.append($('#map-template').content.cloneNode(true));
-$('#overview-map-slot').className='';$('#overview-map-slot').append(map);
+$('#full-map-slot').append(map);map.classList.add('full-map');
 function navigate(id){ if(location.hash===`#${id}`)renderRoute();else location.hash=id; }
 function renderRoute(){
  if(location.hash==='#ringkasan')history.replaceState(history.state,'',`${location.pathname}${location.search}#dashboard`);
@@ -66,6 +66,7 @@ function renderRoute(){
  const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
  state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'dashboard';
  document.body.classList.toggle('superadmin-view',state.route==='superadmin');
+ document.body.classList.toggle('dashboard-view',state.route==='dashboard');
  const r=routes.find(r=>r.id===state.route);
  $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.view||r.id}`);
  $('#watch-wallet-page').hidden=r.id!=='pantauan-wallet';$('#watch-token-page').hidden=r.id!=='pantauan-token';
@@ -79,12 +80,11 @@ function renderRoute(){
  watchParent.setAttribute('aria-expanded',String(r.parent==='pantauan'));watchParent.setAttribute('aria-controls','watch-nav-submenu');
  watchParent.insertAdjacentHTML('beforeend','<svg class="icon watch-nav-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>');
  $('.bottom-nav').innerHTML=primary.map(navButton).join('');
- $(r.id==='peta'?'#full-map-slot':'#overview-map-slot').append(map);map.classList.toggle('full-map',r.id==='peta');transform();
+ transform();
  renderMap();
  window.scrollTo(0,0);
 }
 function row(e){return window.EasyDashboard?.row(e)||'';}
-function renderSummary(){window.EasyDashboard?.summary();}
 function renderActivities(){window.EasyDashboard?.activities();}
 function renderWallets(){window.EasyDashboard?.wallets();}
 function transform(){
@@ -170,4 +170,4 @@ document.addEventListener('click',async e=>{
 window.addEventListener('easykripto-session',event=>{canSuperadmin=event.detail.user?.role==='superadmin';document.body.classList.toggle('has-superadmin',canSuperadmin);renderRoute();});
 $('#wallet-search').addEventListener('input',renderWallets);window.addEventListener('hashchange',renderRoute);window.addEventListener('resize',transform);
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',motion);
-hydrate();renderSummary();renderActivities();renderWallets();renderMap();renderRoute();
+hydrate();renderActivities();renderWallets();renderMap();renderRoute();
