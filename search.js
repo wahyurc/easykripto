@@ -43,6 +43,11 @@
     const chart=document.createElement('section');chart.className='token-data-block';chart.innerHTML='<h3>Grafik harga · per jam</h3><div id="token-live-chart" role="status">Memuat grafik GeckoTerminal…</div>';
     const risk=document.createElement('section');risk.className='token-data-block';risk.innerHTML='<h3>Pemeriksaan risiko</h3><div id="token-live-risk" role="status">Memuat hasil GoPlus…</div>';
     content.append(chart,risk);
+    if(asPage){
+      content.prepend(chart);
+      const links=[...content.querySelectorAll(':scope > .token-detail-link,:scope > .token-trade-link')];
+      if(links.length){const actions=document.createElement('div');actions.className='token-page-trade-actions';actions.setAttribute('role','group');actions.setAttribute('aria-label','Detail dan trading token');links[0].before(actions);actions.append(...links);}
+    }
     const saved=tokens.find(token=>token.chain===chain&&equalChainAddress(token.address,ca,chain));
     const track=document.createElement('button');track.type='button';track.className='primary-button full-width';track.textContent=saved?'Hapus token dari pantauan':'Pantau token';
     if(saved){track.dataset.removeToken=saved.id;if(asPage)track.addEventListener('click',()=>{track.textContent='Token dihapus dari pantauan';track.disabled=true;},{once:true});}

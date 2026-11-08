@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = 'e01768b99eab63e4';
+const RELEASE = 'fb4fd230eff59577';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261022-alpha-report",
@@ -24,7 +24,7 @@ const SHELL = [
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
-  "live-data.css?v=20261109-token-page",
+  "live-data.css?v=20261109-token-fullwidth",
   "manifest.webmanifest",
   "market-data.js?v=20261109-token-page",
   "market-feed.css?v=20261109-dashboard-clean",
@@ -41,7 +41,7 @@ const SHELL = [
   "registration-admin.js?v=20261011-registration",
   "registration.css?v=20261011-registration",
   "registration.js?v=20261011-all-approval",
-  "search.js?v=20261109-token-page",
+  "search.js?v=20261109-token-fullwidth",
   "styles.css?v=20261010-superadmin",
   "token-ui.js?v=20261109-token-page",
   "wallet-categories.css?v=20261011-categories",
