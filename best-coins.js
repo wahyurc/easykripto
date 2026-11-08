@@ -85,7 +85,7 @@
       empty.append(node('strong',busy?'Menyiapkan peringkat…':!hasCriteria?'Pilih komponen skor.':'Belum ada token yang lolos.'),node('span',busy?'Mengambil pool trending dan baru pada jaringan pilihanmu.':rows.length?'Longgarkan filter fase, valuasi, atau kelengkapan data.':'Perbarui daftar atau pilih jaringan lain. Sumber bisa belum memiliki kandidat.'));list.append(row);
     }
     for(const [index,token]of ranked.slice(0,shown).entries()){
-      const row=node('tr'),m=token.metrics,risk=token.risk;row.className='bc-token-row';const openDetail=()=>window.EasyTokenSearch.open({chain:token.chain,address:token.address,stayOnPage:true});row.addEventListener('click',event=>{if(event.target.closest('button,a,input,select,label')||window.getSelection()?.toString())return;openDetail();});cell(row,`#${index+1}`,'bc-table-rank');
+      const row=node('tr'),m=token.metrics,risk=token.risk;row.className='bc-token-row';const openDetail=()=>window.EasyTokenSearch.open({chain:token.chain,address:token.address});row.addEventListener('click',event=>{if(event.target.closest('button,a,input,select,label')||window.getSelection()?.toString())return;openDetail();});cell(row,`#${index+1}`,'bc-table-rank');
       const tokenCell=node('th','','bc-table-token');tokenCell.scope='row';row.append(tokenCell);
       const tokenInfo=node('div','','bc-token-info'),picture=node('span','','bc-picture');
       picture.append(window.EasyTokenUI.iconNode(token.imageUrl,token.symbol));const logo=document.createElement('span');logo.innerHTML=networkLogo(token.chain);picture.append(logo.firstElementChild);

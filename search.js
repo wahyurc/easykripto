@@ -9,8 +9,10 @@
   const form=document.getElementById('token-search-form');
   const message=()=> 'Tempel CA. Jaringan dicari otomatis; jika ada beberapa hasil, pilih jaringan token.';
   let reading=false,request=null,automaticNetworkChange=false,chosenChain=null,chosenPairs=null;
-  function enrichToken(chain,ca,pair){
-    const content=document.getElementById('dialog-content');
+  const pageContent=document.getElementById('token-page-content');
+  let chosenPage=false,pageRequest=false,loadedPage='',returnRoute='dashboard';
+  function enrichToken(chain,ca,pair,asPage=false){
+    const content=asPage?pageContent:document.getElementById('dialog-content');
     const gmgnChain={solana:'sol',ethereum:'eth',base:'base',bsc:'bsc',robinhood:'robinhood'}[chain];
     if(gmgnChain&&validChainAddress(ca,chain)){
       const trade=document.createElement('a');trade.className='primary-button full-width token-trade-link';
@@ -34,7 +36,7 @@
       mastr.setAttribute('aria-label','Trade token di MastrTrade, buka tab baru');
       content.append(mastr);
     }
-    window.EasyTokenUI.setDialogIcon({imageUrl:pair?.info?.imageUrl,label:pair?.baseToken?.symbol||'Token'});
+    window.EasyTokenUI.setDialogIcon({imageUrl:pair?.info?.imageUrl,label:pair?.baseToken?.symbol||'Token',headingId:asPage?'token-page-title':'dialog-title'});
     const holdersBlock=document.createElement('section');holdersBlock.className='token-data-block token-holders-block';
     const holdersTitle=document.createElement('h3');holdersTitle.textContent='Wallet pemegang token';
     const holdersRoot=document.createElement('div');holdersRoot.id='token-live-holders';holdersRoot.dataset.symbol=String(pair?.baseToken?.symbol||'token').slice(0,32);holdersRoot.setAttribute('aria-live','polite');holdersRoot.textContent='Memuat pemegang token…';holdersBlock.append(holdersTitle,holdersRoot);content.append(holdersBlock);
@@ -43,7 +45,7 @@
     content.append(chart,risk);
     const saved=tokens.find(token=>token.chain===chain&&equalChainAddress(token.address,ca,chain));
     const track=document.createElement('button');track.type='button';track.className='primary-button full-width';track.textContent=saved?'Hapus token dari pantauan':'Pantau token';
-    if(saved)track.dataset.removeToken=saved.id;
+    if(saved){track.dataset.removeToken=saved.id;if(asPage)track.addEventListener('click',()=>{track.textContent='Token dihapus dari pantauan';track.disabled=true;},{once:true});}
     else track.addEventListener('click',()=>{window.EasyDashboard.trackToken({chain,address:ca,name:pair?.baseToken?.name,symbol:pair?.baseToken?.symbol,pair});if(tokens.some(token=>token.chain===chain&&equalChainAddress(token.address,ca,chain))){track.textContent='Token sudah dipantau';track.disabled=true;}});
     content.append(track);
     if(chain==='solana'){
@@ -81,7 +83,17 @@
       if(visible())indicate(ca);
     }catch{indicate(null);}finally{reading=false;}
   }
-  function route(){const hash=location.hash.slice(1);section.hidden=!!hash&&hash!=='dashboard';if(!section.hidden)inspectClipboard();else indicate(null);}
+  function loadPage(force=false){
+    const hash=location.hash;if(!hash.startsWith('#token/')||document.body.classList.contains('signed-out'))return;
+    if(!force&&loadedPage===hash)return;loadedPage=hash;
+    let parts;try{parts=hash.slice(1).split('/').map(decodeURIComponent);}catch{parts=[];}
+    const [,chain,address]=parts;
+    if(parts.length!==3||!supportedNetworks().some(network=>network.id===chain)||!validChainAddress(address,chain)){pageContent.innerHTML='<h2>Token tidak valid</h2><p class="detail-note">Tautan harus berisi jaringan dan alamat token yang didukung.</p>';return;}
+    closeDialog();document.getElementById('dialog-content').replaceChildren();
+    input.value=address;chosenChain=chain;chosenPairs=null;chosenPage=true;form.requestSubmit();
+  }
+  function route(){const hash=location.hash.slice(1);section.hidden=!!hash&&hash!=='dashboard';if(!section.hidden)inspectClipboard();else indicate(null);if(hash.startsWith('token/'))loadPage();else{if(pageRequest){request?.abort();request=null;submit.disabled=false;}loadedPage='';pageContent.replaceChildren();}}
+
   button.addEventListener('click',async()=>{
     if(!navigator.clipboard?.readText){status.textContent='Browser belum mendukung akses clipboard. Tekan lama kolom pencarian lalu pilih Tempel.';input.focus();return;}
     button.disabled=true;
@@ -112,6 +124,9 @@
   }
   form.addEventListener('submit',async event=>{
     event.preventDefault();if(document.body.classList.contains('signed-out'))return;
+    const asPage=chosenPage;chosenPage=false;pageRequest=asPage;
+    const present=(title,html,eyebrow)=>{if(!asPage){dialog(title,html,eyebrow);return;}pageContent.innerHTML=`<span class="eyebrow">${escapeHTML(eyebrow)}</span><h1 id="token-page-title" tabindex="-1">${escapeHTML(title)}</h1>${html}`;document.title=`${title} — Easykripto`;hydrate(pageContent);};
+    if(asPage)present('Memuat detail token','<p class="detail-note" role="status">Mengambil data token…</p>','DETAIL TOKEN');
     const value=input.value.trim();
     const ca=extractCA(value);
     if(!ca){status.textContent='Masukkan satu CA Solana atau EVM yang valid.';input.focus();return;}
@@ -148,23 +163,25 @@
       if(request!==current||chain!==selectedBlockchain||document.body.classList.contains('signed-out'))return;
       const pair=pairs[0];
       if(!pair){
-        dialog('Telusuri token',`<div class="address-block">${escapeHTML(ca)}</div><div class="detail-note">DEX Screener belum memiliki pasangan untuk alamat ini pada ${escapeHTML(networkName)}. Grafik dan risiko diperiksa melalui sumber lain; format alamat saja belum membuktikan keberadaan token.</div>`,'DATA TOKEN');
-        enrichToken(chain,ca);status.textContent='Pasangan DEX Screener belum ditemukan. Memeriksa sumber data lainnya.';return;
+        present('Telusuri token',`<div class="address-block">${escapeHTML(ca)}</div><div class="detail-note">DEX Screener belum memiliki pasangan untuk alamat ini pada ${escapeHTML(networkName)}. Grafik dan risiko diperiksa melalui sumber lain; format alamat saja belum membuktikan keberadaan token.</div>`,'DATA TOKEN');
+        enrichToken(chain,ca,undefined,asPage);status.textContent='Pasangan DEX Screener belum ditemukan. Memeriksa sumber data lainnya.';return;
       }
       const number=(n,money=true)=>n==null||n===''||!Number.isFinite(Number(n))?'Belum tersedia':money?new Intl.NumberFormat('id-ID',{style:'currency',currency:'USD',maximumSignificantDigits:6}).format(Number(n)):new Intl.NumberFormat('id-ID').format(Number(n));
       const label=pair.baseToken.symbol||'Token';
-      dialog(label,`<p class="dialog-body-copy" style="margin:12px 0">${escapeHTML(pair.baseToken.name||label)} · ${escapeHTML(networkName)}</p><div class="address-block">${escapeHTML(ca)}</div><div class="detail-metrics" style="margin-top:18px"><div class="detail-metric"><small>Harga USD</small><strong>${number(pair.priceUsd)}</strong></div><div class="detail-metric"><small>Likuiditas pasangan</small><strong>${number(pair.liquidity?.usd)}</strong></div><div class="detail-metric"><small>Volume pasangan · 24 jam</small><strong>${number(pair.volume?.h24)}</strong></div><div class="detail-metric"><small>Market cap</small><strong>${number(pair.marketCap)}</strong></div></div><div class="detail-note">Sumber: DEX Screener, diambil ${new Date().toLocaleTimeString('id-ID')}. Menampilkan pasangan dengan likuiditas terbesar yang tersedia. Grafik dan hasil risiko ditampilkan dari penyedia terpisah. Peta holder tersedia untuk Solana.</div><a class="secondary-button full-width token-detail-link" aria-label="Detail Token di DEX Screener, buka tab baru" href="https://dexscreener.com/${chain}/${encodeURIComponent(pair.pairAddress)}" target="_blank" rel="noopener noreferrer"><img class="token-provider-logo" src="dexscreener-logo.png" alt="" width="24" height="24">Detail Token ${icon('arrow')}</a>`,'HASIL PENCARIAN · DATA PASAR');
-      enrichToken(chain,ca,pair);
+      present(label,`<p class="dialog-body-copy" style="margin:12px 0">${escapeHTML(pair.baseToken.name||label)} · ${escapeHTML(networkName)}</p><div class="address-block">${escapeHTML(ca)}</div><div class="detail-metrics" style="margin-top:18px"><div class="detail-metric"><small>Harga USD</small><strong>${number(pair.priceUsd)}</strong></div><div class="detail-metric"><small>Likuiditas pasangan</small><strong>${number(pair.liquidity?.usd)}</strong></div><div class="detail-metric"><small>Volume pasangan · 24 jam</small><strong>${number(pair.volume?.h24)}</strong></div><div class="detail-metric"><small>Market cap</small><strong>${number(pair.marketCap)}</strong></div></div><div class="detail-note">Sumber: DEX Screener, diambil ${new Date().toLocaleTimeString('id-ID')}. Menampilkan pasangan dengan likuiditas terbesar yang tersedia. Grafik dan hasil risiko ditampilkan dari penyedia terpisah. Peta holder tersedia untuk Solana.</div><a class="secondary-button full-width token-detail-link" aria-label="Detail Token di DEX Screener, buka tab baru" href="https://dexscreener.com/${chain}/${encodeURIComponent(pair.pairAddress)}" target="_blank" rel="noopener noreferrer"><img class="token-provider-logo" src="dexscreener-logo.png" alt="" width="24" height="24">Detail Token ${icon('arrow')}</a>`,'HASIL PENCARIAN · DATA PASAR');
+      enrichToken(chain,ca,pair,asPage);
       status.textContent=`${label} ditemukan pada ${networkName}. Data pasar bersumber dari DEX Screener; grafik dan risiko diperiksa terpisah.`;
-    }catch(error){if(request!==current)return;status.textContent=error.name==='AbortError'?'Pencarian terlalu lama. Periksa koneksi dan coba lagi.':error.message==='Failed to fetch'?'Tidak dapat terhubung ke sumber data. Periksa koneksi dan coba lagi.':error.message;if(location.hash==='#recticker'&&document.getElementById('detail-dialog').open)dialog('Detail token belum tersedia',`<p class="dialog-body-copy">${escapeHTML(status.textContent)}</p><button type="button" class="secondary-button full-width" data-action="close-dialog">Tutup</button>`,'DETAIL TOKEN');}
+    }catch(error){if(request!==current)return;status.textContent=error.name==='AbortError'?'Pencarian terlalu lama. Periksa koneksi dan coba lagi.':error.message==='Failed to fetch'?'Tidak dapat terhubung ke sumber data. Periksa koneksi dan coba lagi.':error.message;if(asPage)present('Detail token belum tersedia',`<p class="dialog-body-copy">${escapeHTML(status.textContent)}</p>`,'DETAIL TOKEN');else if(location.hash==='#recticker'&&document.getElementById('detail-dialog').open)dialog('Detail token belum tersedia',`<p class="dialog-body-copy">${escapeHTML(status.textContent)}</p><button type="button" class="secondary-button full-width" data-action="close-dialog">Tutup</button>`,'DETAIL TOKEN');}
     finally{clearTimeout(timeout);if(request===current){request=null;submit.disabled=false;}}
   });
-  window.EasyTokenSearch={open({chain,address,stayOnPage=false}){if(!validChainAddress(address,chain))return;if(stayOnPage)dialog('Memuat detail token',`<p class="dialog-body-copy" role="status">Mengambil data token…</p><div class="address-block">${escapeHTML(address)}</div>`,'DETAIL TOKEN');else{closeDialog();navigate('dashboard');}input.value=address;chosenChain=chain;chosenPairs=null;form.requestSubmit();}};
+  window.EasyTokenSearch={open({chain,address,stayOnPage=false}){if(!validChainAddress(address,chain))return;if(!stayOnPage){if(!location.hash.startsWith('#token/'))returnRoute=state.route||'dashboard';closeDialog();navigate(`token/${encodeURIComponent(chain)}/${encodeURIComponent(address)}`);loadPage();return;}dialog('Memuat detail token',`<p class="dialog-body-copy" role="status">Mengambil data token…</p><div class="address-block">${escapeHTML(address)}</div>`,'DETAIL TOKEN');input.value=address;chosenChain=chain;chosenPairs=null;form.requestSubmit();}};
+  document.getElementById('token-page-back').addEventListener('click',()=>navigate(returnRoute));
+  document.getElementById('token-page-refresh').addEventListener('click',()=>loadPage(true));
   window.addEventListener('focus',inspectClipboard);
   document.addEventListener('visibilitychange',inspectClipboard);
   window.addEventListener('hashchange',route);
   document.getElementById('detail-dialog').addEventListener('close',()=>{if(location.hash==='#recticker'&&request){request.abort();request=null;submit.disabled=false;}});
-  window.addEventListener('easykripto-session',event=>{request?.abort();request=null;submit.disabled=false;chosenChain=null;chosenPairs=null;if(!event.detail.signedIn){input.value='';indicate(null);}route();});
+  window.addEventListener('easykripto-session',event=>{request?.abort();request=null;submit.disabled=false;chosenChain=null;chosenPairs=null;loadedPage='';if(!event.detail.signedIn){input.value='';indicate(null);pageContent.replaceChildren();}route();});
   window.addEventListener('easykripto-network',()=>{if(automaticNetworkChange)return;request?.abort();request=null;submit.disabled=false;chosenChain=null;chosenPairs=null;input.value='';input.placeholder='Tempel CA · jaringan otomatis';input.setAttribute('aria-label','Cari token dengan CA, jaringan otomatis');status.textContent=message();indicate(null);inspectClipboard();});
   input.addEventListener('focus',inspectClipboard);
   route();

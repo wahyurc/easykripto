@@ -120,7 +120,8 @@
     if(riskRoot)void risk(chain,ca,signal,riskRoot,holdersRoot);
     if(chain==='solana'&&holdersRoot)void solanaHolderList(ca,signal,holdersRoot);
   };
-  document.getElementById('detail-dialog').addEventListener('close',()=>{if(!document.getElementById('detail-dialog').open)analysis?.abort();});
+  document.getElementById('detail-dialog').addEventListener('close',()=>{if(!document.getElementById('detail-dialog').open&&!location.hash.startsWith('#token/'))analysis?.abort();});
+  window.addEventListener('hashchange',()=>analysis?.abort());
   window.addEventListener('easykripto-network',()=>analysis?.abort());
   window.addEventListener('easykripto-session',event=>{if(!event.detail.signedIn)analysis?.abort();});
 })();

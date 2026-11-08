@@ -1,7 +1,7 @@
 'use strict';
 
 // BEGIN GENERATED PWA RELEASE
-const RELEASE = '0e2bbe1d8222333c';
+const RELEASE = 'e01768b99eab63e4';
 const SHELL = [
   "admin.css?v=20261010-superadmin",
   "admin.js?v=20261022-alpha-report",
@@ -11,10 +11,10 @@ const SHELL = [
   "api-monitor-ui.js?v=20261011-api-recovery",
   "api-telemetry.js?v=20261011-api-recovery",
   "app-check.js?v=20261010-security",
-  "app.js?v=20261109-dashboard-clean",
+  "app.js?v=20261109-token-page",
   "auth.js?v=20261011-dashboard-route",
   "best-coins.css?v=20261021-floating-ranking",
-  "best-coins.js?v=20261021-floating-ranking",
+  "best-coins.js?v=20261109-token-page",
   "black-theme.css?v=20261011-watch-flow",
   "dashboard-data.js?v=20261109-dashboard-clean",
   "data-client.js?v=20261011-api-recovery",
@@ -24,9 +24,9 @@ const SHELL = [
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
-  "live-data.css?v=20261011-token-desktop-modal",
+  "live-data.css?v=20261109-token-page",
   "manifest.webmanifest",
-  "market-data.js?v=20261011-api-recovery",
+  "market-data.js?v=20261109-token-page",
   "market-feed.css?v=20261109-dashboard-clean",
   "market-feed.js?v=20261011-dashboard-route",
   "mastrtrade-logo.png",
@@ -41,9 +41,9 @@ const SHELL = [
   "registration-admin.js?v=20261011-registration",
   "registration.css?v=20261011-registration",
   "registration.js?v=20261011-all-approval",
-  "search.js?v=20261021-floating-ranking",
+  "search.js?v=20261109-token-page",
   "styles.css?v=20261010-superadmin",
-  "token-ui.js?v=20261011-holder-stay",
+  "token-ui.js?v=20261109-token-page",
   "wallet-categories.css?v=20261011-categories",
   "wallet-data.js?v=20261011-watch-flow",
   "wallet-snapshot-store.js?v=20261021-wallet-snapshots",

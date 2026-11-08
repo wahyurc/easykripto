@@ -41,6 +41,7 @@ function walletCategoryPicker(value='other',name='wallet-category',walletId=''){
 function walletCategoryLegend(){return `<div class="wallet-category-legend" aria-label="Warna kategori wallet"><span>Wallet:</span>${Object.values(walletCategories).map(category=>walletCategoryBadge(category.id)).join('')}<small>Label manual · alamat lain masuk Other.</small></div>`;}
 const routes = [
  {id:'dashboard',label:'Dashboard',icon:'grid',title:'Pahami setiap <span>pergerakan.</span>',desc:'Lihat aktivitas wallet. Temukan hubungan di baliknya.'},
+ {id:'token',parent:'dashboard',navHidden:true,label:'Detail Token',icon:'info',title:'Detail <span>token.</span>',desc:'Harga, grafik, risiko, dan pemegang token.'},
  {id:'recticker',label:'Rekomendasi Ticker',icon:'spark',title:'Rekomendasi <span>Ticker.</span>',desc:'Peringkat token dari aktivitas pasar, dengan skor yang dapat kamu atur.'},
  {id:'peta',label:'Peta',icon:'map',title:'Setiap titik, <span>punya cerita.</span>',desc:'Jelajahi hubungan wallet dan token melalui transaksi.'},
  {id:'pantauan',label:'Pantauan',icon:'wallet',title:'Wallet pilihan, <span>dalam pantauan.</span>',desc:'Simpan alamat dan beri nama agar lebih mudah dikenali.'},
@@ -64,9 +65,11 @@ function renderRoute(){
  if(location.hash==='#bestcoin')history.replaceState(history.state,'',`${location.pathname}${location.search}#recticker`);
  if(location.hash==='#pantauan')history.replaceState(history.state,'',`${location.pathname}${location.search}#pantauan-wallet`);
  const availableRoutes=routes.filter(r=>!r.adminOnly||canSuperadmin);
- state.route=availableRoutes.some(r=>r.id===location.hash.slice(1))?location.hash.slice(1):'dashboard';
+ const routeId=location.hash.slice(1).split('/')[0];
+ state.route=availableRoutes.some(r=>r.id===routeId)?routeId:'dashboard';
  document.body.classList.toggle('superadmin-view',state.route==='superadmin');
  document.body.classList.toggle('dashboard-view',state.route==='dashboard');
+ document.body.classList.toggle('token-page-view',state.route==='token');
  const r=routes.find(r=>r.id===state.route);
  $$('.view').forEach(v=>v.hidden=v.id!==`view-${r.view||r.id}`);
  $('#watch-wallet-page').hidden=r.id!=='pantauan-wallet';$('#watch-token-page').hidden=r.id!=='pantauan-token';

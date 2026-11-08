@@ -69,7 +69,7 @@
     return {chain,holders,totalHolderCount:/^\d+$/.test(String(data.holder_count))?String(data.holder_count):null,source:'GoPlus',fetchedAt:new Date().toISOString(),note:'Maksimal 10 holder yang dilaporkan GoPlus. Dapat mencakup kontrak, pool, exchange, atau alamat burn. Waktu pembaruan data penyedia tidak diketahui; saldo bukan verifikasi real time.'};
   }
   window.EasyTokenUI={iconNode,imageURL,renderHolders,fromGoPlus,updateButtons,
-    setDialogIcon({imageUrl,label='Token'}){const heading=document.getElementById('dialog-title');if(!heading)return;heading.classList.add('token-result-title');heading.querySelector('.token-picture')?.remove();heading.prepend(iconNode(imageUrl,label));},
+    setDialogIcon({imageUrl,label='Token',headingId='dialog-title'}){const heading=document.getElementById(headingId);if(!heading)return;heading.classList.add('token-result-title');heading.querySelector('.token-picture')?.remove();heading.prepend(iconNode(imageUrl,label));},
     updateCardIcons(){for(const frame of document.querySelectorAll('[data-token-picture]')){if(frame.dataset.loaded===frame.dataset.image)continue;frame.replaceChildren(...iconNode(frame.dataset.image,frame.dataset.label).childNodes);frame.dataset.loaded=frame.dataset.image;}}
   };
   document.addEventListener('click',event=>{
